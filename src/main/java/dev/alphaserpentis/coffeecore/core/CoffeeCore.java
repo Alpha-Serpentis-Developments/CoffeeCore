@@ -1,21 +1,34 @@
-package space.alphaserpentis.coffeecore.core;
+package dev.alphaserpentis.coffeecore.core;
 
+import dev.alphaserpentis.coffeecore.commands.defaultcommands.About;
+import dev.alphaserpentis.coffeecore.commands.defaultcommands.Help;
+import dev.alphaserpentis.coffeecore.commands.defaultcommands.Settings;
+import dev.alphaserpentis.coffeecore.data.bot.BotSettings;
+import dev.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.ChunkingFilter;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
-import space.alphaserpentis.coffeecore.commands.BotCommand;
-import space.alphaserpentis.coffeecore.data.bot.BotSettings;
-import space.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;
+import dev.alphaserpentis.coffeecore.commands.BotCommand;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
 
+/**
+ * The core of Coffee Core. This class is responsible for initializing the bot and handling commands.
+ */
 public class CoffeeCore {
 
+    /**
+     * The {@link JDA} instance.
+     */
     public static JDA api;
+    /**
+     * The {@link BotSettings} instance.
+     */
     public final BotSettings settings;
 
     public CoffeeCore(
@@ -79,10 +92,30 @@ public class CoffeeCore {
             commands.put(cmd.getName(), cmd);
         }
 
+        if(settings.registerDefaultCommands) {
+            commands.put("settings", new Settings());
+            commands.put("help", new Help());
+            commands.put("about", new About());
+        }
+
         CommandsHandler.registerCommands(commands, settings.updateCommandsAtLaunch);
     }
 
+    /**
+     * Get the bot owner's Discord ID
+     * @return The bot owner's Discord ID
+     */
     public long getBotOwnerId() {
         return settings.botOwnerId;
+    }
+
+    /**
+     * Shutdown the bot
+     * @param duration The duration to wait for the bot to shut down
+     * @throws InterruptedException If the bot fails to shut down within the specified duration
+     */
+    public void shutdown(@NonNull Duration duration) throws InterruptedException {
+        api.shutdown();
+        api.awaitShutdown(duration);
     }
 }

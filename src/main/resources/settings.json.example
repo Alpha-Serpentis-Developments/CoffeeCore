@@ -1,5 +1,0 @@
-{
-  "botOwnerId": 1234567890,
-  "serverDataPath": "./storage/serverdata.json",
-  "updateCommandsAtLaunch": false
-}
