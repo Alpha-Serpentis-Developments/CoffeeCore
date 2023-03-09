@@ -17,7 +17,6 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -30,7 +29,7 @@ public class ServerDataHandler extends ListenerAdapter {
         Gson gson = new GsonBuilder()
                 .registerTypeAdapter(serverDataHashMap.getClass(), new ServerDataDeserializer())
                 .create();
-        serverJson = core.serverDataPath;
+        serverJson = core.settings.serverDataPath;
 
         Reader reader = Files.newBufferedReader(serverJson);
         serverDataHashMap = gson.fromJson(reader, new TypeToken<HashMap<Long, ServerData>>(){}.getType());
@@ -56,16 +55,16 @@ public class ServerDataHandler extends ListenerAdapter {
     }
 
     public static void updateServerData() throws IOException {
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder()
+                .setPrettyPrinting()
+                .create();
 
         writeToJSON(gson, gson.toJson(serverDataHashMap));
     }
 
-    private static void writeToJSON(@NonNull Gson gson, @NonNull String json) throws IOException {
-        Writer writer = Files.newBufferedWriter(Paths.get(String.valueOf(serverJson)));
-
-        gson.toJson(json, writer);
-
+    private static void writeToJSON(@NonNull Gson gson, @NonNull Object data) throws IOException {
+        Writer writer = Files.newBufferedWriter(serverJson);
+        gson.toJson(data, writer);
         writer.close();
     }
 
@@ -77,7 +76,6 @@ public class ServerDataHandler extends ListenerAdapter {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        System.out.println("[ServerDataHandler] Adding " + event.getGuild().getIdLong() + " to JSON");
     }
 
     @Override
@@ -88,7 +86,6 @@ public class ServerDataHandler extends ListenerAdapter {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        System.out.println("[ServerDataHandler] Removing " + event.getGuild().getIdLong() + " from the JSON");
     }
 
 }

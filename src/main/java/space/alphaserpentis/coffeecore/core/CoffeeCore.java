@@ -6,22 +6,23 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.ChunkingFilter;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
+import space.alphaserpentis.coffeecore.commands.BotCommand;
+import space.alphaserpentis.coffeecore.data.bot.BotSettings;
+import space.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;
 
-import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashMap;
 
 public class CoffeeCore {
 
     public static JDA api;
-    public final long botOwnerId;
-    public final Path serverDataPath;
+    public final BotSettings settings;
+
     public CoffeeCore(
             @NonNull String token,
-            @NonNull Path serverDataPath,
-            long botOwnerId
+            @NonNull BotSettings settings
     ) throws InterruptedException {
-        this.serverDataPath = serverDataPath;
-        this.botOwnerId = botOwnerId;
+        this.settings = settings;
         api = JDABuilder.createDefault(token)
                 .setChunkingFilter(ChunkingFilter.ALL)
                 .disableCache(CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS, CacheFlag.EMOJI, CacheFlag.VOICE_STATE)
@@ -34,16 +35,14 @@ public class CoffeeCore {
 
     public CoffeeCore(
             @NonNull String token,
-            @NonNull Path serverDataPath,
-            long botOwnerId,
+            @NonNull BotSettings settings,
             @NonNull ChunkingFilter chunkingFilter,
             @NonNull Collection<CacheFlag> disabledCache,
             @NonNull Collection<CacheFlag> enabledCache,
             @NonNull Collection<GatewayIntent> enabledIntents,
             @NonNull Collection<GatewayIntent> disabledIntents
     ) throws InterruptedException {
-        this.serverDataPath = serverDataPath;
-        this.botOwnerId = botOwnerId;
+        this.settings = settings;
         api = JDABuilder.createDefault(token)
                 .setChunkingFilter(chunkingFilter)
                 .disableCache(disabledCache)
@@ -53,5 +52,23 @@ public class CoffeeCore {
                 .build();
 
         api.awaitReady();
+    }
+
+    /**
+     * Register a command or commands to the bot. This method will immediately push the commands to the bot, so it is best to
+     * register all commands instead of registering them one by one.
+     * @param command The command or commands to register.
+     */
+    public void registerCommands(@NonNull BotCommand<?>... command) {
+        HashMap<String, BotCommand<?>> commands = new HashMap<>();
+        for(BotCommand<?> cmd: command) {
+            commands.put(cmd.getName(), cmd);
+        }
+
+        CommandsHandler.registerCommands(commands, settings.updateCommandsAtLaunch);
+    }
+
+    public long getBotOwnerId() {
+        return settings.botOwnerId;
     }
 }

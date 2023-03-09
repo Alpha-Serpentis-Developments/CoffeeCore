@@ -1,6 +1,7 @@
 package space.alphaserpentis.coffeecore.handler.api.discord.commands;
 
 import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -30,7 +31,7 @@ public class CommandsHandler extends ListenerAdapter {
      * @param mappingOfCommands The mapping of commands to check and register
      * @param updateCommands Whether to update the commands if they are already registered
      */
-    public static void checkAndSetSlashCommands(
+    public static void registerCommands(
             @NonNull HashMap<String, BotCommand<?>> mappingOfCommands,
             boolean updateCommands
     ) {
@@ -70,6 +71,11 @@ public class CommandsHandler extends ListenerAdapter {
                 cmd.updateCommand(api);
             }
         }
+    }
+
+    @Nullable
+    public static BotCommand<?> getCommand(@NonNull String name) {
+        return mappingOfCommands.get(name);
     }
 
     @Override

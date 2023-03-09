@@ -166,7 +166,7 @@ public abstract class BotCommand<T> {
     }
 
     /**
-     * Method used to execute the command.
+     * Method used to execute the command. Should contain the main logic of the command.
      * @param userId is the ID of the user who called the command
      * @param event is the SlashCommandInteractionEvent that contains the interaction
      * @return a nonnull CommandResponse containing either a MessageEmbed or Message
@@ -409,8 +409,8 @@ public abstract class BotCommand<T> {
         eb.setTitle("Command Failed To Execute");
         eb.setDescription("The command failed to execute due to: " + e.getClass().getSimpleName());
         if(e.getMessage() != null) {
-            if(e.getMessage().length() > 1800) {
-                eb.addField("Error Message", "Error too long...", false);
+            if(e.getMessage().length() > MessageEmbed.TEXT_MAX_LENGTH) {
+                eb.addField("Error Message", e.getMessage().substring(0, MessageEmbed.TEXT_MAX_LENGTH), false);
             } else {
                 eb.addField("Error Message", e.getMessage(), false);
             }
