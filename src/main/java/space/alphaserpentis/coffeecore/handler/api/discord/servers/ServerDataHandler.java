@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class ServerDataHandler extends ListenerAdapter {
 
@@ -29,10 +30,10 @@ public class ServerDataHandler extends ListenerAdapter {
         Gson gson = new GsonBuilder()
                 .registerTypeAdapter(serverDataHashMap.getClass(), new ServerDataDeserializer())
                 .create();
-        serverJson = core.settings.serverDataPath;
+        serverJson = Path.of(core.settings.serverDataPath);
 
         Reader reader = Files.newBufferedReader(serverJson);
-        serverDataHashMap = gson.fromJson(reader, new TypeToken<HashMap<Long, ServerData>>(){}.getType());
+        serverDataHashMap = gson.fromJson(reader, new TypeToken<Map<Long, ServerData>>(){}.getType());
 
         // Check the current servers
         if(serverDataHashMap == null)
@@ -59,7 +60,7 @@ public class ServerDataHandler extends ListenerAdapter {
                 .setPrettyPrinting()
                 .create();
 
-        writeToJSON(gson, gson.toJson(serverDataHashMap));
+        writeToJSON(gson, serverDataHashMap);
     }
 
     private static void writeToJSON(@NonNull Gson gson, @NonNull Object data) throws IOException {

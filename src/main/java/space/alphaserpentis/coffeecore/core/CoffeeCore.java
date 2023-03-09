@@ -21,7 +21,7 @@ public class CoffeeCore {
     public CoffeeCore(
             @NonNull String token,
             @NonNull BotSettings settings
-    ) throws InterruptedException {
+    ) {
         this.settings = settings;
         api = JDABuilder.createDefault(token)
                 .setChunkingFilter(ChunkingFilter.ALL)
@@ -30,7 +30,14 @@ public class CoffeeCore {
                 .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_MESSAGES)
                 .build();
 
-        api.awaitReady();
+        try {
+            api.awaitReady();
+        } catch (IllegalStateException | InterruptedException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        api.addEventListener(new CommandsHandler());
     }
 
     public CoffeeCore(
@@ -41,7 +48,7 @@ public class CoffeeCore {
             @NonNull Collection<CacheFlag> enabledCache,
             @NonNull Collection<GatewayIntent> enabledIntents,
             @NonNull Collection<GatewayIntent> disabledIntents
-    ) throws InterruptedException {
+    ) {
         this.settings = settings;
         api = JDABuilder.createDefault(token)
                 .setChunkingFilter(chunkingFilter)
@@ -51,7 +58,14 @@ public class CoffeeCore {
                 .enableIntents(enabledIntents)
                 .build();
 
-        api.awaitReady();
+        try {
+            api.awaitReady();
+        } catch (IllegalStateException | InterruptedException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        api.addEventListener(new CommandsHandler());
     }
 
     /**

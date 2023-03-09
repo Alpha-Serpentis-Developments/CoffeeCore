@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class BotCommand<T> {
 
-    enum TypeOfEphemeral {
+    public enum TypeOfEphemeral {
         DEFAULT,
         DYNAMIC
     }

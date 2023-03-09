@@ -1,4 +1,5 @@
 import com.google.gson.Gson;
+import io.github.cdimascio.dotenv.Dotenv;
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -8,11 +9,12 @@ import space.alphaserpentis.coffeecore.core.CoffeeCore;
 import space.alphaserpentis.coffeecore.core.CoffeeCoreBuilder;
 import space.alphaserpentis.coffeecore.data.bot.BotSettings;
 import space.alphaserpentis.coffeecore.data.bot.CommandResponse;
-import space.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class HelloWorld {
 
@@ -20,7 +22,13 @@ public class HelloWorld {
 
         public HelloCommand() {
             super(
-                    new BotCommandOptions("hello", "Says hello to you!")
+                    new BotCommandOptions(
+                            "hello",
+                            "Says hello to you!",
+                            true,
+                            false,
+                            TypeOfEphemeral.DEFAULT
+                    )
             );
         }
 
@@ -39,13 +47,19 @@ public class HelloWorld {
         }
     }
 
-    public static void main(String[] args) throws InterruptedException, IOException {
+    public static void main(String[] args) throws InterruptedException, IOException, URISyntaxException {
+        Dotenv dotenv = Dotenv.load();
         HelloCommand helloCommand = new HelloCommand();
-        System.out.println(System.getenv());
         CoffeeCore core = CoffeeCoreBuilder.build(
-                System.getenv("DISCORD_BOT_TOKEN"),
+                dotenv.get("DISCORD_BOT_TOKEN"),
                 new Gson().fromJson(
-                        Files.newBufferedReader(Path.of(args[0])),
+                        Files.newBufferedReader(
+                                Path.of(
+                                        Paths.get(
+                                                HelloWorld.class.getClassLoader().getResource("settings.json").toURI()
+                                        ).toString()
+                                )
+                        ),
                         BotSettings.class
                 )
         );
