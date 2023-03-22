@@ -1,7 +1,8 @@
 package dev.alphaserpentis.coffeecore.commands;
 
+import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
-import dev.alphaserpentis.coffeecore.handler.api.discord.servers.ServerDataHandler;
+import dev.alphaserpentis.coffeecore.handler.api.discord.servers.AbstractServerDataHandler;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -146,6 +147,7 @@ public abstract class BotCommand<T> {
     protected final boolean messagesExpire;
     protected final TypeOfEphemeral ephemeralType;
     protected long commandId;
+    protected CoffeeCore core;
 
     public BotCommand() {
         throw new UnsupportedOperationException("Unsupported constructor");
@@ -225,6 +227,9 @@ public abstract class BotCommand<T> {
     public void setCommandId(long id) {
         commandId = id;
     }
+    public void setCore(@NonNull CoffeeCore core) {
+        this.core = core;
+    }
     @NonNull
     public String getName() {
         return name;
@@ -281,6 +286,7 @@ public abstract class BotCommand<T> {
     public static Message handleReply(@NonNull SlashCommandInteractionEvent event, @NonNull BotCommand<?> cmd) {
         boolean sendAsEphemeral = cmd.isOnlyEphemeral();
         CommandResponse<?> responseFromCommand;
+        AbstractServerDataHandler<?> sdh = cmd.core.getServerDataHandler();
         Object response;
         ReplyCallbackAction reply;
 
@@ -288,7 +294,7 @@ public abstract class BotCommand<T> {
             InteractionHook hook = event.getHook();
             try {
                 if (!sendAsEphemeral && event.getGuild() != null) {
-                    sendAsEphemeral = ServerDataHandler.serverDataHashMap.get(event.getGuild().getIdLong()).getOnlyEphemeral();
+                    sendAsEphemeral = sdh.serverDataHashMap.get(event.getGuild().getIdLong()).getOnlyEphemeral();
                 }
 
                 if (cmd.isOnlyEmbed()) {
@@ -359,7 +365,7 @@ public abstract class BotCommand<T> {
             response = responseFromCommand.messageResponse();
 
             if (!sendAsEphemeral && event.getGuild() != null)
-                sendAsEphemeral = ServerDataHandler.serverDataHashMap.get(event.getGuild().getIdLong()).getOnlyEphemeral();
+                sendAsEphemeral = sdh.serverDataHashMap.get(event.getGuild().getIdLong()).getOnlyEphemeral();
 
             if (cmd.isOnlyEmbed()) {
                 if (!sendAsEphemeral && event.getGuild() != null) {

@@ -8,6 +8,12 @@ package dev.alphaserpentis.coffeecore.data.server;
  */
 public class ServerData {
     private boolean onlyEphemeral = true;
+
+    public ServerData() {}
+    public ServerData(boolean onlyEphemeral) {
+        this.onlyEphemeral = onlyEphemeral;
+    }
+
     public void setOnlyEphemeral(boolean onlyEphemeral) {
         this.onlyEphemeral = onlyEphemeral;
     }

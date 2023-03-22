@@ -7,13 +7,15 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
-public class Help extends BotCommand<MessageEmbed> {
+import java.time.Duration;
 
-    public Help() {
+public class Shutdown extends BotCommand<MessageEmbed> {
+
+    public Shutdown() {
         super(
                 new BotCommandOptions(
-                        "help",
-                        "Lists all the commands and their descriptions",
+                        "shutdown",
+                        "Shuts down the bot. This may or may not respond.",
                         true,
                         false,
                         TypeOfEphemeral.DEFAULT
@@ -26,15 +28,21 @@ public class Help extends BotCommand<MessageEmbed> {
     public CommandResponse<MessageEmbed> runCommand(long userId, @NonNull SlashCommandInteractionEvent event) {
         EmbedBuilder eb = new EmbedBuilder();
 
-        eb.setTitle("Help");
-        eb.setDescription("List of all the commands provided by " + event.getJDA().getSelfUser().getName() + "!");
-        eb.setFooter("Built using Coffee Core");
-        for(BotCommand<?> command: core.getCommandsHandler().getCommands()) {
-            eb.addField(
-                    command.getName(),
-                    command.getDescription(),
-                    false
-            );
+        if(core.getBotOwnerId() != userId) {
+            eb.setTitle("Denied");
+            eb.setDescription("You are not authorized to use this command.");
+            eb.setColor(0xff0000);
+            return new CommandResponse<>(eb.build(), isOnlyEphemeral());
+        }
+
+        eb.setTitle("Shutting down...");
+        eb.setDescription("The bot is shutting down.");
+        eb.setColor(0xff0000);
+
+        try {
+            core.shutdown(Duration.ofSeconds(5));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
         return new CommandResponse<>(eb.build(), isOnlyEphemeral());

@@ -7,17 +7,18 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ServerDataDeserializer implements JsonDeserializer<Map<Long, ServerData>> {
+public class ServerDataDeserializer<T extends ServerData> implements JsonDeserializer<Map<Long, T>> {
 
     @Override
-    public Map<Long, ServerData> deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
-        Map<Long, ServerData> serverDataMap = new HashMap<>();
+    @SuppressWarnings("unchecked")
+    public Map<Long, T> deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+        Map<Long, T> serverDataMap = new HashMap<>();
 
         Gson gson = new Gson();
-        JsonObject object = JsonParser.parseString(jsonElement.getAsString()).getAsJsonObject();
+        JsonObject object = jsonElement.getAsJsonObject();
 
         for(Map.Entry<String, JsonElement> entry: object.entrySet()) {
-            serverDataMap.put(Long.valueOf(entry.getKey()), gson.fromJson(entry.getValue(), ServerData.class));
+            serverDataMap.put(Long.valueOf(entry.getKey()), (T) gson.fromJson(entry.getValue(), ServerData.class));
         }
 
         return serverDataMap;

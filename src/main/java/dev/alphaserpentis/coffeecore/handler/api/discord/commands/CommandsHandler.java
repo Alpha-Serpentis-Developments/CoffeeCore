@@ -1,5 +1,9 @@
 package dev.alphaserpentis.coffeecore.handler.api.discord.commands;
 
+import dev.alphaserpentis.coffeecore.commands.BotCommand;
+import dev.alphaserpentis.coffeecore.commands.ButtonCommand;
+import dev.alphaserpentis.coffeecore.commands.ModalCommand;
+import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.JDA;
@@ -9,10 +13,6 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import org.jetbrains.annotations.NotNull;
-import dev.alphaserpentis.coffeecore.commands.BotCommand;
-import dev.alphaserpentis.coffeecore.commands.ButtonCommand;
-import dev.alphaserpentis.coffeecore.commands.ModalCommand;
-import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,31 +23,39 @@ import java.util.concurrent.Executors;
 
 public class CommandsHandler extends ListenerAdapter {
     /**
-     * The mapping of commands that have been registered to the bot. This is used to check for commands that are already
+     * The mapping of {@link BotCommand} that have been registered to the bot. This is used to check for commands that are already
      * registered and update them if necessary.
      */
-    public static final HashMap<String, BotCommand<?>> mappingOfCommands = new HashMap<>();
+    public final HashMap<String, BotCommand<?>> mappingOfCommands = new HashMap<>();
     /**
-     * The executor service that will be used to run the commands.
+     * The {@link ExecutorService} that will be used to run the commands.
      */
-    public static final ExecutorService executor = Executors.newCachedThreadPool();
+    public final ExecutorService executor = Executors.newCachedThreadPool();
+    /**
+     * The {@link CoffeeCore} instance that this handler is attached to.
+     */
+    public final CoffeeCore core;
+
+    public CommandsHandler(@NonNull CoffeeCore core) {
+        this.core = core;
+    }
 
     /**
-     * Provided a mapping of commands, this will check for any commands that are already registered and update them if
+     * Provided a mapping of {@link BotCommand}, this will check for any commands that are already registered and update them if
      * necessary. If the command is not registered, it will register it. If the command is registered, but not in the
      * mapping, it will remove it.
      * @param mappingOfCommands The mapping of commands to check and register
      * @param updateCommands Whether to update the commands if they are already registered
      */
-    public static void registerCommands(
+    public void registerCommands(
             @NonNull HashMap<String, BotCommand<?>> mappingOfCommands,
             boolean updateCommands
     ) {
-        JDA api = CoffeeCore.api;
+        JDA api = core.getJda();
         List<Command> listOfActiveCommands = api.retrieveCommands().complete();
         List<String> detectedCommandNames = new ArrayList<>();
 
-        CommandsHandler.mappingOfCommands.putAll(mappingOfCommands);
+        this.mappingOfCommands.putAll(mappingOfCommands);
 
         // Checks for the detected commands
         for (Iterator<Command> it = listOfActiveCommands.iterator(); it.hasNext(); ) {
@@ -55,6 +63,7 @@ public class CommandsHandler extends ListenerAdapter {
             if(mappingOfCommands.containsKey(cmd.getName())) {
                 BotCommand<?> botCmd = mappingOfCommands.get(cmd.getName());
                 botCmd.setCommandId(cmd.getIdLong());
+                botCmd.setCore(core);
                 if(updateCommands)
                     botCmd.updateCommand(api);
 
@@ -82,19 +91,22 @@ public class CommandsHandler extends ListenerAdapter {
     }
 
     /**
-     * Gets a command from the mapping of commands.
+     * Gets a {@link BotCommand} from the {@link #mappingOfCommands}.
      * @param name The name of the command to get
-     * @return {@link BotCommand} or null if the command is not found
+     * @return BotCommand or {@code null} if the command is not found
      */
     @Nullable
-    public static BotCommand<?> getCommand(@NonNull String name) {
+    public BotCommand<?> getCommand(@NonNull String name) {
         return mappingOfCommands.get(name);
+    }
+    public ArrayList<BotCommand<?>> getCommands() {
+        return new ArrayList<>(mappingOfCommands.values());
     }
 
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?> cmd = mappingOfCommands.get(event.getName());
+            BotCommand<?> cmd = getCommand(event.getName());
             BotCommand.handleReply(event, cmd);
         });
     }
@@ -102,7 +114,7 @@ public class CommandsHandler extends ListenerAdapter {
     @Override
     public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?> cmd = mappingOfCommands.get(event.getButton().getId().substring(0, event.getButton().getId().indexOf("_")));
+            BotCommand<?> cmd = getCommand(event.getButton().getId().substring(0, event.getButton().getId().indexOf("_")));
 
             ((ButtonCommand<?>) cmd).runButtonInteraction(event);
         });
@@ -111,7 +123,7 @@ public class CommandsHandler extends ListenerAdapter {
     @Override
     public void onModalInteraction(@NotNull ModalInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?> cmd = mappingOfCommands.get(event.getModalId().substring(0, event.getModalId().indexOf("_")));
+            BotCommand<?> cmd = getCommand(event.getModalId().substring(0, event.getModalId().indexOf("_")));
 
             ((ModalCommand) cmd).runModalInteraction(event);
         });

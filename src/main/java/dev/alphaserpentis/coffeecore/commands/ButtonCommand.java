@@ -13,6 +13,9 @@ import java.util.Collection;
 import java.util.HashMap;
 
 public abstract class ButtonCommand<T> extends BotCommand<T> {
+    /**
+     * A {@link HashMap} of buttons that can be added to a message.
+     */
     protected final HashMap<String, Button> buttonHashMap = new HashMap<>();
     public ButtonCommand() {
         super();
@@ -47,7 +50,7 @@ public abstract class ButtonCommand<T> extends BotCommand<T> {
     }
 
     /**
-     * Get the button hash map.
+     * Returns the {@link #buttonHashMap} field.
      * @return The button hash map.
      */
     @NonNull
@@ -56,33 +59,43 @@ public abstract class ButtonCommand<T> extends BotCommand<T> {
     }
 
     /**
-     * Easy way to add a {@link Button} to the button hash map.
-     * @param key Unique identifier for the button. Ensure it was not previously used!
+     * Easy way to add a {@link Button} to the {@link #buttonHashMap}.
+     * @param key Unique identifier for the button. An {@link IllegalArgumentException} will be thrown if the key is already in use.
      * @param style The style of button.
      * @param label Text to display on the button. This cannot be null.
      * @param disabled Determines if the button is disabled.
+     * @throws IllegalArgumentException If the key is already in use.
      */
     public void addButton(@NonNull String key, @NonNull ButtonStyle style, @NonNull String label, boolean disabled) {
+        if(buttonHashMap.containsKey(key))
+            throw new IllegalArgumentException("The key " + key + " is already in use!");
+
         buttonHashMap.put(key, Button.of(style, generateButtonKey(key), label).withDisabled(disabled));
     }
 
     /**
-     * Easy way to add a {@link Button} to the button hash map.
-     * @param key Unique identifier for the button. Ensure it was not previously used!
+     * Easy way to add a {@link Button} to the {@link #buttonHashMap} with a nullable {@link Emoji}.
+     * @param key Unique identifier for the button. An {@link IllegalArgumentException} will be thrown if the key is already in use.
      * @param style The style of button.
      * @param label Text to display on the button. This may be null.
-     * @param emoji {@link Emoji} to display on the button.
+     * @param emoji {@link Emoji} to display on the button. This may be null.
      * @param disabled Determines if the button is disabled.
+     * @throws IllegalArgumentException If the key is already in use.
      */
     public void addButton(@NonNull String key, @NonNull ButtonStyle style, @Nullable String label, @Nullable Emoji emoji, boolean disabled) {
+        if(buttonHashMap.containsKey(key))
+            throw new IllegalArgumentException("The key " + key + " is already in use!");
+
         buttonHashMap.put(key, Button.of(style, generateButtonKey(key), label, emoji).withDisabled(disabled));
     }
+
     /**
      * Generate a button key. This key is used for identification purposes.
      * @param key Unique identifier for the button.
      * @return {@link String} The generated key.
      */
-    public String generateButtonKey(String key) {
+    @NonNull
+    public String generateButtonKey(@NonNull String key) {
         return String.format("%s_%s", getName(), key);
     }
 }

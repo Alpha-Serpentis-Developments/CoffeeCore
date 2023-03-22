@@ -74,7 +74,8 @@ public class Settings extends BotCommand<MessageEmbed> {
     }
 
     private void setServerEphemeral(long guildId, EmbedBuilder eb) throws IOException {
-        ServerData sd = ServerDataHandler.getServerData(guildId);
+        ServerDataHandler<?> sdh = (ServerDataHandler<?>) core.getServerDataHandler();
+        ServerData sd = sdh.getServerData(guildId);
         if(sd.getOnlyEphemeral()) {
             sd.setOnlyEphemeral(false);
             eb.setDescription("The bot's responses are no longer ephemeral.");
@@ -83,6 +84,6 @@ public class Settings extends BotCommand<MessageEmbed> {
             eb.setDescription("The bot's responses are now ephemeral.");
         }
 
-        ServerDataHandler.updateServerData();
+        sdh.updateServerData();
     }
 }

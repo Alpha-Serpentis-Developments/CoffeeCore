@@ -2,80 +2,57 @@ package dev.alphaserpentis.coffeecore.handler.api.discord.servers;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
-import dev.alphaserpentis.coffeecore.serialization.ServerDataDeserializer;
+import dev.alphaserpentis.coffeecore.data.server.ServerData;
 import io.reactivex.rxjava3.annotations.NonNull;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import dev.alphaserpentis.coffeecore.core.CoffeeCore;
-import dev.alphaserpentis.coffeecore.data.server.ServerData;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
-public class ServerDataHandler extends ListenerAdapter {
+/**
+ * A default implementation of {@link AbstractServerDataHandler} that handles {@link ServerData}.
+ * @param <T> The type of {@link ServerData} to handle.
+ */
+public class ServerDataHandler<T extends ServerData> extends AbstractServerDataHandler<T> {
 
-    public static Path serverJson;
-    public static HashMap<Long, ServerData> serverDataHashMap = new HashMap<>();
+    /**
+     * Initializes the server data handler.
+     * @param path The path to the server data file.
+     * @param typeToken The {@link TypeToken} of the mapping of user IDs to {@link ServerData}.
+     * @param jsonDeserializer The {@link JsonDeserializer} to deserialize the server data.
+     * @throws IOException If the bot fails to read the server data file.
+     */
+    public ServerDataHandler(
+            @NonNull Path path,
+            @NonNull TypeToken<Map<Long, T>> typeToken,
+            @NonNull JsonDeserializer<Map<Long, T>> jsonDeserializer
+    ) throws IOException {
+        super(path);
+        Gson gson;
+        Reader reader;
 
-    public static void init(@NonNull CoffeeCore core) throws IOException {
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(serverDataHashMap.getClass(), new ServerDataDeserializer())
+        gson = new GsonBuilder()
+                .registerTypeAdapter(serverDataHashMap.getClass(), jsonDeserializer)
                 .create();
-        serverJson = Path.of(core.settings.serverDataPath);
-
-        Reader reader = Files.newBufferedReader(serverJson);
-        serverDataHashMap = gson.fromJson(reader, new TypeToken<Map<Long, ServerData>>(){}.getType());
-
-        // Check the current servers
-        if(serverDataHashMap == null)
-            serverDataHashMap = new HashMap<>();
-
-        ArrayList<Long> serversActuallyJoined = new ArrayList<>();
-
-        for(Guild g: CoffeeCore.api.getGuilds()) {
-            if(!serverDataHashMap.containsKey(g.getIdLong())) {
-                serverDataHashMap.put(g.getIdLong(), new ServerData());
-            }
-
-            serversActuallyJoined.add(g.getIdLong());
-        }
-
-        // Check if the bot left a server but data wasn't cleared
-        serverDataHashMap.keySet().removeIf(id -> !serversActuallyJoined.contains(id));
-
-        updateServerData();
+        reader = Files.newBufferedReader(serverJson);
+        serverDataHashMap = gson.fromJson(reader, typeToken.getType());
     }
 
-    public static ServerData getServerData(long guildId) {
-        return serverDataHashMap.get(guildId);
-    }
-
-    public static void updateServerData() throws IOException {
-        Gson gson = new GsonBuilder()
-                .setPrettyPrinting()
-                .create();
-
-        writeToJSON(gson, serverDataHashMap);
-    }
-
-    private static void writeToJSON(@NonNull Gson gson, @NonNull Object data) throws IOException {
-        Writer writer = Files.newBufferedWriter(serverJson);
-        gson.toJson(data, writer);
-        writer.close();
+    @Override
+    @SuppressWarnings("unchecked")
+    protected T createNewServerData() {
+        return (T) new ServerData();
     }
 
     @Override
     public void onGuildJoin(@NonNull GuildJoinEvent event) {
-        serverDataHashMap.put(event.getGuild().getIdLong(), new ServerData());
+        serverDataHashMap.put(event.getGuild().getIdLong(), createNewServerData());
         try {
             updateServerData();
         } catch (IOException e) {
@@ -92,5 +69,4 @@ public class ServerDataHandler extends ListenerAdapter {
             throw new RuntimeException(e);
         }
     }
-
 }
