@@ -6,6 +6,8 @@ A Discord bot framework built on top of [JDA](https://github.com/DV8FromTheWorld
 framework is designed to be modular, allowing you to only use the features you need and to focus on your bot's
 functionality.
 
+Coffee Core's framework originated from ["Squeeth Discord Bot"](https://github.com/AlphaSerpentis/SqueethDiscordBot)
+
 ## Features
 
 - Primarily uses slash commands, but can also be interacted with through:
