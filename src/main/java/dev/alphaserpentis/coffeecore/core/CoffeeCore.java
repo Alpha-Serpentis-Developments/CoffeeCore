@@ -14,19 +14,14 @@ import dev.alphaserpentis.coffeecore.serialization.ServerDataDeserializer;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.requests.GatewayIntent;
-import net.dv8tion.jda.api.utils.ChunkingFilter;
-import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.concurrent.Executors;
 
 /**
  * The core of Coffee Core. This class is responsible for initializing the bot and handling commands.
@@ -51,66 +46,39 @@ public class CoffeeCore {
     protected final BotSettings settings;
 
     public CoffeeCore(
-            @NonNull String token,
             @NonNull BotSettings settings,
-            @Nullable Constructor<?> serverDataHandlerConstructor
+            @NonNull JDA jda
     ) {
         this.settings = settings;
-
-        jda = JDABuilder.createDefault(token)
-                .setChunkingFilter(ChunkingFilter.ALL)
-                .disableCache(CacheFlag.EMOJI, CacheFlag.VOICE_STATE)
-                .disableIntents(GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_MESSAGE_TYPING, GatewayIntent.GUILD_MESSAGE_REACTIONS)
-                .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
-                .build();
+        this.jda = jda;
 
         try {
             jda.awaitReady();
-
-            if(serverDataHandlerConstructor == null) {
-                Path path = Path.of(settings.serverDataPath);
-                this.serverDataHandler = new ServerDataHandler<>(
-                        path,
-                        new TypeToken<>() {
-                        },
-                        new ServerDataDeserializer<>()
-                );
-            } else {
-                this.serverDataHandler = (ServerDataHandler<?>) serverDataHandlerConstructor.newInstance(
-                        Path.of(settings.serverDataPath)
-                );
-            }
-
-            serverDataHandler.init(getJda());
-        } catch (IllegalStateException | InterruptedException | IOException | InvocationTargetException |
-                 InstantiationException | IllegalAccessException | InvalidPathException e) {
+            Path path = Path.of(settings.serverDataPath);
+            this.serverDataHandler = new ServerDataHandler<>(
+                    path,
+                    new TypeToken<>() {},
+                    new ServerDataDeserializer<>()
+            );
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             System.exit(1);
         }
-        commandsHandler = new CommandsHandler(this);
 
-        jda.addEventListener(commandsHandler);
-        jda.addEventListener(this.serverDataHandler);
+        commandsHandler = new CommandsHandler(this, Executors.newCachedThreadPool());
+
+        this.jda.addEventListener(commandsHandler);
+        this.jda.addEventListener(this.serverDataHandler);
     }
 
     public CoffeeCore(
-            @NonNull String token,
             @NonNull BotSettings settings,
+            @NonNull JDA jda,
             @Nullable Constructor<?> serverDataHandlerConstructor,
-            @NonNull ChunkingFilter chunkingFilter,
-            @NonNull Collection<CacheFlag> disabledCache,
-            @NonNull Collection<CacheFlag> enabledCache,
-            @NonNull Collection<GatewayIntent> enabledIntents,
-            @NonNull Collection<GatewayIntent> disabledIntents
+            @Nullable Object... serverDataHandlerParameters
     ) {
         this.settings = settings;
-        jda = JDABuilder.createDefault(token)
-                .setChunkingFilter(chunkingFilter)
-                .disableCache(disabledCache)
-                .enableCache(enabledCache)
-                .disableIntents(disabledIntents)
-                .enableIntents(enabledIntents)
-                .build();
+        this.jda = jda;
 
         try {
             jda.awaitReady();
@@ -124,19 +92,22 @@ public class CoffeeCore {
                         new ServerDataDeserializer<>()
                 );
             } else {
-                this.serverDataHandler = (ServerDataHandler<?>) serverDataHandlerConstructor.newInstance(
-                        Path.of(settings.serverDataPath)
+                if(serverDataHandlerParameters == null) {
+                    throw new IllegalArgumentException("serverDataHandlerParameters cannot be null if serverDataHandlerConstructor is not null");
+                }
+
+                this.serverDataHandler = (AbstractServerDataHandler<?>) serverDataHandlerConstructor.newInstance(
+                        serverDataHandlerParameters
                 );
             }
 
             serverDataHandler.init(getJda());
         } catch (IllegalStateException | InterruptedException | IOException | InvocationTargetException |
-                 InstantiationException | IllegalAccessException | InvalidPathException e) {
+                 InstantiationException | IllegalAccessException | IllegalArgumentException e) {
             e.printStackTrace();
             System.exit(1);
         }
-        commandsHandler = new CommandsHandler(this);
-
+        commandsHandler = new CommandsHandler(this, Executors.newCachedThreadPool());
 
         jda.addEventListener(commandsHandler);
         jda.addEventListener(this.serverDataHandler);

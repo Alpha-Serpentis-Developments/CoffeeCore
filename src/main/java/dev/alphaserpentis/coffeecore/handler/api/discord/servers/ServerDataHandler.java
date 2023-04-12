@@ -44,6 +44,12 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
         serverDataHashMap = gson.fromJson(reader, typeToken.getType());
     }
 
+    /**
+     * Creates a new instance of {@link ServerData}.
+     * <p>
+     * <b>This method should be overridden if you're extending this class!</b>
+     * @return A new instance of {@link ServerData}.
+     */
     @Override
     @SuppressWarnings("unchecked")
     protected T createNewServerData() {

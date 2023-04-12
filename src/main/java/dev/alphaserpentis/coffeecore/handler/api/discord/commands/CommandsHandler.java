@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class CommandsHandler extends ListenerAdapter {
     /**
@@ -30,14 +29,15 @@ public class CommandsHandler extends ListenerAdapter {
     /**
      * The {@link ExecutorService} that will be used to run the commands.
      */
-    public final ExecutorService executor = Executors.newCachedThreadPool();
+    public final ExecutorService executor;
     /**
      * The {@link CoffeeCore} instance that this handler is attached to.
      */
     public final CoffeeCore core;
 
-    public CommandsHandler(@NonNull CoffeeCore core) {
+    public CommandsHandler(@NonNull CoffeeCore core, @NonNull ExecutorService executor) {
         this.core = core;
+        this.executor = executor;
     }
 
     /**
@@ -114,18 +114,16 @@ public class CommandsHandler extends ListenerAdapter {
     @Override
     public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?> cmd = getCommand(event.getButton().getId().substring(0, event.getButton().getId().indexOf("_")));
-
-            ((ButtonCommand<?>) cmd).runButtonInteraction(event);
+            ButtonCommand<?> cmd = (ButtonCommand<?>) getCommand(event.getButton().getId().substring(0, event.getButton().getId().indexOf("_")));
+            cmd.runButtonInteraction(event);
         });
     }
 
     @Override
     public void onModalInteraction(@NotNull ModalInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?> cmd = getCommand(event.getModalId().substring(0, event.getModalId().indexOf("_")));
-
-            ((ModalCommand) cmd).runModalInteraction(event);
+            ModalCommand cmd = (ModalCommand) getCommand(event.getModalId().substring(0, event.getModalId().indexOf("_")));
+            cmd.runModalInteraction(event);
         });
     }
 }

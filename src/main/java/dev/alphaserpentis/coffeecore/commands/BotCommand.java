@@ -180,7 +180,7 @@ public abstract class BotCommand<T> {
      * Method used to update the command.
      * This method is called when the bot is started and when the command is updated.
      * <p>
-     * This method should be overridden if the command uses subcommands.
+     * <b>This method should be overridden if the command uses subcommands.</b>
      * @param jda {@link JDA} instance
      */
     public void updateCommand(@NonNull JDA jda) {
