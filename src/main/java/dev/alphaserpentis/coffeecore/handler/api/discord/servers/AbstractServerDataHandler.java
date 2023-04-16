@@ -3,9 +3,9 @@ package dev.alphaserpentis.coffeecore.handler.api.discord.servers;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import dev.alphaserpentis.coffeecore.data.server.ServerData;
+import dev.alphaserpentis.coffeecore.helper.ContainerHelper;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
@@ -39,17 +39,17 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
 
     /**
      * Initializes the server data handler.
-     * @param api The {@link JDA} instance.
+     * @param container The {@link ContainerHelper} instance to get the servers from.
      * @throws IOException If the bot fails to write to the server data file.
      */
-    public void init(@NonNull JDA api) throws IOException {
+    public void init(@NonNull ContainerHelper container) throws IOException {
         // Check the current servers
         if(serverDataHashMap == null)
             serverDataHashMap = new HashMap<>();
 
         ArrayList<Long> serversActuallyJoined = new ArrayList<>();
 
-        for(Guild g: api.getGuilds()) {
+        for(Guild g: container.getGuilds()) {
             if(!serverDataHashMap.containsKey(g.getIdLong())) {
                 serverDataHashMap.put(g.getIdLong(), createNewServerData());
             }

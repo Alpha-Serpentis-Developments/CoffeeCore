@@ -1,56 +1,60 @@
 package dev.alphaserpentis.coffeecore.core;
 
 import dev.alphaserpentis.coffeecore.data.bot.BotSettings;
+import dev.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;
 import dev.alphaserpentis.coffeecore.handler.api.discord.servers.AbstractServerDataHandler;
-import dev.alphaserpentis.coffeecore.handler.api.discord.servers.ServerDataHandler;
+import dev.alphaserpentis.coffeecore.helper.BuilderHelper;
 import io.reactivex.rxjava3.annotations.Experimental;
 import io.reactivex.rxjava3.annotations.NonNull;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import net.dv8tion.jda.api.utils.ChunkingFilter;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 
 /**
  * Builder class for {@link CoffeeCore}.
  */
-public class CoffeeCoreBuilder {
+public class CoffeeCoreBuilder<T> {
 
     /**
-     * Enum used to determine how the {@link JDABuilder} is configured initially
+     * Enum used to determine how the {@link JDABuilder} or {@link DefaultShardManagerBuilder} is configured initially
      *
      * @see JDABuilder#create(Collection)
      * @see JDABuilder#createDefault(String)
      * @see JDABuilder#createLight(String)
      */
-    enum JDABuilderConfiguration {
+    enum BuilderConfiguration {
         /**
-         * Creates a {@link JDABuilder} with its predefined configuration.
+         * Creates a {@link JDABuilder} or {@link ShardManager} with the defined gateway intents.
          * @see JDABuilder#create(String, Collection)
+         * @see DefaultShardManagerBuilder#create(String, Collection)
          */
         NONE,
         /**
-         * Creates a {@link JDABuilder} with a light configuration.
+         * Creates a {@link JDABuilder} or {@link ShardManager} with a light configuration.
          * @see JDABuilder#createLight(String)
+         * @see DefaultShardManagerBuilder#createLight(String)
          */
         LIGHT,
         /**
-         * Creates a {@link JDABuilder} with JDA's recommended default configuration.
+         * Creates a {@link JDABuilder} or {@link ShardManager} with JDA's recommended default configuration.
          * <p>These may change by JDA over time.
          * @see JDABuilder#createDefault(String)
+         * @see DefaultShardManagerBuilder#createDefault(String)
          */
         DEFAULT
     }
 
     protected BotSettings settings = null;
-    protected Constructor<?> serverDataHandler = null;
-    protected Object[] serverDataHandlerParameters = null;
+    protected AbstractServerDataHandler<?> serverDataHandler = null;
+    protected CommandsHandler commandsHandler = null;
     protected ChunkingFilter chunkingFilter = ChunkingFilter.ALL;
     protected Collection<CacheFlag> enabledCacheFlags = new ArrayList<>();
     protected Collection<CacheFlag> disabledCacheFlags = new ArrayList<>() {
@@ -65,30 +69,35 @@ public class CoffeeCoreBuilder {
         }
     };
     protected Collection<GatewayIntent> disabledGatewayIntents = new ArrayList<>();
-    protected JDABuilderConfiguration jdaBuilderConfiguration = JDABuilderConfiguration.DEFAULT;
+    protected BuilderConfiguration builderConfiguration = BuilderConfiguration.DEFAULT;
     protected MemberCachePolicy memberCachePolicy = MemberCachePolicy.NONE;
+    protected boolean enableSharding = false;
 
     /**
-     * Builds a {@link CoffeeCore} instance and automatically initializes {@link ServerDataHandler}.
+     * Builds a {@link CoffeeCore} instance with the configured settings. Initialization will begin inside Coffee Core's
+     * constructor.
      * Coffee Core will shut down if the bot is misconfigured within Discord (e.g., invalid token, invalid permissions).
-     * <p><b>Be aware that {@link CoffeeCoreBuilder#disabledCacheFlags}, {@link CoffeeCoreBuilder#enabledGatewayIntents}, and {@link CoffeeCoreBuilder#jdaBuilderConfiguration} contain default values.</b>
+     * <p><b>Be aware that {@link CoffeeCoreBuilder#chunkingFilter}, {@link CoffeeCoreBuilder#disabledCacheFlags},
+     * {@link CoffeeCoreBuilder#enabledGatewayIntents}, {@link CoffeeCoreBuilder#builderConfiguration}, and
+     * {@link CoffeeCoreBuilder#memberCachePolicy} contain default values.</b>
      * @param token The Discord bot token.
      * @return {@link CoffeeCore}.
-     * @throws IOException If the bot fails to read or write to the server data file.
      */
     @NonNull
     public CoffeeCore build(
             @NonNull String token
-    ) throws IOException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    ) {
+        BuilderHelper<?> builderHelper = new BuilderHelper<>(createBuilderInstance(token));
+
         if(serverDataHandler != null) {
             return new CoffeeCore(
                     settings,
-                    createJDABuilderInstance(token).build(),
+                    builderHelper.build(),
                     serverDataHandler,
-                    serverDataHandlerParameters
+                    commandsHandler
             );
         } else {
-            return new CoffeeCore(settings, createJDABuilderInstance(token).build());
+            return new CoffeeCore(settings, builderHelper.build());
         }
     }
 
@@ -96,34 +105,35 @@ public class CoffeeCoreBuilder {
      * Sets the bot's settings.
      * @param settings The bot's settings.
      * @return {@link CoffeeCoreBuilder} for method chaining.
+     * @see BotSettings
      */
     @NonNull
-    public CoffeeCoreBuilder setSettings(@NonNull BotSettings settings) {
+    public CoffeeCoreBuilder<?> setSettings(@NonNull BotSettings settings) {
         this.settings = settings;
         return this;
     }
 
     /**
-     * Sets the {@link AbstractServerDataHandler} constructor.
-     * @param serverDataHandler The {@link AbstractServerDataHandler} constructor.
+     * Sets the {@link AbstractServerDataHandler} for {@link CoffeeCore}.
+     * @param serverDataHandler The {@link AbstractServerDataHandler}.
      * @return {@link CoffeeCoreBuilder} for method chaining.
      */
     @Experimental
     @NonNull
-    public CoffeeCoreBuilder setServerDataHandler(@NonNull Constructor<?> serverDataHandler) {
+    public CoffeeCoreBuilder<?> setServerDataHandler(@NonNull AbstractServerDataHandler<?> serverDataHandler) {
         this.serverDataHandler = serverDataHandler;
         return this;
     }
 
     /**
-     * Sets the {@link AbstractServerDataHandler} constructor parameters.
-     * @param serverDataHandlerParameters The {@link AbstractServerDataHandler} constructor parameters.
+     * Sets the {@link CommandsHandler} for {@link CoffeeCore}.
+     * @param commandsHandler The {@link CommandsHandler}.
      * @return {@link CoffeeCoreBuilder} for method chaining.
      */
     @Experimental
     @NonNull
-    public CoffeeCoreBuilder setServerDataHandlerParameters(@NonNull Object... serverDataHandlerParameters) {
-        this.serverDataHandlerParameters = serverDataHandlerParameters;
+    public CoffeeCoreBuilder<?> setCommandsHandler(@NonNull CommandsHandler commandsHandler) {
+        this.commandsHandler = commandsHandler;
         return this;
     }
 
@@ -134,7 +144,7 @@ public class CoffeeCoreBuilder {
      * @see JDABuilder#setChunkingFilter(ChunkingFilter)
      */
     @NonNull
-    public CoffeeCoreBuilder setChunkingFilter(@NonNull ChunkingFilter chunkingFilter) {
+    public CoffeeCoreBuilder<?> setChunkingFilter(@NonNull ChunkingFilter chunkingFilter) {
         this.chunkingFilter = chunkingFilter;
         return this;
     }
@@ -146,7 +156,7 @@ public class CoffeeCoreBuilder {
      * @see JDABuilder#enableCache(Collection)
      */
     @NonNull
-    public CoffeeCoreBuilder setEnabledCacheFlags(@NonNull Collection<CacheFlag> enabledCacheFlags) {
+    public CoffeeCoreBuilder<?> setEnabledCacheFlags(@NonNull Collection<CacheFlag> enabledCacheFlags) {
         this.enabledCacheFlags = enabledCacheFlags;
         return this;
     }
@@ -158,7 +168,7 @@ public class CoffeeCoreBuilder {
      * @see JDABuilder#disableCache(Collection)
      */
     @NonNull
-    public CoffeeCoreBuilder setDisabledCacheFlags(@NonNull Collection<CacheFlag> disabledCacheFlags) {
+    public CoffeeCoreBuilder<?> setDisabledCacheFlags(@NonNull Collection<CacheFlag> disabledCacheFlags) {
         this.disabledCacheFlags = disabledCacheFlags;
         return this;
     }
@@ -170,7 +180,7 @@ public class CoffeeCoreBuilder {
      * @see JDABuilder#enableIntents(Collection)
      */
     @NonNull
-    public CoffeeCoreBuilder setEnabledGatewayIntents(@NonNull Collection<GatewayIntent> enabledGatewayIntents) {
+    public CoffeeCoreBuilder<?> setEnabledGatewayIntents(@NonNull Collection<GatewayIntent> enabledGatewayIntents) {
         this.enabledGatewayIntents = enabledGatewayIntents;
         return this;
     }
@@ -182,7 +192,7 @@ public class CoffeeCoreBuilder {
      * @see JDABuilder#disableIntents(Collection)
      */
     @NonNull
-    public CoffeeCoreBuilder setDisabledGatewayIntents(@NonNull Collection<GatewayIntent> disabledGatewayIntents) {
+    public CoffeeCoreBuilder<?> setDisabledGatewayIntents(@NonNull Collection<GatewayIntent> disabledGatewayIntents) {
         this.disabledGatewayIntents = disabledGatewayIntents;
         return this;
     }
@@ -194,35 +204,66 @@ public class CoffeeCoreBuilder {
      * @see JDABuilder#setMemberCachePolicy(MemberCachePolicy)
      */
     @NonNull
-    public CoffeeCoreBuilder setMemberCachePolicy(@NonNull MemberCachePolicy memberCachePolicy) {
+    public CoffeeCoreBuilder<?> setMemberCachePolicy(@NonNull MemberCachePolicy memberCachePolicy) {
         this.memberCachePolicy = memberCachePolicy;
+        return this;
+    }
+
+    /**
+     * Sets the builder to use the {@link ShardManager} instead of a single {@link JDA} instance.
+     * @param enableSharding Whether to enable sharding.
+     * @return {@link CoffeeCoreBuilder} for method chaining.
+     */
+    @NonNull
+    public CoffeeCoreBuilder<?> enableSharding(boolean enableSharding) {
+        this.enableSharding = enableSharding;
         return this;
     }
 
     /**
      * Creates and configures a {@link JDABuilder} based upon this class's configuration.
      * @param token The Discord bot token.
-     * @return {@link JDABuilder} object
+     * @return {@link T} which can be either {@link JDABuilder} or {@link DefaultShardManagerBuilder}.
      * @see JDABuilder#create(String, Collection)
      * @see JDABuilder#createLight(String)
      * @see JDABuilder#createDefault(String)
      */
     @NonNull
-    private JDABuilder createJDABuilderInstance(@NonNull String token) {
-        JDABuilder jdaBuilder = null;
+    @SuppressWarnings("unchecked")
+    private T createBuilderInstance(@NonNull String token) {
+        if(enableSharding) {
+            DefaultShardManagerBuilder shardManagerBuilder = null;
 
-        switch(jdaBuilderConfiguration) {
-            case NONE -> jdaBuilder = JDABuilder.create(token, enabledGatewayIntents);
-            case LIGHT -> jdaBuilder = JDABuilder.createLight(token);
-            case DEFAULT -> jdaBuilder = JDABuilder.createDefault(token);
+            switch(builderConfiguration) {
+                case NONE -> shardManagerBuilder = DefaultShardManagerBuilder.create(token, enabledGatewayIntents);
+                case LIGHT -> shardManagerBuilder = DefaultShardManagerBuilder.createLight(token);
+                case DEFAULT -> shardManagerBuilder = DefaultShardManagerBuilder.createDefault(token);
+            }
+
+            return (T) shardManagerBuilder
+                    .setChunkingFilter(chunkingFilter)
+                    .enableCache(enabledCacheFlags)
+                    .disableCache(disabledCacheFlags)
+                    .enableIntents(enabledGatewayIntents)
+                    .disableIntents(disabledGatewayIntents)
+                    .setMemberCachePolicy(memberCachePolicy)
+                    .setShardsTotal(-1);
+        } else {
+            JDABuilder jdaBuilder = null;
+
+            switch(builderConfiguration) {
+                case NONE -> jdaBuilder = JDABuilder.create(token, enabledGatewayIntents);
+                case LIGHT -> jdaBuilder = JDABuilder.createLight(token);
+                case DEFAULT -> jdaBuilder = JDABuilder.createDefault(token);
+            }
+
+            return (T) jdaBuilder
+                    .setChunkingFilter(chunkingFilter)
+                    .enableCache(enabledCacheFlags)
+                    .disableCache(disabledCacheFlags)
+                    .enableIntents(enabledGatewayIntents)
+                    .disableIntents(disabledGatewayIntents)
+                    .setMemberCachePolicy(memberCachePolicy);
         }
-
-        return jdaBuilder
-                .setChunkingFilter(chunkingFilter)
-                .enableCache(enabledCacheFlags)
-                .disableCache(disabledCacheFlags)
-                .enableIntents(enabledGatewayIntents)
-                .disableIntents(disabledGatewayIntents)
-                .setMemberCachePolicy(memberCachePolicy);
     }
 }

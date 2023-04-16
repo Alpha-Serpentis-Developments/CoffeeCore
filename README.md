@@ -12,12 +12,9 @@ functionality.
   - Buttons
   - Modal dialogs
 - Modular design if needed
-- Default implementation for handling server data
-- Default implementation for handling slash commands, buttons, and dialogs
+- Default implementation for handling server data, slash commands, buttons, and dialogs
+- Sharding support!
 
-### Currently Missing Features
-
-- Sharding
 ## Getting Started
 
 ### Adding Coffee Core to your project with Maven
@@ -38,15 +35,39 @@ Latest Snapshot:
 <dependency>
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.2.0-alpha-SNAPSHOT</version>
+    <version>0.3.0-alpha-SNAPSHOT</version>
 </dependency>
 ```
 
 ### Creating a bot
 
-**Note**: By default, Coffee Core will enable two privileged intents: `GUILD_MEMBERS` and `MESSAGE_CONTENT`. Additionally,
+**Note**: By default, Coffee Core will enable two privileged intents: `GUILD_MEMBERS`. Additionally,
 when Coffee Core is being created, it uses JDA's default configuration via [`JDABuilder.createDefault`](https://ci.dv8tion.net/job/JDA5/javadoc/net/dv8tion/jda/api/JDABuilder.html#createDefault(java.lang.String)) 
-then applies the provided settings.
+then applies the provided settings. In addition, the Coffee Core builder has its own default settings to configure JDA.
+
+The default settings are as follows:
+
+```java
+public class CoffeeCoreBuilder {
+    // Some properties omitted...
+    protected ChunkingFilter chunkingFilter = ChunkingFilter.ALL;
+    protected Collection<CacheFlag> disabledCacheFlags = new ArrayList<>() {
+            {
+            add(CacheFlag.MEMBER_OVERRIDES);
+            add(CacheFlag.VOICE_STATE);
+            }
+            };
+    protected Collection<GatewayIntent> enabledGatewayIntents = new ArrayList<>() {
+            {
+            add(GatewayIntent.GUILD_MEMBERS);
+            }
+            };
+    protected JDABuilderConfiguration jdaBuilderConfiguration = JDABuilderConfiguration.DEFAULT;
+    protected MemberCachePolicy memberCachePolicy = MemberCachePolicy.NONE;
+    
+    // Methods omitted...
+}
+```
 
 1. Create a new `.env` file in the root of your project and fill it out with the following (adjust to your liking):
 
@@ -61,31 +82,33 @@ REGISTER_DEFAULT_COMMANDS=true
 2. Create a new CoffeeCore instance using CoffeeCoreBuilder and load in your bot settings from the `.env` file:
 
 ```java
-Dotenv dotenv = Dotenv.load(); // Load a local .env file
-CoffeeCoreBuilder builder = new CoffeeCoreBuilder();
-CoffeeCore core;
+public static void main(String[] args) throws Exception {
+        Dotenv dotenv = Dotenv.load(); // Load a local .env file
+        CoffeeCoreBuilder builder = new CoffeeCoreBuilder();
+        CoffeeCore core;
 
-// Load in the settings from the .env file
-builder.setSettings(
-        new BotSettings(
-                Long.parseLong(dotenv.get("BOT_OWNER_ID")),
-                dotenv.get("SERVER_DATA_PATH"),
-                Boolean.parseBoolean(dotenv.get("UPDATE_COMMANDS_AT_LAUNCH")),
-                Boolean.parseBoolean(dotenv.get("REGISTER_DEFAULT_COMMANDS"))
-        )
-);
+        // Load in the settings from the .env file
+        builder
+            .setSettings(
+                new BotSettings(
+                    Long.parseLong(dotenv.get("BOT_OWNER_ID")),
+                    dotenv.get("SERVER_DATA_PATH"),
+                    Boolean.parseBoolean(dotenv.get("UPDATE_COMMANDS_AT_LAUNCH")),
+                    Boolean.parseBoolean(dotenv.get("REGISTER_DEFAULT_COMMANDS"))
+                )
+            )
+        .setServerDataHandler(new MyServerDataHandler()) // (Experimental!) Optionally, assign your own ServerDataHandler
+        .setCommandsHandler(new MyCommandsHandler()); // (Experimental!) Optionally, also assign your own CommandsHandler
 
-// (Experimental) Optionally set a custom server data handler
-// builder.setServerDataHandler(
-//         MyServerDataHandler.class.getDeclaredConstructor(
-//                 Path.class
-//         )
-// );
+        // (Experimental!) Optionally, you can also assign your own CommandsHandler
+        builder.setCommandsHandler(new MyCommandsHandler());
         
-// Start the bot
-core = builder.build(dotenv.get("DISCORD_BOT_TOKEN"));
-
-// Register your commands with core.registerCommands(...)
+        // Start the bot
+        core = builder.build(dotenv.get("DISCORD_BOT_TOKEN"));
+        
+        // Register your commands with core.registerCommands(...)
+        core.registerCommands(new MyEpicCommand(), new QuackCommand());
+}
 ```
 
 ## Support
@@ -96,7 +119,7 @@ core = builder.build(dotenv.get("DISCORD_BOT_TOKEN"));
 
 ## Dependencies
 
-- [JDA - 5.0.0-beta.6](https://github.com/DV8FromTheWorld/JDA)
+- [JDA - 5.0.0-beta.8](https://github.com/DV8FromTheWorld/JDA)
 - [Gson - 2.10.1](https://github.com/google/gson)
 - [RxJava - 3.1.6](https://github.com/ReactiveX/RxJava)
 - [Dotenv - 2.3.2](https://github.com/cdimascio/dotenv-java)
