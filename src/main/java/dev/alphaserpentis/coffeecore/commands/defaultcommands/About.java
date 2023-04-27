@@ -11,13 +11,10 @@ public class About extends BotCommand<MessageEmbed> {
 
     public About() {
         super(
-                new BotCommandOptions(
-                        "about",
-                        "Shows information about the bot",
-                        true,
-                        false,
-                        TypeOfEphemeral.DEFAULT
-                )
+                new BotCommandOptions()
+                        .setName("about")
+                        .setDescription("Shows information about the bot")
+                        .setOnlyEmbed(true)
         );
     }
 

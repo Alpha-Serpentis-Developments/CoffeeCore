@@ -29,7 +29,7 @@ public abstract class ButtonCommand<T> extends BotCommand<T> {
      * This method is called when a button is pressed.
      * @param event The event that triggered the button press.
      */
-    abstract public void runButtonInteraction(@NonNull ButtonInteractionEvent event);
+    abstract public void runButtonInteraction(@NonNull final ButtonInteractionEvent event);
 
     /**
      * This method is called when the command is executed which may add buttons to a message.
@@ -37,7 +37,7 @@ public abstract class ButtonCommand<T> extends BotCommand<T> {
      * @return A collection of buttons to add to the message. The collection may be empty.
      */
     @NonNull
-    abstract public Collection<ItemComponent> addButtons(@NonNull GenericCommandInteractionEvent event);
+    abstract public Collection<ItemComponent> addButtonsToMessage(@NonNull final GenericCommandInteractionEvent event);
 
     /**
      * Get a {@link Button} by its key.
@@ -45,7 +45,7 @@ public abstract class ButtonCommand<T> extends BotCommand<T> {
      * @return The button, or null if it does not exist.
      */
     @Nullable
-    public Button getButton(String key) {
+    public Button getButton(@NonNull String key) {
         return buttonHashMap.get(key);
     }
 

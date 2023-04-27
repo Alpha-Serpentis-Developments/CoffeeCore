@@ -15,6 +15,7 @@ public class ContainerHelper {
         this.container = container;
     }
 
+    @NonNull
     public List<Guild> getGuilds() {
         if(container instanceof JDA) {
             return ((JDA) container).getGuilds();

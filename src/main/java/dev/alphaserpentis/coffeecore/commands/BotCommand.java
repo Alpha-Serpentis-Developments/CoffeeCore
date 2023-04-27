@@ -28,26 +28,19 @@ public abstract class BotCommand<T> {
     }
 
     public static class BotCommandOptions {
-        protected final String name;
-        protected final String description;
-        protected final long ratelimitLength;
-        protected final long messageExpirationLength;
-        protected final boolean onlyEmbed;
-        protected final boolean onlyEphemeral;
-        protected final boolean isActive;
-        protected final boolean deferReplies;
-        protected final boolean useRatelimits;
-        protected final boolean messagesExpire;
-        protected final TypeOfEphemeral typeOfEphemeral;
-        protected final long defaultRatelimitLength = 0;
-        protected final long defaultMessageExpirationLength = 0;
-        protected final boolean defaultOnlyEmbed = false;
-        protected final boolean defaultOnlyEphemeral = false;
-        protected final boolean defaultIsActive = true;
-        protected final boolean defaultDeferReplies = false;
-        protected final boolean defaultUseRatelimits = false;
-        protected final boolean defaultMessagesExpire = false;
-        protected final TypeOfEphemeral defaultTypeOfEphemeral = TypeOfEphemeral.DEFAULT;
+        protected String name;
+        protected String description;
+        protected long ratelimitLength = 0;
+        protected long messageExpirationLength = 0;
+        protected boolean onlyEmbed = false;
+        protected boolean onlyEphemeral = false;
+        protected boolean isActive = true;
+        protected boolean deferReplies = false;
+        protected boolean useRatelimits = false;
+        protected boolean messagesExpire = false;
+        protected TypeOfEphemeral typeOfEphemeral = TypeOfEphemeral.DEFAULT;
+
+        public BotCommandOptions() {}
 
         public BotCommandOptions(
                 @NonNull String name,
@@ -55,15 +48,6 @@ public abstract class BotCommand<T> {
         ) {
             this.name = name;
             this.description = description;
-            ratelimitLength = defaultRatelimitLength;
-            messageExpirationLength = defaultMessageExpirationLength;
-            onlyEmbed = defaultOnlyEmbed;
-            onlyEphemeral = defaultOnlyEphemeral;
-            isActive = defaultIsActive;
-            deferReplies = defaultDeferReplies;
-            useRatelimits = defaultUseRatelimits;
-            messagesExpire = defaultMessagesExpire;
-            typeOfEphemeral = defaultTypeOfEphemeral;
         }
 
         public BotCommandOptions(
@@ -78,12 +62,6 @@ public abstract class BotCommand<T> {
             this.onlyEmbed = onlyEmbed;
             this.onlyEphemeral = onlyEphemeral;
             this.typeOfEphemeral = typeOfEphemeral;
-            ratelimitLength = defaultRatelimitLength;
-            messageExpirationLength = defaultMessageExpirationLength;
-            isActive = defaultIsActive;
-            deferReplies = defaultDeferReplies;
-            useRatelimits = defaultUseRatelimits;
-            messagesExpire = defaultMessagesExpire;
         }
 
         public BotCommandOptions(
@@ -100,11 +78,6 @@ public abstract class BotCommand<T> {
             this.onlyEphemeral = onlyEphemeral;
             this.typeOfEphemeral = typeOfEphemeral;
             this.deferReplies = deferReplies;
-            ratelimitLength = defaultRatelimitLength;
-            messageExpirationLength = defaultMessageExpirationLength;
-            isActive = defaultIsActive;
-            useRatelimits = defaultUseRatelimits;
-            messagesExpire = defaultMessagesExpire;
         }
 
         public BotCommandOptions(
@@ -132,6 +105,76 @@ public abstract class BotCommand<T> {
             this.useRatelimits = useRatelimits;
             this.messagesExpire = messagesExpire;
         }
+
+        @NonNull
+        public BotCommandOptions setName(@NonNull String name) {
+            this.name = name;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setDescription(@NonNull String description) {
+            this.description = description;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setRatelimitLength(long ratelimitLength) {
+            this.ratelimitLength = ratelimitLength;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setMessageExpirationLength(long messageExpirationLength) {
+            this.messageExpirationLength = messageExpirationLength;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setOnlyEmbed(boolean onlyEmbed) {
+            this.onlyEmbed = onlyEmbed;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setOnlyEphemeral(boolean onlyEphemeral) {
+            this.onlyEphemeral = onlyEphemeral;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setActive(boolean isActive) {
+            this.isActive = isActive;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setDeferReplies(boolean deferReplies) {
+            this.deferReplies = deferReplies;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setUseRatelimits(boolean useRatelimits) {
+            this.useRatelimits = useRatelimits;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setMessagesExpire(boolean messagesExpire) {
+            this.messagesExpire = messagesExpire;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setTypeOfEphemeral(@NonNull TypeOfEphemeral typeOfEphemeral) {
+            this.typeOfEphemeral = typeOfEphemeral;
+            return this;
+        }
+
+        public boolean validate() {
+            return name != null && description != null;
+        }
     }
 
     protected final HashMap<Long, Long> ratelimitMap = new HashMap<>();
@@ -154,6 +197,9 @@ public abstract class BotCommand<T> {
     }
 
     public BotCommand(@NonNull BotCommandOptions options) {
+        if(!options.validate())
+            throw new IllegalArgumentException("Name and description weren't set!");
+
         name = options.name;
         description = options.description;
         ratelimitLength = options.ratelimitLength;
@@ -174,7 +220,7 @@ public abstract class BotCommand<T> {
      * @return a nonnull CommandResponse containing either a MessageEmbed or Message
      */
     @NonNull
-    abstract public CommandResponse<T> runCommand(long userId, @NonNull SlashCommandInteractionEvent event);
+    abstract public CommandResponse<T> runCommand(final long userId, @NonNull final SlashCommandInteractionEvent event);
 
     /**
      * Method used to update the command.
@@ -283,7 +329,7 @@ public abstract class BotCommand<T> {
      * @return {@link Message} that is the reply of the command
      */
     @NonNull
-    public static Message handleReply(@NonNull SlashCommandInteractionEvent event, @NonNull BotCommand<?> cmd) {
+    public static Message handleReply(@NonNull final SlashCommandInteractionEvent event, @NonNull final BotCommand<?> cmd) {
         boolean sendAsEphemeral = cmd.isOnlyEphemeral();
         CommandResponse<?> responseFromCommand;
         AbstractServerDataHandler<?> sdh = cmd.core.getServerDataHandler();
@@ -319,7 +365,7 @@ public abstract class BotCommand<T> {
                     response = responseFromCommand.messageResponse();
 
                     if (cmd instanceof ButtonCommand) {
-                        Collection<ItemComponent> buttons = ((ButtonCommand<?>) cmd).addButtons(event);
+                        Collection<ItemComponent> buttons = ((ButtonCommand<?>) cmd).addButtonsToMessage(event);
 
                         if (cmd.isUsingRatelimits() && !cmd.isUserRatelimited(event.getUser().getIdLong())) {
                             cmd.ratelimitMap.put(event.getUser().getIdLong(), Instant.now().getEpochSecond() + cmd.getRatelimitLength());
@@ -382,7 +428,7 @@ public abstract class BotCommand<T> {
             }
 
             if (cmd instanceof ButtonCommand) {
-                Collection<ItemComponent> buttons = ((ButtonCommand<?>) cmd).addButtons(event);
+                Collection<ItemComponent> buttons = ((ButtonCommand<?>) cmd).addButtonsToMessage(event);
 
                 if(!buttons.isEmpty())
                     reply = reply.addActionRow(buttons);

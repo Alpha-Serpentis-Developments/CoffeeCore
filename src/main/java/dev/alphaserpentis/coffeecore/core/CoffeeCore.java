@@ -169,7 +169,9 @@ public class CoffeeCore {
     /**
      * Get the active container. This method will return either {@link JDA} or {@link ShardManager}, whichever is active.
      * @return The active container.
+     * @throws IllegalStateException If the container has not been determined yet. This may be caused by calling it too early.
      */
+    @NonNull
     public IGuildChannelContainer getActiveContainer() {
         if(jda != null) {
             return jda;

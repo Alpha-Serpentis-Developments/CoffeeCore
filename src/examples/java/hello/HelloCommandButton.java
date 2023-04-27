@@ -60,7 +60,7 @@ public class HelloCommandButton extends ButtonCommand<MessageEmbed> {
 
     @Override
     @NonNull
-    public Collection<ItemComponent> addButtons(@NonNull GenericCommandInteractionEvent event) {
+    public Collection<ItemComponent> addButtonsToMessage(@NonNull GenericCommandInteractionEvent event) {
         return Arrays.asList(new ItemComponent[] {
                 getButton("hello"),
                 getButton("goodbye"),
