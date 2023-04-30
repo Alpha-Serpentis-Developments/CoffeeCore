@@ -20,10 +20,23 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Abstract class for bot commands
+ * @param <T> The type to return for responses. This should only be {@link MessageEmbed} or {@link String}.
+ */
 public abstract class BotCommand<T> {
 
+    /**
+     * Types of ephemeral available for commands.
+     */
     public enum TypeOfEphemeral {
+        /**
+         * The default ephemeral type. This will be set to the server's default ephemeral type.
+         */
         DEFAULT,
+        /**
+         * Ephemeral type that enables the usage of {@link #beforeRunCommand(long, SlashCommandInteractionEvent)}
+         */
         DYNAMIC
     }
 
@@ -216,8 +229,8 @@ public abstract class BotCommand<T> {
     /**
      * Method used to execute the command. Should contain the main logic of the command.
      * @param userId is the ID of the user who called the command
-     * @param event is the SlashCommandInteractionEvent that contains the interaction
-     * @return a nonnull CommandResponse containing either a MessageEmbed or Message
+     * @param event is the {@link SlashCommandInteractionEvent} that contains the interaction
+     * @return a nonnull {@link CommandResponse} containing either a {@link MessageEmbed} or {@link Message}
      */
     @NonNull
     abstract public CommandResponse<T> runCommand(final long userId, @NonNull final SlashCommandInteractionEvent event);
@@ -235,14 +248,14 @@ public abstract class BotCommand<T> {
     }
 
     /**
-     * A method that REQUIRES to be overridden if to be used for any {@link BotCommand} with an ephemeralType of {@link TypeOfEphemeral#DYNAMIC}
+     * A method that <b>REQUIRES</b> to be overridden if to be used for any {@link BotCommand} with an ephemeralType of {@link TypeOfEphemeral#DYNAMIC}
      * <p>
-     * This method is currently only called if the command is DEFERRED.
+     * This method is currently only called if the command is <b>DEFERRED</b>.
      * <p>
-     * Operations inside must NOT exceed the time it requires to ACKNOWLEDGE the API!
+     * Operations inside must NOT exceed the time it requires to <b>ACKNOWLEDGE</b> the API!
      * @param userId is a long ID provided by Discord for the user calling the command
-     * @param event is a SlashCommandInteractionEvent that contains the interaction
-     * @return a nonnull {@link CommandResponse} containing either a MessageEmbed or String
+     * @param event is a {@link SlashCommandInteractionEvent} that contains the interaction
+     * @return a nonnull {@link CommandResponse} containing either a {@link MessageEmbed} or String
      */
     @NonNull
     public CommandResponse<T> beforeRunCommand(long userId, @NonNull SlashCommandInteractionEvent event) {
@@ -254,7 +267,7 @@ public abstract class BotCommand<T> {
      * <p>
      * Commands not using embeds must override this method to return a {@link CommandResponse} containing String.
      * @param userId is a long ID provided by Discord for the user calling the command
-     * @return a nullable CommandResponse that by default returns a MessageEmbed
+     * @return a nullable {@link CommandResponse} that by default returns a {@link MessageEmbed}
      */
     @Nullable
     public CommandResponse<?> checkAndHandleRateLimitedUser(long userId) {
@@ -447,12 +460,7 @@ public abstract class BotCommand<T> {
      */
     protected static void letMessageExpire(@NonNull BotCommand<?> command, @NonNull Message message) {
         if(command.doMessagesExpire()) {
-            message.delete().queueAfter(command.getMessageExpirationLength(), TimeUnit.SECONDS,
-                    (ignored) -> {},
-                    (fail) -> {
-                        throw new RuntimeException(fail);
-                    }
-            );
+            message.delete().queueAfter(command.getMessageExpirationLength(), TimeUnit.SECONDS);
         }
     }
 
