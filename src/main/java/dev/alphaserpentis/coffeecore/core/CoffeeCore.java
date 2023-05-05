@@ -223,6 +223,10 @@ public class CoffeeCore {
             commands.put("shutdown", new Shutdown());
         }
 
+        for(BotCommand<?> cmd: commands.values()) {
+            cmd.setCore(this);
+        }
+
         commandsHandler.registerCommands(commands, settings.updateCommandsAtLaunch);
     }
 

@@ -72,6 +72,7 @@ public class CoffeeCoreBuilder<T> {
     protected BuilderConfiguration builderConfiguration = BuilderConfiguration.DEFAULT;
     protected MemberCachePolicy memberCachePolicy = MemberCachePolicy.NONE;
     protected boolean enableSharding = false;
+    protected int shardsTotal = -1;
 
     /**
      * Builds a {@link CoffeeCore} instance with the configured settings. Initialization will begin inside Coffee Core's
@@ -221,6 +222,18 @@ public class CoffeeCoreBuilder<T> {
     }
 
     /**
+     * Sets the amount of shards to build. You must enable sharding first.
+     * @param shardsTotal The amount of shards to build.
+     * @return {@link CoffeeCoreBuilder} for method chaining.
+     * @see DefaultShardManagerBuilder#setShardsTotal(int)
+     */
+    @NonNull
+    public CoffeeCoreBuilder<?> setShardsTotal(int shardsTotal) {
+        this.shardsTotal = shardsTotal;
+        return this;
+    }
+
+    /**
      * Creates and configures a {@link JDABuilder} based upon this class's configuration.
      * @param token The Discord bot token.
      * @return {@link T} which can be either {@link JDABuilder} or {@link DefaultShardManagerBuilder}.
@@ -247,7 +260,7 @@ public class CoffeeCoreBuilder<T> {
                     .enableIntents(enabledGatewayIntents)
                     .disableIntents(disabledGatewayIntents)
                     .setMemberCachePolicy(memberCachePolicy)
-                    .setShardsTotal(-1);
+                    .setShardsTotal(shardsTotal);
         } else {
             JDABuilder jdaBuilder = null;
 

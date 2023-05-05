@@ -62,7 +62,6 @@ public class CommandsHandler extends ListenerAdapter {
                 if(mappingOfCommands.containsKey(cmd.getName())) {
                     BotCommand<?> botCmd = mappingOfCommands.get(cmd.getName());
                     botCmd.setCommandId(cmd.getIdLong());
-                    botCmd.setCore(core);
                     if(updateCommands)
                         botCmd.updateCommand(shard);
 
