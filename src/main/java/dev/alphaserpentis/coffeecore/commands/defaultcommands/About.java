@@ -25,7 +25,7 @@ public class About extends BotCommand<MessageEmbed> {
         boolean isSharded = core.isSharded();
 
         eb.setTitle("About " + event.getJDA().getSelfUser().getName());
-        eb.setDescription("This bot was built using [Coffee Core](https://github.com/AlphaSerpentis/CoffeeCore)!");
+        eb.setDescription(core.getAboutDescription());
         eb.addField(
                 "Sharding",
                 "Active: " + (isSharded ? "Yes" : "No") + "\nTotal Shards: " +

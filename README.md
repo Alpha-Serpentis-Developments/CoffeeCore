@@ -9,7 +9,7 @@ functionality.
 
 ## Support
 
-- **Discord Server** (TBD)
+- **Discord Server**: https://discord.alphaserpentis.dev
 - **Twitter**: [https://twitter.com/AlphaSerpentis_](https://twitter.com/AlphaSerpentis_)
 - **GitHub Issues**: https://github.com/AlphaSerpentis/CoffeeCore/issues
 
@@ -23,7 +23,7 @@ Latest Release:
 <dependency>
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.2.0-alpha.1</version>
+    <version>0.3.0-alpha</version>
 </dependency>
 ```
 

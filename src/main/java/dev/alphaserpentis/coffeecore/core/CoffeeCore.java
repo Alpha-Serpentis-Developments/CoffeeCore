@@ -159,6 +159,15 @@ public class CoffeeCore {
     }
 
     /**
+     * Get the description of the bot from {@link BotSettings}
+     * @return The description of the bot
+     */
+    @NonNull
+    public String getAboutDescription() {
+        return settings.aboutDescription;
+    }
+
+    /**
      * Get the bot owner's Discord ID
      * @return The bot owner's Discord ID
      */
@@ -199,7 +208,10 @@ public class CoffeeCore {
         IGuildChannelContainer container = getActiveContainer();
         if(container instanceof JDA) {
             ((JDA) container).shutdown();
-            ((JDA) container).awaitShutdown();
+            if(((JDA) container).awaitShutdown(duration)) {
+                ((JDA) container).shutdownNow();
+                ((JDA) container).awaitShutdown();
+            }
         } else if(container instanceof ShardManager) {
             ((ShardManager) getActiveContainer()).shutdown();
         }

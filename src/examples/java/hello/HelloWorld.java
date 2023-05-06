@@ -18,7 +18,8 @@ public class HelloWorld {
                         Long.parseLong(dotenv.get("BOT_OWNER_ID")),
                         dotenv.get("SERVER_DATA_PATH"),
                         Boolean.parseBoolean(dotenv.get("UPDATE_COMMANDS_AT_LAUNCH")),
-                        Boolean.parseBoolean(dotenv.get("REGISTER_DEFAULT_COMMANDS"))
+                        Boolean.parseBoolean(dotenv.get("REGISTER_DEFAULT_COMMANDS")),
+                        "This is the Hello World example!"
                 )
         );
 
