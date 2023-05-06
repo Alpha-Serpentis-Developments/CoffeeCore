@@ -13,13 +13,10 @@ public class Shutdown extends BotCommand<MessageEmbed> {
 
     public Shutdown() {
         super(
-                new BotCommandOptions(
-                        "shutdown",
-                        "Shuts down the bot. This may or may not respond.",
-                        true,
-                        false,
-                        TypeOfEphemeral.DEFAULT
-                )
+                new BotCommandOptions()
+                        .setName("shutdown")
+                        .setDescription("Shuts down the bot. This may or may not respond.")
+                        .setOnlyEmbed(true)
         );
     }
 

@@ -20,34 +20,40 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Abstract class for bot commands
+ * @param <T> The type to return for responses. This should only be {@link MessageEmbed} or {@link String}.
+ */
 public abstract class BotCommand<T> {
 
+    /**
+     * Types of ephemeral available for commands.
+     */
     public enum TypeOfEphemeral {
+        /**
+         * The default ephemeral type. This will be set to the server's default ephemeral type.
+         */
         DEFAULT,
+        /**
+         * Ephemeral type that enables the usage of {@link #beforeRunCommand(long, SlashCommandInteractionEvent)}
+         */
         DYNAMIC
     }
 
     public static class BotCommandOptions {
-        protected final String name;
-        protected final String description;
-        protected final long ratelimitLength;
-        protected final long messageExpirationLength;
-        protected final boolean onlyEmbed;
-        protected final boolean onlyEphemeral;
-        protected final boolean isActive;
-        protected final boolean deferReplies;
-        protected final boolean useRatelimits;
-        protected final boolean messagesExpire;
-        protected final TypeOfEphemeral typeOfEphemeral;
-        protected final long defaultRatelimitLength = 0;
-        protected final long defaultMessageExpirationLength = 0;
-        protected final boolean defaultOnlyEmbed = false;
-        protected final boolean defaultOnlyEphemeral = false;
-        protected final boolean defaultIsActive = true;
-        protected final boolean defaultDeferReplies = false;
-        protected final boolean defaultUseRatelimits = false;
-        protected final boolean defaultMessagesExpire = false;
-        protected final TypeOfEphemeral defaultTypeOfEphemeral = TypeOfEphemeral.DEFAULT;
+        protected String name;
+        protected String description;
+        protected long ratelimitLength = 0;
+        protected long messageExpirationLength = 0;
+        protected boolean onlyEmbed = false;
+        protected boolean onlyEphemeral = false;
+        protected boolean isActive = true;
+        protected boolean deferReplies = false;
+        protected boolean useRatelimits = false;
+        protected boolean messagesExpire = false;
+        protected TypeOfEphemeral typeOfEphemeral = TypeOfEphemeral.DEFAULT;
+
+        public BotCommandOptions() {}
 
         public BotCommandOptions(
                 @NonNull String name,
@@ -55,15 +61,6 @@ public abstract class BotCommand<T> {
         ) {
             this.name = name;
             this.description = description;
-            ratelimitLength = defaultRatelimitLength;
-            messageExpirationLength = defaultMessageExpirationLength;
-            onlyEmbed = defaultOnlyEmbed;
-            onlyEphemeral = defaultOnlyEphemeral;
-            isActive = defaultIsActive;
-            deferReplies = defaultDeferReplies;
-            useRatelimits = defaultUseRatelimits;
-            messagesExpire = defaultMessagesExpire;
-            typeOfEphemeral = defaultTypeOfEphemeral;
         }
 
         public BotCommandOptions(
@@ -78,12 +75,6 @@ public abstract class BotCommand<T> {
             this.onlyEmbed = onlyEmbed;
             this.onlyEphemeral = onlyEphemeral;
             this.typeOfEphemeral = typeOfEphemeral;
-            ratelimitLength = defaultRatelimitLength;
-            messageExpirationLength = defaultMessageExpirationLength;
-            isActive = defaultIsActive;
-            deferReplies = defaultDeferReplies;
-            useRatelimits = defaultUseRatelimits;
-            messagesExpire = defaultMessagesExpire;
         }
 
         public BotCommandOptions(
@@ -100,11 +91,6 @@ public abstract class BotCommand<T> {
             this.onlyEphemeral = onlyEphemeral;
             this.typeOfEphemeral = typeOfEphemeral;
             this.deferReplies = deferReplies;
-            ratelimitLength = defaultRatelimitLength;
-            messageExpirationLength = defaultMessageExpirationLength;
-            isActive = defaultIsActive;
-            useRatelimits = defaultUseRatelimits;
-            messagesExpire = defaultMessagesExpire;
         }
 
         public BotCommandOptions(
@@ -132,6 +118,76 @@ public abstract class BotCommand<T> {
             this.useRatelimits = useRatelimits;
             this.messagesExpire = messagesExpire;
         }
+
+        @NonNull
+        public BotCommandOptions setName(@NonNull String name) {
+            this.name = name;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setDescription(@NonNull String description) {
+            this.description = description;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setRatelimitLength(long ratelimitLength) {
+            this.ratelimitLength = ratelimitLength;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setMessageExpirationLength(long messageExpirationLength) {
+            this.messageExpirationLength = messageExpirationLength;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setOnlyEmbed(boolean onlyEmbed) {
+            this.onlyEmbed = onlyEmbed;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setOnlyEphemeral(boolean onlyEphemeral) {
+            this.onlyEphemeral = onlyEphemeral;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setActive(boolean isActive) {
+            this.isActive = isActive;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setDeferReplies(boolean deferReplies) {
+            this.deferReplies = deferReplies;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setUseRatelimits(boolean useRatelimits) {
+            this.useRatelimits = useRatelimits;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setMessagesExpire(boolean messagesExpire) {
+            this.messagesExpire = messagesExpire;
+            return this;
+        }
+
+        @NonNull
+        public BotCommandOptions setTypeOfEphemeral(@NonNull TypeOfEphemeral typeOfEphemeral) {
+            this.typeOfEphemeral = typeOfEphemeral;
+            return this;
+        }
+
+        public boolean validate() {
+            return name != null && description != null;
+        }
     }
 
     protected final HashMap<Long, Long> ratelimitMap = new HashMap<>();
@@ -154,6 +210,9 @@ public abstract class BotCommand<T> {
     }
 
     public BotCommand(@NonNull BotCommandOptions options) {
+        if(!options.validate())
+            throw new IllegalArgumentException("Name and description weren't set!");
+
         name = options.name;
         description = options.description;
         ratelimitLength = options.ratelimitLength;
@@ -170,17 +229,17 @@ public abstract class BotCommand<T> {
     /**
      * Method used to execute the command. Should contain the main logic of the command.
      * @param userId is the ID of the user who called the command
-     * @param event is the SlashCommandInteractionEvent that contains the interaction
-     * @return a nonnull CommandResponse containing either a MessageEmbed or Message
+     * @param event is the {@link SlashCommandInteractionEvent} that contains the interaction
+     * @return a nonnull {@link CommandResponse} containing either a {@link MessageEmbed} or {@link Message}
      */
     @NonNull
-    abstract public CommandResponse<T> runCommand(long userId, @NonNull SlashCommandInteractionEvent event);
+    abstract public CommandResponse<T> runCommand(final long userId, @NonNull final SlashCommandInteractionEvent event);
 
     /**
      * Method used to update the command.
      * This method is called when the bot is started and when the command is updated.
      * <p>
-     * This method should be overridden if the command uses subcommands.
+     * <b>This method should be overridden if the command uses subcommands.</b>
      * @param jda {@link JDA} instance
      */
     public void updateCommand(@NonNull JDA jda) {
@@ -189,14 +248,14 @@ public abstract class BotCommand<T> {
     }
 
     /**
-     * A method that REQUIRES to be overridden if to be used for any {@link BotCommand} with an ephemeralType of {@link TypeOfEphemeral#DYNAMIC}
+     * A method that <b>REQUIRES</b> to be overridden if to be used for any {@link BotCommand} with an ephemeralType of {@link TypeOfEphemeral#DYNAMIC}
      * <p>
-     * This method is currently only called if the command is DEFERRED.
+     * This method is currently only called if the command is <b>DEFERRED</b>.
      * <p>
-     * Operations inside must NOT exceed the time it requires to ACKNOWLEDGE the API!
+     * Operations inside must NOT exceed the time it requires to <b>ACKNOWLEDGE</b> the API!
      * @param userId is a long ID provided by Discord for the user calling the command
-     * @param event is a SlashCommandInteractionEvent that contains the interaction
-     * @return a nonnull {@link CommandResponse} containing either a MessageEmbed or String
+     * @param event is a {@link SlashCommandInteractionEvent} that contains the interaction
+     * @return a nonnull {@link CommandResponse} containing either a {@link MessageEmbed} or String
      */
     @NonNull
     public CommandResponse<T> beforeRunCommand(long userId, @NonNull SlashCommandInteractionEvent event) {
@@ -208,7 +267,7 @@ public abstract class BotCommand<T> {
      * <p>
      * Commands not using embeds must override this method to return a {@link CommandResponse} containing String.
      * @param userId is a long ID provided by Discord for the user calling the command
-     * @return a nullable CommandResponse that by default returns a MessageEmbed
+     * @return a nullable {@link CommandResponse} that by default returns a {@link MessageEmbed}
      */
     @Nullable
     public CommandResponse<?> checkAndHandleRateLimitedUser(long userId) {
@@ -283,7 +342,7 @@ public abstract class BotCommand<T> {
      * @return {@link Message} that is the reply of the command
      */
     @NonNull
-    public static Message handleReply(@NonNull SlashCommandInteractionEvent event, @NonNull BotCommand<?> cmd) {
+    public static Message handleReply(@NonNull final SlashCommandInteractionEvent event, @NonNull final BotCommand<?> cmd) {
         boolean sendAsEphemeral = cmd.isOnlyEphemeral();
         CommandResponse<?> responseFromCommand;
         AbstractServerDataHandler<?> sdh = cmd.core.getServerDataHandler();
@@ -319,7 +378,7 @@ public abstract class BotCommand<T> {
                     response = responseFromCommand.messageResponse();
 
                     if (cmd instanceof ButtonCommand) {
-                        Collection<ItemComponent> buttons = ((ButtonCommand<?>) cmd).addButtons(event);
+                        Collection<ItemComponent> buttons = ((ButtonCommand<?>) cmd).addButtonsToMessage(event);
 
                         if (cmd.isUsingRatelimits() && !cmd.isUserRatelimited(event.getUser().getIdLong())) {
                             cmd.ratelimitMap.put(event.getUser().getIdLong(), Instant.now().getEpochSecond() + cmd.getRatelimitLength());
@@ -382,7 +441,7 @@ public abstract class BotCommand<T> {
             }
 
             if (cmd instanceof ButtonCommand) {
-                Collection<ItemComponent> buttons = ((ButtonCommand<?>) cmd).addButtons(event);
+                Collection<ItemComponent> buttons = ((ButtonCommand<?>) cmd).addButtonsToMessage(event);
 
                 if(!buttons.isEmpty())
                     reply = reply.addActionRow(buttons);
@@ -401,12 +460,7 @@ public abstract class BotCommand<T> {
      */
     protected static void letMessageExpire(@NonNull BotCommand<?> command, @NonNull Message message) {
         if(command.doMessagesExpire()) {
-            message.delete().queueAfter(command.getMessageExpirationLength(), TimeUnit.SECONDS,
-                    (ignored) -> {},
-                    (fail) -> {
-                        throw new RuntimeException(fail);
-                    }
-            );
+            message.delete().queueAfter(command.getMessageExpirationLength(), TimeUnit.SECONDS);
         }
     }
 

@@ -8,5 +8,5 @@ public interface ModalCommand {
      * This method is called when a modal is pressed.
      * @param event The event that triggered the modal press.
      */
-    void runModalInteraction(@NonNull ModalInteractionEvent event);
+    void runModalInteraction(@NonNull final ModalInteractionEvent event);
 }

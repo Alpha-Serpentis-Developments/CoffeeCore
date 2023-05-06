@@ -10,23 +10,20 @@ import dev.alphaserpentis.coffeecore.data.bot.BotSettings;
 import dev.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;
 import dev.alphaserpentis.coffeecore.handler.api.discord.servers.AbstractServerDataHandler;
 import dev.alphaserpentis.coffeecore.handler.api.discord.servers.ServerDataHandler;
+import dev.alphaserpentis.coffeecore.helper.ContainerHelper;
 import dev.alphaserpentis.coffeecore.serialization.ServerDataDeserializer;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.requests.GatewayIntent;
-import net.dv8tion.jda.api.utils.ChunkingFilter;
-import net.dv8tion.jda.api.utils.cache.CacheFlag;
+import net.dv8tion.jda.api.entities.channel.attribute.IGuildChannelContainer;
+import net.dv8tion.jda.api.sharding.ShardManager;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.Objects;
+import java.util.concurrent.Executors;
 
 /**
  * The core of Coffee Core. This class is responsible for initializing the bot and handling commands.
@@ -34,9 +31,13 @@ import java.util.HashMap;
 public class CoffeeCore {
 
     /**
-     * The {@link JDA} instance.
+     * The {@link JDA} instance. Mutually exclusive with {@link #shardManager}.
      */
-    protected final JDA jda;
+    protected JDA jda = null;
+    /**
+     * The {@link ShardManager} instance. Mutually exclusive with {@link #jda}.
+     */
+    protected ShardManager shardManager = null;
     /**
      * The {@link ServerDataHandler} instance.
      */
@@ -51,71 +52,46 @@ public class CoffeeCore {
     protected final BotSettings settings;
 
     public CoffeeCore(
-            @NonNull String token,
             @NonNull BotSettings settings,
-            @Nullable Constructor<?> serverDataHandlerConstructor
+            @NonNull IGuildChannelContainer container
     ) {
         this.settings = settings;
 
-        jda = JDABuilder.createDefault(token)
-                .setChunkingFilter(ChunkingFilter.ALL)
-                .disableCache(CacheFlag.EMOJI, CacheFlag.VOICE_STATE)
-                .disableIntents(GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_MESSAGE_TYPING, GatewayIntent.GUILD_MESSAGE_REACTIONS)
-                .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
-                .build();
-
         try {
-            jda.awaitReady();
+            determineAndSetContainer(container);
 
-            if(serverDataHandlerConstructor == null) {
-                Path path = Path.of(settings.serverDataPath);
-                this.serverDataHandler = new ServerDataHandler<>(
-                        path,
-                        new TypeToken<>() {
-                        },
-                        new ServerDataDeserializer<>()
-                );
-            } else {
-                this.serverDataHandler = (ServerDataHandler<?>) serverDataHandlerConstructor.newInstance(
-                        Path.of(settings.serverDataPath)
-                );
-            }
+            ContainerHelper containerHelper = new ContainerHelper(container);
+            Path path = Path.of(settings.serverDataPath);
+            serverDataHandler = new ServerDataHandler<>(
+                    path,
+                    new TypeToken<>() {},
+                    new ServerDataDeserializer<>()
+            );
 
-            serverDataHandler.init(getJda());
-        } catch (IllegalStateException | InterruptedException | IOException | InvocationTargetException |
-                 InstantiationException | IllegalAccessException | InvalidPathException e) {
+            serverDataHandler.init(containerHelper);
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             System.exit(1);
         }
-        commandsHandler = new CommandsHandler(this);
 
-        jda.addEventListener(commandsHandler);
-        jda.addEventListener(this.serverDataHandler);
+        commandsHandler = new CommandsHandler(this, Executors.newCachedThreadPool());
+
+        addEventListenersToContainer(this.commandsHandler, this.serverDataHandler);
     }
 
     public CoffeeCore(
-            @NonNull String token,
             @NonNull BotSettings settings,
-            @Nullable Constructor<?> serverDataHandlerConstructor,
-            @NonNull ChunkingFilter chunkingFilter,
-            @NonNull Collection<CacheFlag> disabledCache,
-            @NonNull Collection<CacheFlag> enabledCache,
-            @NonNull Collection<GatewayIntent> enabledIntents,
-            @NonNull Collection<GatewayIntent> disabledIntents
+            @NonNull IGuildChannelContainer container,
+            @Nullable AbstractServerDataHandler<?> serverDataHandler,
+            @Nullable CommandsHandler commandsHandler
     ) {
         this.settings = settings;
-        jda = JDABuilder.createDefault(token)
-                .setChunkingFilter(chunkingFilter)
-                .disableCache(disabledCache)
-                .enableCache(enabledCache)
-                .disableIntents(disabledIntents)
-                .enableIntents(enabledIntents)
-                .build();
 
         try {
-            jda.awaitReady();
+            determineAndSetContainer(container);
+            ContainerHelper containerHelper = new ContainerHelper(container);
 
-            if(serverDataHandlerConstructor == null) {
+            if(serverDataHandler == null) {
                 Path path = Path.of(settings.serverDataPath);
                 this.serverDataHandler = new ServerDataHandler<>(
                         path,
@@ -124,31 +100,35 @@ public class CoffeeCore {
                         new ServerDataDeserializer<>()
                 );
             } else {
-                this.serverDataHandler = (ServerDataHandler<?>) serverDataHandlerConstructor.newInstance(
-                        Path.of(settings.serverDataPath)
-                );
+                this.serverDataHandler = serverDataHandler;
             }
 
-            serverDataHandler.init(getJda());
-        } catch (IllegalStateException | InterruptedException | IOException | InvocationTargetException |
-                 InstantiationException | IllegalAccessException | InvalidPathException e) {
+            this.serverDataHandler.init(containerHelper);
+        } catch (IllegalStateException | InterruptedException | IOException | IllegalArgumentException e) {
             e.printStackTrace();
             System.exit(1);
         }
-        commandsHandler = new CommandsHandler(this);
+        this.commandsHandler = Objects.requireNonNullElseGet(commandsHandler, () -> new CommandsHandler(this, Executors.newCachedThreadPool()));
 
-
-        jda.addEventListener(commandsHandler);
-        jda.addEventListener(this.serverDataHandler);
+        addEventListenersToContainer(this.commandsHandler, this.serverDataHandler);
     }
 
     /**
      * Get the {@link JDA} instance
-     * @return {@link JDA}
+     * @return {@link JDA} if bot is not sharded, {@code null} otherwise
      */
-    @NonNull
+    @Nullable
     public JDA getJda() {
         return jda;
+    }
+
+    /**
+     * Get the {@link ShardManager} instance
+     * @return {@link ShardManager} if bot is sharded, {@code null} otherwise
+     */
+    @Nullable
+    public ShardManager getShardManager() {
+        return shardManager;
     }
 
     /**
@@ -179,6 +159,15 @@ public class CoffeeCore {
     }
 
     /**
+     * Get the description of the bot from {@link BotSettings}
+     * @return The description of the bot
+     */
+    @NonNull
+    public String getAboutDescription() {
+        return settings.aboutDescription;
+    }
+
+    /**
      * Get the bot owner's Discord ID
      * @return The bot owner's Discord ID
      */
@@ -187,13 +176,45 @@ public class CoffeeCore {
     }
 
     /**
+     * Get the active container. This method will return either {@link JDA} or {@link ShardManager}, whichever is active.
+     * @return The active container.
+     * @throws IllegalStateException If the container has not been determined yet. This may be caused by calling it too early.
+     */
+    @NonNull
+    public IGuildChannelContainer getActiveContainer() {
+        if(jda != null) {
+            return jda;
+        } else if(shardManager != null) {
+            return shardManager;
+        } else {
+            throw new IllegalStateException("The container has not been determined yet.");
+        }
+    }
+
+    /**
+     * Check if the bot is sharded
+     * @return {@code true} if the bot is sharded, {@code false} otherwise
+     */
+    public boolean isSharded() {
+        return shardManager != null;
+    }
+
+    /**
      * Shutdown the bot
      * @param duration The duration to wait for the bot to shut down
      * @throws InterruptedException If the bot fails to shut down within the specified duration
      */
     public void shutdown(@NonNull Duration duration) throws InterruptedException {
-        jda.shutdown();
-        jda.awaitShutdown(duration);
+        IGuildChannelContainer container = getActiveContainer();
+        if(container instanceof JDA) {
+            ((JDA) container).shutdown();
+            if(((JDA) container).awaitShutdown(duration)) {
+                ((JDA) container).shutdownNow();
+                ((JDA) container).awaitShutdown();
+            }
+        } else if(container instanceof ShardManager) {
+            ((ShardManager) getActiveContainer()).shutdown();
+        }
     }
 
     /**
@@ -214,6 +235,46 @@ public class CoffeeCore {
             commands.put("shutdown", new Shutdown());
         }
 
+        for(BotCommand<?> cmd: commands.values()) {
+            cmd.setCore(this);
+        }
+
         commandsHandler.registerCommands(commands, settings.updateCommandsAtLaunch);
+    }
+
+    /**
+     * Determine the container to use for the bot. This method is used to determine whether to use a {@link JDA} instance or a
+     * {@link ShardManager} instance. This method will also wait for the bot to be ready.
+     * @param container The container to use for the bot.
+     */
+    public void determineAndSetContainer(@NonNull IGuildChannelContainer container) throws InterruptedException {
+        if(jda != null || shardManager != null)
+            throw new IllegalStateException("The container has already been determined.");
+
+        if(container instanceof JDA) {
+            jda = (JDA) container;
+            jda.awaitReady();
+        } else if(container instanceof ShardManager) {
+            shardManager = (ShardManager) container;
+            for(JDA jda: shardManager.getShardCache()) {
+                jda.awaitReady();
+            }
+        } else {
+            throw new IllegalArgumentException("The container must be either a JDA instance or a ShardManager instance.");
+        }
+    }
+
+    /**
+     * Add event listeners to the container. This method will add the specified listeners to the container. The container can be either
+     * {@link JDA} or {@link ShardManager}.
+     * @param listeners The listeners to add to the container.
+     */
+    public void addEventListenersToContainer(@NonNull Object... listeners) {
+        IGuildChannelContainer container = getActiveContainer();
+        if(container instanceof JDA) {
+            ((JDA) container).addEventListener(listeners);
+        } else if(container instanceof ShardManager) {
+            ((ShardManager) container).addEventListener(listeners);
+        }
     }
 }

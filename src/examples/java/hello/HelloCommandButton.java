@@ -47,20 +47,20 @@ public class HelloCommandButton extends ButtonCommand<MessageEmbed> {
 
     @Override
     public void runButtonInteraction(@NonNull ButtonInteractionEvent event) {
-        String componentId = event.getComponentId().substring(getName().length() + 1);
+        String key = convertComponentIdToKey(event.getComponentId());
 
-        if (componentId.equals("hello")) {
+        if (key.equals("hello")) {
             event.reply("Hello, " + event.getUser().getAsMention() + "!").queue();
-        } else if (componentId.equals("goodbye")) {
+        } else if (key.equals("goodbye")) {
             event.reply("Goodbye, " + event.getUser().getAsMention() + "!").queue();
-        } else if (componentId.equals("mystery")) {
+        } else if (key.equals("mystery")) {
             event.reply("How did you click on this?").queue();
         }
     }
 
     @Override
     @NonNull
-    public Collection<ItemComponent> addButtons(@NonNull GenericCommandInteractionEvent event) {
+    public Collection<ItemComponent> addButtonsToMessage(@NonNull GenericCommandInteractionEvent event) {
         return Arrays.asList(new ItemComponent[] {
                 getButton("hello"),
                 getButton("goodbye"),

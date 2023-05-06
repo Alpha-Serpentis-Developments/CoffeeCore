@@ -12,14 +12,9 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class CommandsHandler extends ListenerAdapter {
     /**
@@ -30,14 +25,15 @@ public class CommandsHandler extends ListenerAdapter {
     /**
      * The {@link ExecutorService} that will be used to run the commands.
      */
-    public final ExecutorService executor = Executors.newCachedThreadPool();
+    public final ExecutorService executor;
     /**
      * The {@link CoffeeCore} instance that this handler is attached to.
      */
     public final CoffeeCore core;
 
-    public CommandsHandler(@NonNull CoffeeCore core) {
+    public CommandsHandler(@NonNull CoffeeCore core, @NonNull ExecutorService executor) {
         this.core = core;
+        this.executor = executor;
     }
 
     /**
@@ -51,41 +47,44 @@ public class CommandsHandler extends ListenerAdapter {
             @NonNull HashMap<String, BotCommand<?>> mappingOfCommands,
             boolean updateCommands
     ) {
-        JDA api = core.getJda();
-        List<Command> listOfActiveCommands = api.retrieveCommands().complete();
+        List<JDA> shards = core.isSharded() ? core.getShardManager().getShards() : List.of(core.getJda());
+        List<Command> listOfActiveCommands;
         List<String> detectedCommandNames = new ArrayList<>();
 
-        this.mappingOfCommands.putAll(mappingOfCommands);
+        for(JDA shard: shards) {
+            listOfActiveCommands = shard.retrieveCommands().complete();
 
-        // Checks for the detected commands
-        for (Iterator<Command> it = listOfActiveCommands.iterator(); it.hasNext(); ) {
-            Command cmd = it.next();
-            if(mappingOfCommands.containsKey(cmd.getName())) {
-                BotCommand<?> botCmd = mappingOfCommands.get(cmd.getName());
-                botCmd.setCommandId(cmd.getIdLong());
-                botCmd.setCore(core);
-                if(updateCommands)
-                    botCmd.updateCommand(api);
+            this.mappingOfCommands.putAll(mappingOfCommands);
 
-                detectedCommandNames.add(cmd.getName());
+            // Checks for the detected commands
+            for (Iterator<Command> it = listOfActiveCommands.iterator(); it.hasNext(); ) {
+                Command cmd = it.next();
+                if(mappingOfCommands.containsKey(cmd.getName())) {
+                    BotCommand<?> botCmd = mappingOfCommands.get(cmd.getName());
+                    botCmd.setCommandId(cmd.getIdLong());
+                    if(updateCommands)
+                        botCmd.updateCommand(shard);
 
-                it.remove();
+                    detectedCommandNames.add(cmd.getName());
+
+                    it.remove();
+                }
             }
-        }
 
-        // Fills in any gaps or removes any commands
-        for(Command cmd: listOfActiveCommands) { // Removes unused commands
-            api.deleteCommandById(cmd.getId()).complete();
-        }
+            // Fills in any gaps or removes any commands
+            for(Command cmd: listOfActiveCommands) { // Removes unused commands
+                shard.deleteCommandById(cmd.getId()).complete();
+            }
 
-        if(detectedCommandNames.size() < mappingOfCommands.size()) { // Adds new commands
-            List<String> missingCommands = new ArrayList<>(mappingOfCommands.keySet());
+            if(detectedCommandNames.size() < mappingOfCommands.size()) { // Adds new commands
+                List<String> missingCommands = new ArrayList<>(mappingOfCommands.keySet());
 
-            missingCommands.removeAll(detectedCommandNames);
+                missingCommands.removeAll(detectedCommandNames);
 
-            for(String cmdName: missingCommands) {
-                BotCommand<?> cmd = mappingOfCommands.get(cmdName);
-                cmd.updateCommand(api);
+                for(String cmdName: missingCommands) {
+                    BotCommand<?> cmd = mappingOfCommands.get(cmdName);
+                    cmd.updateCommand(shard);
+                }
             }
         }
     }
@@ -104,7 +103,7 @@ public class CommandsHandler extends ListenerAdapter {
     }
 
     @Override
-    public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
+    public void onSlashCommandInteraction(@NonNull SlashCommandInteractionEvent event) {
         executor.submit(() -> {
             BotCommand<?> cmd = getCommand(event.getName());
             BotCommand.handleReply(event, cmd);
@@ -112,20 +111,18 @@ public class CommandsHandler extends ListenerAdapter {
     }
 
     @Override
-    public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
+    public void onButtonInteraction(@NonNull ButtonInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?> cmd = getCommand(event.getButton().getId().substring(0, event.getButton().getId().indexOf("_")));
-
-            ((ButtonCommand<?>) cmd).runButtonInteraction(event);
+            ButtonCommand<?> cmd = (ButtonCommand<?>) getCommand(event.getButton().getId().substring(0, event.getButton().getId().indexOf("_")));
+            cmd.runButtonInteraction(event);
         });
     }
 
     @Override
-    public void onModalInteraction(@NotNull ModalInteractionEvent event) {
+    public void onModalInteraction(@NonNull ModalInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?> cmd = getCommand(event.getModalId().substring(0, event.getModalId().indexOf("_")));
-
-            ((ModalCommand) cmd).runModalInteraction(event);
+            ModalCommand cmd = (ModalCommand) getCommand(event.getModalId().substring(0, event.getModalId().indexOf("_")));
+            cmd.runModalInteraction(event);
         });
     }
 }

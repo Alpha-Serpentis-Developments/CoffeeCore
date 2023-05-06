@@ -11,13 +11,10 @@ public class Help extends BotCommand<MessageEmbed> {
 
     public Help() {
         super(
-                new BotCommandOptions(
-                        "help",
-                        "Lists all the commands and their descriptions",
-                        true,
-                        false,
-                        TypeOfEphemeral.DEFAULT
-                )
+                new BotCommandOptions()
+                        .setName("help")
+                        .setDescription("Lists all the commands and their descriptions")
+                        .setOnlyEmbed(true)
         );
     }
 

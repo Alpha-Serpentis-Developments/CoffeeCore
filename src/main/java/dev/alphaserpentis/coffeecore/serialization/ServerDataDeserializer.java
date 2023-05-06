@@ -7,6 +7,10 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * A deserializer for {@link ServerData} objects.
+ * @param <T> The type of {@link ServerData} to deserialize.
+ */
 public class ServerDataDeserializer<T extends ServerData> implements JsonDeserializer<Map<Long, T>> {
 
     @Override

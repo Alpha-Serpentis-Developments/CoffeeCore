@@ -19,13 +19,10 @@ public class Settings extends BotCommand<MessageEmbed> {
 
     public Settings() {
         super(
-                new BotCommandOptions(
-                        "settings",
-                        "Configure the bot's settings",
-                        true,
-                        false,
-                        TypeOfEphemeral.DEFAULT
-                )
+                new BotCommandOptions()
+                        .setName("settings")
+                        .setDescription("Configure the bot's settings")
+                        .setOnlyEmbed(true)
         );
     }
 
@@ -48,8 +45,10 @@ public class Settings extends BotCommand<MessageEmbed> {
                 }
             } else {
                 eb.setDescription(
-                        "You do not have permission to change the server settings.\n\n" +
-                        "You must have the `Manage Server` or `Administrator` permission to change the server settings."
+                        """
+                                You do not have permission to change the server settings.
+
+                                You must have the `Manage Server` or `Administrator` permission to change the server settings."""
                 );
                 eb.setColor(0xff0000);
             }

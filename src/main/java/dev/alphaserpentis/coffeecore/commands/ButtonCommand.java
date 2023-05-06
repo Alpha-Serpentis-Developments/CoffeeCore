@@ -29,7 +29,7 @@ public abstract class ButtonCommand<T> extends BotCommand<T> {
      * This method is called when a button is pressed.
      * @param event The event that triggered the button press.
      */
-    abstract public void runButtonInteraction(@NonNull ButtonInteractionEvent event);
+    abstract public void runButtonInteraction(@NonNull final ButtonInteractionEvent event);
 
     /**
      * This method is called when the command is executed which may add buttons to a message.
@@ -37,7 +37,7 @@ public abstract class ButtonCommand<T> extends BotCommand<T> {
      * @return A collection of buttons to add to the message. The collection may be empty.
      */
     @NonNull
-    abstract public Collection<ItemComponent> addButtons(@NonNull GenericCommandInteractionEvent event);
+    abstract public Collection<ItemComponent> addButtonsToMessage(@NonNull final GenericCommandInteractionEvent event);
 
     /**
      * Get a {@link Button} by its key.
@@ -45,7 +45,7 @@ public abstract class ButtonCommand<T> extends BotCommand<T> {
      * @return The button, or null if it does not exist.
      */
     @Nullable
-    public Button getButton(String key) {
+    public Button getButton(@NonNull String key) {
         return buttonHashMap.get(key);
     }
 
@@ -60,7 +60,7 @@ public abstract class ButtonCommand<T> extends BotCommand<T> {
 
     /**
      * Easy way to add a {@link Button} to the {@link #buttonHashMap}.
-     * @param key Unique identifier for the button. An {@link IllegalArgumentException} will be thrown if the key is already in use.
+     * @param key Unique key for the button. An {@link IllegalArgumentException} will be thrown if the key is already in use.
      * @param style The style of button.
      * @param label Text to display on the button. This cannot be null.
      * @param disabled Determines if the button is disabled.
@@ -70,12 +70,12 @@ public abstract class ButtonCommand<T> extends BotCommand<T> {
         if(buttonHashMap.containsKey(key))
             throw new IllegalArgumentException("The key " + key + " is already in use!");
 
-        buttonHashMap.put(key, Button.of(style, generateButtonKey(key), label).withDisabled(disabled));
+        buttonHashMap.put(key, Button.of(style, generateButtonId(key), label).withDisabled(disabled));
     }
 
     /**
      * Easy way to add a {@link Button} to the {@link #buttonHashMap} with a nullable {@link Emoji}.
-     * @param key Unique identifier for the button. An {@link IllegalArgumentException} will be thrown if the key is already in use.
+     * @param key Unique key for the button. An {@link IllegalArgumentException} will be thrown if the key is already in use.
      * @param style The style of button.
      * @param label Text to display on the button. This may be null.
      * @param emoji {@link Emoji} to display on the button. This may be null.
@@ -86,16 +86,26 @@ public abstract class ButtonCommand<T> extends BotCommand<T> {
         if(buttonHashMap.containsKey(key))
             throw new IllegalArgumentException("The key " + key + " is already in use!");
 
-        buttonHashMap.put(key, Button.of(style, generateButtonKey(key), label, emoji).withDisabled(disabled));
+        buttonHashMap.put(key, Button.of(style, generateButtonId(key), label, emoji).withDisabled(disabled));
     }
 
     /**
-     * Generate a button key. This key is used for identification purposes.
+     * Generate a button id. This id is used for identification purposes.
      * @param key Unique identifier for the button.
      * @return {@link String} The generated key.
      */
     @NonNull
-    public String generateButtonKey(@NonNull String key) {
+    public String generateButtonId(@NonNull String key) {
         return String.format("%s_%s", getName(), key);
+    }
+
+    /**
+     * Convert a component (button) id to a key.
+     * @param componentId The component (button) id.
+     * @return The key.
+     */
+    @NonNull
+    public String convertComponentIdToKey(@NonNull String componentId) {
+        return componentId.substring(getName().length() + 1);
     }
 }
