@@ -9,7 +9,7 @@ functionality.
 
 ## Support
 
-- **Discord Server**: https://discord.alphaserpentis.dev
+- **Discord Server**: https://asrp.dev/discord
 - **Twitter**: [https://twitter.com/AlphaSerpentis_](https://twitter.com/AlphaSerpentis_)
 - **GitHub Issues**: https://github.com/AlphaSerpentis/CoffeeCore/issues
 
@@ -33,7 +33,7 @@ Latest Snapshot:
 <dependency>
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.3.0-alpha-SNAPSHOT</version>
+    <version>0.4.0-alpha-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -195,7 +195,7 @@ To be written...
 
 ## Dependencies
 
-- [JDA - 5.0.0-beta.8](https://github.com/DV8FromTheWorld/JDA)
+- [JDA - 5.0.0-beta.9](https://github.com/DV8FromTheWorld/JDA)
 - [Gson - 2.10.1](https://github.com/google/gson)
 - [RxJava - 3.1.6](https://github.com/ReactiveX/RxJava)
 - [Dotenv - 2.3.2](https://github.com/cdimascio/dotenv-java)
