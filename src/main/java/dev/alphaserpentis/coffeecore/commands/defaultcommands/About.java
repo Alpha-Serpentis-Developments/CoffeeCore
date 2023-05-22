@@ -14,7 +14,7 @@ public class About extends BotCommand<MessageEmbed> {
     private static final String DEFAULT_DESCRIPTION = """
     A bot powered by Coffee Core!
     
-    https://github.com/AlphaSerpentis/CoffeeCore
+    https://github.com/Alpha-Serpentis-Developments/CoffeeCore
     """;
     private static final String DEFAULT_FOOTER = "Powered by Coffee Core";
 

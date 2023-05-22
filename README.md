@@ -11,7 +11,7 @@ functionality.
 
 - **Discord Server**: https://asrp.dev/discord
 - **Twitter**: [https://twitter.com/AlphaSerpentis_](https://twitter.com/AlphaSerpentis_)
-- **GitHub Issues**: https://github.com/AlphaSerpentis/CoffeeCore/issues
+- **GitHub Issues**: https://github.com/Alpha-Serpentis-Developments/CoffeeCore/issues
 
 ## Getting Started
 
@@ -150,7 +150,7 @@ To add buttons, you can use the `addButton(...)` method. When adding buttons, yo
 button, a `ButtonStyle`, a label, and whether the button is disabled. Optionally, there's a fifth parameter that allows
 you to provide an `Emoji`.
 
-Check out an example [here](https://github.com/AlphaSerpentis/CoffeeCore/blob/main/src/examples/java/hello/HelloCommandButton.java)
+Check out an example [here](https://github.com/Alpha-Serpentis-Developments/CoffeeCore/blob/main/src/examples/java/hello/HelloCommandButton.java)
 
 ```java
 public class ExampleCommand extends ButtonCommand<MessageEmbed> {
