@@ -224,6 +224,7 @@ public class CoffeeCore {
      * Restarts the bot if it is sharded. This method will throw an {@link UnsupportedOperationException} if the bot is
      * not sharded.
      * @throws UnsupportedOperationException If the bot is not sharded.
+     * @see ShardManager#restart()
      */
     public void restart() {
         if(isSharded() && getShardManager() != null) {
@@ -238,6 +239,7 @@ public class CoffeeCore {
      * This method will throw an {@link UnsupportedOperationException} if the bot is not sharded.
      * @param shardId The shard ID to restart
      * @throws UnsupportedOperationException If the bot is not sharded.
+     * @see ShardManager#restart(int)
      */
     public void restart(int shardId) {
         if(isSharded() && getShardManager() != null) {
