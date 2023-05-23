@@ -6,6 +6,7 @@ import dev.alphaserpentis.coffeecore.commands.defaultcommands.About;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Help;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Settings;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Shutdown;
+import dev.alphaserpentis.coffeecore.data.bot.AboutInformation;
 import dev.alphaserpentis.coffeecore.data.bot.BotSettings;
 import dev.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;
 import dev.alphaserpentis.coffeecore.handler.api.discord.servers.AbstractServerDataHandler;
@@ -26,7 +27,7 @@ import java.util.Objects;
 import java.util.concurrent.Executors;
 
 /**
- * The core of Coffee Core. This class is responsible for initializing the bot and handling commands.
+ * The core of Coffee Core. This class is responsible for initializing the bot, handling commands, and containing various components.
  */
 public class CoffeeCore {
 
@@ -61,7 +62,7 @@ public class CoffeeCore {
             determineAndSetContainer(container);
 
             ContainerHelper containerHelper = new ContainerHelper(container);
-            Path path = Path.of(settings.serverDataPath);
+            Path path = Path.of(settings.getServerDataPath());
             serverDataHandler = new ServerDataHandler<>(
                     path,
                     new TypeToken<>() {},
@@ -92,7 +93,7 @@ public class CoffeeCore {
             ContainerHelper containerHelper = new ContainerHelper(container);
 
             if(serverDataHandler == null) {
-                Path path = Path.of(settings.serverDataPath);
+                Path path = Path.of(settings.getServerDataPath());
                 this.serverDataHandler = new ServerDataHandler<>(
                         path,
                         new TypeToken<>() {
@@ -108,7 +109,9 @@ public class CoffeeCore {
             e.printStackTrace();
             System.exit(1);
         }
-        this.commandsHandler = Objects.requireNonNullElseGet(commandsHandler, () -> new CommandsHandler(this, Executors.newCachedThreadPool()));
+        this.commandsHandler = Objects.requireNonNullElseGet(
+                commandsHandler, () -> new CommandsHandler(this, Executors.newCachedThreadPool())
+        );
 
         addEventListenersToContainer(this.commandsHandler, this.serverDataHandler);
     }
@@ -159,12 +162,12 @@ public class CoffeeCore {
     }
 
     /**
-     * Get the description of the bot from {@link BotSettings}
-     * @return The description of the bot
+     * Get the bot's {@link dev.alphaserpentis.coffeecore.data.bot.AboutInformation} instance
+     * @return {@link dev.alphaserpentis.coffeecore.data.bot.AboutInformation}
      */
     @NonNull
-    public String getAboutDescription() {
-        return settings.aboutDescription;
+    public AboutInformation getAboutInformation() {
+        return settings.getAboutInformation();
     }
 
     /**
@@ -172,7 +175,7 @@ public class CoffeeCore {
      * @return The bot owner's Discord ID
      */
     public long getBotOwnerId() {
-        return settings.botOwnerId;
+        return settings.getBotOwnerId();
     }
 
     /**
@@ -200,7 +203,7 @@ public class CoffeeCore {
     }
 
     /**
-     * Shutdown the bot
+     * Shutdown the bot. This blocks the thread.
      * @param duration The duration to wait for the bot to shut down
      * @throws InterruptedException If the bot fails to shut down within the specified duration
      */
@@ -213,13 +216,42 @@ public class CoffeeCore {
                 ((JDA) container).awaitShutdown();
             }
         } else if(container instanceof ShardManager) {
-            ((ShardManager) getActiveContainer()).shutdown();
+            ((ShardManager) container).shutdown();
         }
     }
 
     /**
-     * Register a {@link BotCommand} or commands to the bot. This method will immediately push the commands to the bot, so it is best to
-     * register all commands instead of registering them one by one.
+     * Restarts the bot if it is sharded. This method will throw an {@link UnsupportedOperationException} if the bot is
+     * not sharded.
+     * @throws UnsupportedOperationException If the bot is not sharded.
+     * @see ShardManager#restart()
+     */
+    public void restart() {
+        if(isSharded() && getShardManager() != null) {
+            getShardManager().restart();
+        } else {
+            throw new UnsupportedOperationException("Restarting is not supported for non-sharded bots.");
+        }
+    }
+
+    /**
+     * Restarts the specified shard if the bot is sharded.
+     * This method will throw an {@link UnsupportedOperationException} if the bot is not sharded.
+     * @param shardId The shard ID to restart
+     * @throws UnsupportedOperationException If the bot is not sharded.
+     * @see ShardManager#restart(int)
+     */
+    public void restart(int shardId) {
+        if(isSharded() && getShardManager() != null) {
+            getShardManager().restart(shardId);
+        } else {
+            throw new UnsupportedOperationException("Restarting is not supported for non-sharded bots.");
+        }
+    }
+
+    /**
+     * Register a {@link BotCommand} or commands to the bot. This method will immediately push the commands to the bot,
+     * so it is best to register all commands instead of registering them one by one.
      * @param command The command or commands to register.
      */
     public void registerCommands(@NonNull BotCommand<?>... command) {
@@ -228,7 +260,7 @@ public class CoffeeCore {
             commands.put(cmd.getName(), cmd);
         }
 
-        if(settings.registerDefaultCommands) {
+        if(settings.isRegisterDefaultCommands()) {
             commands.put("settings", new Settings());
             commands.put("help", new Help());
             commands.put("about", new About());
@@ -239,13 +271,18 @@ public class CoffeeCore {
             cmd.setCore(this);
         }
 
-        commandsHandler.registerCommands(commands, settings.updateCommandsAtLaunch);
+        commandsHandler.registerCommands(commands, settings.isUpdateCommandsAtLaunch());
     }
 
     /**
-     * Determine the container to use for the bot. This method is used to determine whether to use a {@link JDA} instance or a
-     * {@link ShardManager} instance. This method will also wait for the bot to be ready.
+     * Determine the container to use for the bot. This method is used to determine whether to use a {@link JDA}
+     * instance or a {@link ShardManager} instance. This method will also wait for the bot to be ready. Failure to
+     * provide either class will throw an
+     * {@link IllegalArgumentException}.
      * @param container The container to use for the bot.
+     * @throws InterruptedException If the bot is interrupted while waiting for the container to be ready.
+     * @throws IllegalStateException If the container has already been determined.
+     * @throws IllegalArgumentException If the container is not a {@link JDA} instance or a {@link ShardManager}
      */
     public void determineAndSetContainer(@NonNull IGuildChannelContainer container) throws InterruptedException {
         if(jda != null || shardManager != null)
@@ -265,8 +302,8 @@ public class CoffeeCore {
     }
 
     /**
-     * Add event listeners to the container. This method will add the specified listeners to the container. The container can be either
-     * {@link JDA} or {@link ShardManager}.
+     * Add event listeners to the container. This method will add the specified listeners to the container. The
+     * container can be either {@link JDA} or {@link ShardManager}.
      * @param listeners The listeners to add to the container.
      */
     public void addEventListenersToContainer(@NonNull Object... listeners) {

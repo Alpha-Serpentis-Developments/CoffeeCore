@@ -6,10 +6,10 @@
 
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.3.0-alpha</version>
+    <version>0.4.0-alpha</version>
     <name>Coffee Core</name>
     <description>Coffee Core is a JDA-based framework for Discord bots</description>
-    <url>https://github.com/AlphaSerpentis/CoffeeCore</url>
+    <url>https://asrp.dev/#coffee-core</url>
 
     <licenses>
         <license>
@@ -27,9 +27,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/AlphaSerpentis/CoffeeCore</connection>
-        <developerConnection>scm:git:ssh:git@github.com:AlphaSerpentis/CoffeeCore</developerConnection>
-        <url>https://github.com/AlphaSerpentis/CoffeeCore/tree/main</url>
+        <connection>scm:git:git://github.com/Alpha-Serpentis-Developments/CoffeeCore</connection>
+        <developerConnection>scm:git:ssh:git@github.com:Alpha-Serpentis-Developments/CoffeeCore</developerConnection>
+        <url>https://github.com/Alpha-Serpentis-Developments/CoffeeCore/tree/main</url>
     </scm>
 
     <properties>
@@ -101,7 +101,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>2.2.1</version>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -114,7 +114,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9.1</version>
+                <version>3.5.0</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -127,7 +127,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.5</version>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>
