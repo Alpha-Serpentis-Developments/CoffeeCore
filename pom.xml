@@ -6,7 +6,7 @@
 
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.4.0-alpha-SNAPSHOT</version>
+    <version>0.4.0-alpha</version>
     <name>Coffee Core</name>
     <description>Coffee Core is a JDA-based framework for Discord bots</description>
     <url>https://asrp.dev/#coffee-core</url>
