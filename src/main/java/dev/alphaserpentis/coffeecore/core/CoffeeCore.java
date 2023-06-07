@@ -16,6 +16,7 @@ import dev.alphaserpentis.coffeecore.serialization.ServerDataDeserializer;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.SelfUser;
 import net.dv8tion.jda.api.entities.channel.attribute.IGuildChannelContainer;
 import net.dv8tion.jda.api.sharding.ShardManager;
 
@@ -200,6 +201,20 @@ public class CoffeeCore {
      */
     public boolean isSharded() {
         return shardManager != null;
+    }
+
+    /**
+     * Get the bot's {@link SelfUser} instance
+     * @return {@link SelfUser}
+     */
+    @Nullable
+    public SelfUser getSelfUser() {
+        if(getActiveContainer() instanceof JDA)
+            return ((JDA) getActiveContainer()).getSelfUser();
+        else if(getActiveContainer() instanceof ShardManager)
+            return ((ShardManager) getActiveContainer()).getShards().get(0).getSelfUser();
+        else
+            throw new IllegalStateException("The container has not been determined yet.");
     }
 
     /**
