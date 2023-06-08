@@ -15,6 +15,8 @@ functionality.
 
 ## Getting Started
 
+**Notice**: Coffee Core requires Java 17+!
+
 ### Adding Coffee Core to your project with Maven
 
 Latest Release:
@@ -23,7 +25,7 @@ Latest Release:
 <dependency>
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.3.0-alpha</version>
+    <version>0.4.1-alpha</version>
 </dependency>
 ```
 
@@ -33,8 +35,37 @@ Latest Snapshot:
 <dependency>
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.4.0-alpha-SNAPSHOT</version>
+    <version>0.4.1-alpha-SNAPSHOT</version>
 </dependency>
+```
+
+By default, JDA includes a package to handle voice connections. If you don't need voice support, you can exclude it:
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>dev.alphaserpentis</groupId>
+        <artifactId>CoffeeCore</artifactId>
+        <version>VERSION-HERE</version>
+        <exclusions>
+            <exclusion>
+                <groupId>club.minnced</groupId>
+                <artifactId>opus-java</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+```
+
+You can also exclude the `dotenv-java` package if you do not intend to use it.
+
+```xml
+<exclusions>
+    <exclusion>
+        <groupId>io.github.cdimascio</groupId>
+        <artifactId>dotenv-java</artifactId>
+    </exclusion>
+</exclusions>
 ```
 
 ### Creating a bot
@@ -67,7 +98,7 @@ public class CoffeeCoreBuilder {
 }
 ```
 
-1. Create a new `.env` file in the root of your project and fill it out with the following (adjust to your liking):
+1. (Optional) Create a new `.env` file in the root of your project and fill it out with the following (adjust to your liking):
 
 ```env
 DISCORD_BOT_TOKEN=YOUR_DISCORD_BOT_TOKEN
@@ -77,7 +108,7 @@ UPDATE_COMMANDS_AT_LAUNCH=true
 REGISTER_DEFAULT_COMMANDS=true
 ```
 
-2. Create a new CoffeeCore instance using CoffeeCoreBuilder and load in your bot settings from the `.env` file:
+2. Create a new CoffeeCore instance using CoffeeCoreBuilder and load in your bot settings from the `.env` file (or other source):
 
 ```java
 public static void main(String[] args) throws Exception {
@@ -195,7 +226,7 @@ To be written...
 
 ## Dependencies
 
-- [JDA - 5.0.0-beta.9](https://github.com/DV8FromTheWorld/JDA)
+- [JDA - 5.0.0-beta.10](https://github.com/DV8FromTheWorld/JDA)
 - [Gson - 2.10.1](https://github.com/google/gson)
 - [RxJava - 3.1.6](https://github.com/ReactiveX/RxJava)
-- [Dotenv - 2.3.2](https://github.com/cdimascio/dotenv-java)
+- (Optional) [Dotenv - 3.0.0](https://github.com/cdimascio/dotenv-java)

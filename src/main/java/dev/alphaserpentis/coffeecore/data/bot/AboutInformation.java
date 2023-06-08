@@ -23,4 +23,35 @@ public record AboutInformation(
         @Nullable ArrayList<MessageEmbed.Field> fields,
         boolean displayShardingInfo,
         boolean displayServersInfo
-) {}
+) {
+    public AboutInformation(
+            @Nullable String description,
+            @Nullable String footer,
+            @Nullable Color color,
+            boolean displayShardingInfo,
+            boolean displayServersInfo
+    ) {
+        this(description, footer, color, null, displayShardingInfo, displayServersInfo);
+    }
+    public AboutInformation(
+            @Nullable String description,
+            @Nullable String footer,
+            @Nullable Color color,
+            @Nullable ArrayList<MessageEmbed.Field> fields
+    ) {
+        this(description, footer, color, fields, true, true);
+    }
+    public AboutInformation(
+            @Nullable String description,
+            @Nullable String footer,
+            @Nullable Color color
+    ) {
+        this(description, footer, color, null, true, true);
+    }
+    public AboutInformation(
+            @Nullable String description,
+            @Nullable String footer
+    ) {
+        this(description, footer, null, null, true, true);
+    }
+}

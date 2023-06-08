@@ -40,7 +40,7 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
         gson = new GsonBuilder()
                 .registerTypeAdapter(serverDataHashMap.getClass(), jsonDeserializer)
                 .create();
-        reader = Files.newBufferedReader(serverJson);
+        reader = Files.newBufferedReader(path);
         serverDataHashMap = gson.fromJson(reader, typeToken.getType());
     }
 
