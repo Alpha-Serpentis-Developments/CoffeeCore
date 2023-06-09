@@ -7,8 +7,12 @@ import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.command.UserContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
@@ -21,7 +25,7 @@ public class CommandsHandler extends ListenerAdapter {
      * The mapping of {@link BotCommand} that have been registered to the bot. This is used to check for commands that are already
      * registered and update them if necessary.
      */
-    public final HashMap<String, BotCommand<?>> mappingOfCommands = new HashMap<>();
+    public final HashMap<String, BotCommand<?, ?>> mappingOfCommands = new HashMap<>();
     /**
      * The {@link ExecutorService} that will be used to run the commands.
      */
@@ -44,7 +48,7 @@ public class CommandsHandler extends ListenerAdapter {
      * @param updateCommands Whether to update the commands if they are already registered
      */
     public void registerCommands(
-            @NonNull HashMap<String, BotCommand<?>> mappingOfCommands,
+            @NonNull HashMap<String, BotCommand<?, ?>> mappingOfCommands,
             boolean updateCommands
     ) {
         List<JDA> shards = core.isSharded() ? core.getShardManager().getShards() : List.of(core.getJda());
@@ -60,7 +64,7 @@ public class CommandsHandler extends ListenerAdapter {
             for (Iterator<Command> it = listOfActiveCommands.iterator(); it.hasNext(); ) {
                 Command cmd = it.next();
                 if(mappingOfCommands.containsKey(cmd.getName())) {
-                    BotCommand<?> botCmd = mappingOfCommands.get(cmd.getName());
+                    BotCommand<?, ?> botCmd = mappingOfCommands.get(cmd.getName());
                     botCmd.setCommandId(cmd.getIdLong());
                     if(updateCommands)
                         botCmd.updateCommand(shard);
@@ -82,7 +86,7 @@ public class CommandsHandler extends ListenerAdapter {
                 missingCommands.removeAll(detectedCommandNames);
 
                 for(String cmdName: missingCommands) {
-                    BotCommand<?> cmd = mappingOfCommands.get(cmdName);
+                    BotCommand<?, ?> cmd = mappingOfCommands.get(cmdName);
                     cmd.updateCommand(shard);
                 }
             }
@@ -95,25 +99,55 @@ public class CommandsHandler extends ListenerAdapter {
      * @return BotCommand or {@code null} if the command is not found
      */
     @Nullable
-    public BotCommand<?> getCommand(@NonNull String name) {
+    public BotCommand<?, ? extends GenericCommandInteractionEvent> getCommand(@NonNull String name) {
         return mappingOfCommands.get(name);
     }
-    public ArrayList<BotCommand<?>> getCommands() {
+
+    @NonNull
+    public ArrayList<BotCommand<?, ? extends GenericCommandInteractionEvent>> getCommands() {
         return new ArrayList<>(mappingOfCommands.values());
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onSlashCommandInteraction(@NonNull SlashCommandInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?> cmd = getCommand(event.getName());
-            BotCommand.handleReply(event, cmd);
+            BotCommand<?, SlashCommandInteractionEvent> cmd = (BotCommand<?, SlashCommandInteractionEvent>) getCommand(event.getName());
+            Message msg = cmd.handleReply(event, Objects.requireNonNull(cmd));
+
+            if(cmd.doMessagesExpire())
+                BotCommand.letMessageExpire(cmd, msg);
+        });
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void onUserContextInteraction(@NonNull UserContextInteractionEvent event) {
+        executor.submit(() -> {
+            BotCommand<?, UserContextInteractionEvent> cmd = (BotCommand<?, UserContextInteractionEvent>) getCommand(event.getName());
+            Message msg = cmd.handleReply(event, Objects.requireNonNull(cmd));
+
+            if(cmd.doMessagesExpire())
+                BotCommand.letMessageExpire(cmd, msg);
+        });
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void onMessageContextInteraction(@NonNull MessageContextInteractionEvent event) {
+        executor.submit(() -> {
+            BotCommand<?, MessageContextInteractionEvent> cmd = (BotCommand<?, MessageContextInteractionEvent>) getCommand(event.getName());
+            Message msg = cmd.handleReply(event, Objects.requireNonNull(cmd));
+
+            if(cmd.doMessagesExpire())
+                BotCommand.letMessageExpire(cmd, msg);
         });
     }
 
     @Override
     public void onButtonInteraction(@NonNull ButtonInteractionEvent event) {
         executor.submit(() -> {
-            ButtonCommand<?> cmd = (ButtonCommand<?>) getCommand(event.getButton().getId().substring(0, event.getButton().getId().indexOf("_")));
+            ButtonCommand<?, ?> cmd = (ButtonCommand<?, ?>) getCommand(event.getButton().getId().substring(0, event.getButton().getId().indexOf("_")));
             cmd.runButtonInteraction(event);
         });
     }

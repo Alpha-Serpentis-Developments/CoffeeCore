@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import dev.alphaserpentis.coffeecore.commands.BotCommand;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 
-public class HelloCommandText extends BotCommand<String> {
+public class HelloCommandText extends BotCommand<String, SlashCommandInteractionEvent> {
 
     public HelloCommandText() {
         super(

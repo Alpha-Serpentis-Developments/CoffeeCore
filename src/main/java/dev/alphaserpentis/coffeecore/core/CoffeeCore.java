@@ -269,9 +269,9 @@ public class CoffeeCore {
      * so it is best to register all commands instead of registering them one by one.
      * @param command The command or commands to register.
      */
-    public void registerCommands(@NonNull BotCommand<?>... command) {
-        HashMap<String, BotCommand<?>> commands = new HashMap<>();
-        for(BotCommand<?> cmd: command) {
+    public void registerCommands(@NonNull BotCommand<?, ?>... command) {
+        HashMap<String, BotCommand<?, ?>> commands = new HashMap<>();
+        for(BotCommand<?, ?> cmd: command) {
             commands.put(cmd.getName(), cmd);
         }
 
@@ -282,7 +282,7 @@ public class CoffeeCore {
             commands.put("shutdown", new Shutdown());
         }
 
-        for(BotCommand<?> cmd: commands.values()) {
+        for(BotCommand<?, ?> cmd: commands.values()) {
             cmd.setCore(this);
         }
 

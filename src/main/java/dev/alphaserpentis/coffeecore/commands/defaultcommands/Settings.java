@@ -15,7 +15,7 @@ import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 
 import java.io.IOException;
 
-public class Settings extends BotCommand<MessageEmbed> {
+public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEvent> {
 
     public Settings() {
         super(

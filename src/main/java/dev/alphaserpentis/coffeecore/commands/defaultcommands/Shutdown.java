@@ -9,7 +9,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 
 import java.time.Duration;
 
-public class Shutdown extends BotCommand<MessageEmbed> {
+public class Shutdown extends BotCommand<MessageEmbed, SlashCommandInteractionEvent> {
 
     public Shutdown() {
         super(

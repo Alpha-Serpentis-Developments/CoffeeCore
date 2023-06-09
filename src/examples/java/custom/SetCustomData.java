@@ -13,7 +13,7 @@ import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 
 import java.io.IOException;
 
-public class SetCustomData extends BotCommand<String> {
+public class SetCustomData extends BotCommand<String, SlashCommandInteractionEvent> {
 
     public SetCustomData() {
         super(
@@ -26,6 +26,7 @@ public class SetCustomData extends BotCommand<String> {
                 )
         );
     }
+
     @Override
     @NonNull
     public CommandResponse<String> runCommand(long userId, @NonNull SlashCommandInteractionEvent event) {

@@ -9,7 +9,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
-public class About extends BotCommand<MessageEmbed> {
+public class About extends BotCommand<MessageEmbed, SlashCommandInteractionEvent> {
 
     private static final String DEFAULT_DESCRIPTION = """
     A bot powered by Coffee Core!

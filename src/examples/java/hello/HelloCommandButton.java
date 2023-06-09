@@ -15,7 +15,7 @@ import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class HelloCommandButton extends ButtonCommand<MessageEmbed> {
+public class HelloCommandButton extends ButtonCommand<MessageEmbed, SlashCommandInteractionEvent> {
 
     public HelloCommandButton() {
         super(
@@ -49,12 +49,10 @@ public class HelloCommandButton extends ButtonCommand<MessageEmbed> {
     public void runButtonInteraction(@NonNull ButtonInteractionEvent event) {
         String key = convertComponentIdToKey(event.getComponentId());
 
-        if (key.equals("hello")) {
-            event.reply("Hello, " + event.getUser().getAsMention() + "!").queue();
-        } else if (key.equals("goodbye")) {
-            event.reply("Goodbye, " + event.getUser().getAsMention() + "!").queue();
-        } else if (key.equals("mystery")) {
-            event.reply("How did you click on this?").queue();
+        switch (key) {
+            case "hello" -> event.reply("Hello, " + event.getUser().getAsMention() + "!").queue();
+            case "goodbye" -> event.reply("Goodbye, " + event.getUser().getAsMention() + "!").queue();
+            case "mystery" -> event.reply("How did you click on this?").queue();
         }
     }
 

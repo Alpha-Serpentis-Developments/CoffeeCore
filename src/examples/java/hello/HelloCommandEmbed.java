@@ -7,7 +7,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import dev.alphaserpentis.coffeecore.commands.BotCommand;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 
-public class HelloCommandEmbed extends BotCommand<MessageEmbed> {
+public class HelloCommandEmbed extends BotCommand<MessageEmbed, SlashCommandInteractionEvent> {
 
     public HelloCommandEmbed() {
         super(

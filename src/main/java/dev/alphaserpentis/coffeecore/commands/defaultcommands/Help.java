@@ -7,7 +7,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
-public class Help extends BotCommand<MessageEmbed> {
+public class Help extends BotCommand<MessageEmbed, SlashCommandInteractionEvent> {
 
     public Help() {
         super(
@@ -26,7 +26,7 @@ public class Help extends BotCommand<MessageEmbed> {
         eb.setTitle("Help");
         eb.setDescription("List of all the commands provided by " + event.getJDA().getSelfUser().getName() + "!");
         eb.setFooter("Built using Coffee Core");
-        for(BotCommand<?> command: core.getCommandsHandler().getCommands()) {
+        for(BotCommand<?, ?> command: core.getCommandsHandler().getCommands()) {
             eb.addField(
                     command.getName(),
                     command.getDescription(),
