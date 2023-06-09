@@ -25,7 +25,7 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
     /**
      * Path to the server data file.
      */
-    public final Path serverJson;
+    private final Path pathToFile;
     /**
      * The mapping of server IDs to {@link ServerData}.
      */
@@ -34,7 +34,7 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
     public AbstractServerDataHandler(
             @NonNull Path path
     ) {
-        serverJson = path;
+        pathToFile = path;
     }
 
     /**
@@ -73,6 +73,15 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
     }
 
     /**
+     * Gets the {@link Path} to the server data file.
+     * @return {@link Path}
+     */
+    @NonNull
+    public Path getPathToFile() {
+        return pathToFile;
+    }
+
+    /**
      * Updates the server data file.
      * @throws IOException If the bot fails to write to the server data file.
      */
@@ -85,7 +94,7 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
     }
 
     protected void writeToJSON(@NonNull Gson gson, @NonNull Object data) throws IOException {
-        Writer writer = Files.newBufferedWriter(serverJson);
+        Writer writer = Files.newBufferedWriter(pathToFile);
         gson.toJson(data, writer);
         writer.close();
     }

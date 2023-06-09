@@ -16,6 +16,7 @@ import dev.alphaserpentis.coffeecore.serialization.ServerDataDeserializer;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.SelfUser;
 import net.dv8tion.jda.api.entities.channel.attribute.IGuildChannelContainer;
 import net.dv8tion.jda.api.sharding.ShardManager;
 
@@ -203,20 +204,34 @@ public class CoffeeCore {
     }
 
     /**
+     * Get the bot's {@link SelfUser} instance
+     * @return {@link SelfUser}
+     */
+    @NonNull
+    public SelfUser getSelfUser() {
+        if(getActiveContainer() instanceof JDA j)
+            return j.getSelfUser();
+        else if(getActiveContainer() instanceof ShardManager sm)
+            return sm.getShards().get(0).getSelfUser();
+        else
+            throw new IllegalStateException("The container has not been determined yet.");
+    }
+
+    /**
      * Shutdown the bot. This blocks the thread.
      * @param duration The duration to wait for the bot to shut down
      * @throws InterruptedException If the bot fails to shut down within the specified duration
      */
     public void shutdown(@NonNull Duration duration) throws InterruptedException {
         IGuildChannelContainer container = getActiveContainer();
-        if(container instanceof JDA) {
-            ((JDA) container).shutdown();
-            if(((JDA) container).awaitShutdown(duration)) {
-                ((JDA) container).shutdownNow();
-                ((JDA) container).awaitShutdown();
+        if(container instanceof JDA j) {
+            j.shutdown();
+            if(j.awaitShutdown(duration)) {
+                j.shutdownNow();
+                j.awaitShutdown();
             }
-        } else if(container instanceof ShardManager) {
-            ((ShardManager) container).shutdown();
+        } else if(container instanceof ShardManager sm) {
+            sm.shutdown();
         }
     }
 
@@ -288,11 +303,11 @@ public class CoffeeCore {
         if(jda != null || shardManager != null)
             throw new IllegalStateException("The container has already been determined.");
 
-        if(container instanceof JDA) {
-            jda = (JDA) container;
+        if(container instanceof JDA j) {
+            jda = j;
             jda.awaitReady();
-        } else if(container instanceof ShardManager) {
-            shardManager = (ShardManager) container;
+        } else if(container instanceof ShardManager sm) {
+            shardManager = sm;
             for(JDA jda: shardManager.getShardCache()) {
                 jda.awaitReady();
             }
@@ -308,10 +323,10 @@ public class CoffeeCore {
      */
     public void addEventListenersToContainer(@NonNull Object... listeners) {
         IGuildChannelContainer container = getActiveContainer();
-        if(container instanceof JDA) {
-            ((JDA) container).addEventListener(listeners);
-        } else if(container instanceof ShardManager) {
-            ((ShardManager) container).addEventListener(listeners);
+        if(container instanceof JDA j) {
+            j.addEventListener(listeners);
+        } else if(container instanceof ShardManager sm) {
+            sm.addEventListener(listeners);
         }
     }
 }

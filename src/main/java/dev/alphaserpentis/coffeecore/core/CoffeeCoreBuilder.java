@@ -240,6 +240,9 @@ public class CoffeeCoreBuilder<T> {
      * @see JDABuilder#create(String, Collection)
      * @see JDABuilder#createLight(String)
      * @see JDABuilder#createDefault(String)
+     * @see DefaultShardManagerBuilder#create(String, Collection)
+     * @see DefaultShardManagerBuilder#createLight(String)
+     * @see DefaultShardManagerBuilder#createDefault(String)
      */
     @NonNull
     @SuppressWarnings("unchecked")
