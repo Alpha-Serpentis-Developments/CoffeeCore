@@ -25,19 +25,28 @@ public class CommandsHandler extends ListenerAdapter {
      * The mapping of {@link BotCommand} that have been registered to the bot. This is used to check for commands that are already
      * registered and update them if necessary.
      */
-    public final HashMap<String, BotCommand<?, ?>> mappingOfCommands = new HashMap<>();
+    protected final HashMap<String, BotCommand<?, ?>> mappingOfCommands = new HashMap<>();
     /**
      * The {@link ExecutorService} that will be used to run the commands.
      */
-    public final ExecutorService executor;
+    protected final ExecutorService executor;
     /**
      * The {@link CoffeeCore} instance that this handler is attached to.
      */
-    public final CoffeeCore core;
+    protected CoffeeCore core;
 
-    public CommandsHandler(@NonNull CoffeeCore core, @NonNull ExecutorService executor) {
-        this.core = core;
+    public CommandsHandler(@NonNull ExecutorService executor) {
         this.executor = executor;
+    }
+
+    /**
+     * Sets the {@link CoffeeCore} instance that this handler is attached to. This should only be called once.
+     * @param core The {@link CoffeeCore} instance
+     */
+    public void setCore(@NonNull CoffeeCore core) {
+        if(this.core == null) {
+            this.core = core;
+        }
     }
 
     /**

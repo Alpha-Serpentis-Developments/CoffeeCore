@@ -20,6 +20,7 @@ import java.util.Collection;
 
 /**
  * Builder class for {@link CoffeeCore}.
+ * @param <T> Represents either a {@link JDABuilder} or {@link DefaultShardManagerBuilder}
  */
 public class CoffeeCoreBuilder<T> {
 
@@ -88,18 +89,12 @@ public class CoffeeCoreBuilder<T> {
     public CoffeeCore build(
             @NonNull String token
     ) {
-        BuilderHelper<?> builderHelper = new BuilderHelper<>(createBuilderInstance(token));
-
-        if(serverDataHandler != null) {
-            return new CoffeeCore(
-                    settings,
-                    builderHelper.build(),
-                    serverDataHandler,
-                    commandsHandler
-            );
-        } else {
-            return new CoffeeCore(settings, builderHelper.build());
-        }
+        return new CoffeeCore(
+                settings,
+                new BuilderHelper<>(createBuilderInstance(token)).build(),
+                serverDataHandler,
+                commandsHandler
+        );
     }
 
     /**

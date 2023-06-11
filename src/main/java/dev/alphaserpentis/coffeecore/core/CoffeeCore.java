@@ -57,28 +57,23 @@ public class CoffeeCore {
             @NonNull BotSettings settings,
             @NonNull IGuildChannelContainer container
     ) {
-        this.settings = settings;
+        this(settings, container, null, null);
+    }
 
-        try {
-            determineAndSetContainer(container);
+    public CoffeeCore(
+            @NonNull BotSettings settings,
+            @NonNull IGuildChannelContainer container,
+            @Nullable AbstractServerDataHandler<?> serverDataHandler
+    ) {
+        this(settings, container, serverDataHandler, null);
+    }
 
-            ContainerHelper containerHelper = new ContainerHelper(container);
-            Path path = Path.of(settings.getServerDataPath());
-            serverDataHandler = new ServerDataHandler<>(
-                    path,
-                    new TypeToken<>() {},
-                    new ServerDataDeserializer<>()
-            );
-
-            serverDataHandler.init(containerHelper);
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        commandsHandler = new CommandsHandler(this, Executors.newCachedThreadPool());
-
-        addEventListenersToContainer(this.commandsHandler, this.serverDataHandler);
+    public CoffeeCore(
+            @NonNull BotSettings settings,
+            @NonNull IGuildChannelContainer container,
+            @Nullable CommandsHandler commandsHandler
+    ) {
+        this(settings, container, null, commandsHandler);
     }
 
     public CoffeeCore(
@@ -111,8 +106,9 @@ public class CoffeeCore {
             System.exit(1);
         }
         this.commandsHandler = Objects.requireNonNullElseGet(
-                commandsHandler, () -> new CommandsHandler(this, Executors.newCachedThreadPool())
+                commandsHandler, () -> new CommandsHandler(Executors.newCachedThreadPool())
         );
+        this.commandsHandler.setCore(this);
 
         addEventListenersToContainer(this.commandsHandler, this.serverDataHandler);
     }
