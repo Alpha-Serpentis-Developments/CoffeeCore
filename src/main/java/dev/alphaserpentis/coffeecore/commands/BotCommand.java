@@ -2,6 +2,7 @@ package dev.alphaserpentis.coffeecore.commands;
 
 import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
+import io.reactivex.rxjava3.annotations.Experimental;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -12,11 +13,15 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.InteractionHook;
+import net.dv8tion.jda.api.interactions.commands.Command;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 
 import java.awt.*;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -27,9 +32,23 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
+    public enum CommandVisibility {
+        /**
+         * A slash command that will be registered to the bot. Can be accessed globally
+         * @see JDA#upsertCommand(String, String)
+         */
+        GLOBAL,
+        /**
+         * A slash command that will be registered on a per-guild basis. Can only be accessed in the guild it is registered in.
+         * @see Guild#upsertCommand(String, String)
+         */
+        GUILD
+    }
+
     /**
      * Types of ephemeral available for commands.
      */
+    @Experimental
     public enum TypeOfEphemeral {
         /**
          * The default ephemeral type. This will be set to the server's default ephemeral type.
@@ -41,6 +60,9 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         DYNAMIC
     }
 
+    /**
+     * Static class builder helper for {@link BotCommand}
+     */
     public static class BotCommandOptions {
         protected String name;
         protected String description;
@@ -52,7 +74,10 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         protected boolean deferReplies = false;
         protected boolean useRatelimits = false;
         protected boolean messagesExpire = false;
+        protected CommandVisibility commandVisibility = CommandVisibility.GLOBAL;
+        protected Command.Type commandType = Command.Type.SLASH;
         protected TypeOfEphemeral typeOfEphemeral = TypeOfEphemeral.DEFAULT;
+        protected ArrayList<Long> guildsToRegisterIn = new ArrayList<>();
 
         public BotCommandOptions() {}
 
@@ -64,6 +89,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             this.description = description;
         }
 
+        @Deprecated
         public BotCommandOptions(
                 @NonNull String name,
                 @NonNull String description,
@@ -78,6 +104,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             this.typeOfEphemeral = typeOfEphemeral;
         }
 
+        @Deprecated
         public BotCommandOptions(
                 @NonNull String name,
                 @NonNull String description,
@@ -94,6 +121,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             this.deferReplies = deferReplies;
         }
 
+        @Deprecated
         public BotCommandOptions(
                 @NonNull String name,
                 @NonNull String description,
@@ -120,78 +148,173 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             this.messagesExpire = messagesExpire;
         }
 
+        /**
+         * Sets the name of the command
+         * @param name The name of the command
+         * @return {@link BotCommandOptions}
+         */
         @NonNull
         public BotCommandOptions setName(@NonNull String name) {
             this.name = name;
             return this;
         }
 
+        /**
+         * Sets the description of the command
+         * @param description The description of the command
+         * @return {@link BotCommandOptions}
+         */
         @NonNull
         public BotCommandOptions setDescription(@NonNull String description) {
             this.description = description;
             return this;
         }
 
+        /**
+         * Sets the ratelimit length for the command
+         * @param ratelimitLength The length of the ratelimit in seconds
+         * @return {@link BotCommandOptions}
+         */
         @NonNull
         public BotCommandOptions setRatelimitLength(long ratelimitLength) {
             this.ratelimitLength = ratelimitLength;
             return this;
         }
 
+        /**
+         * Sets the message expiration length for the command
+         * @param messageExpirationLength The length of the message expiration in seconds
+         * @return {@link BotCommandOptions}
+         */
         @NonNull
         public BotCommandOptions setMessageExpirationLength(long messageExpirationLength) {
             this.messageExpirationLength = messageExpirationLength;
             return this;
         }
 
+        /**
+         * Sets the command to determine if it'll only ever embed messages
+         * @param onlyEmbed Whether the command will only ever embed messages
+         * @return {@link BotCommandOptions}
+         */
         @NonNull
         public BotCommandOptions setOnlyEmbed(boolean onlyEmbed) {
             this.onlyEmbed = onlyEmbed;
             return this;
         }
 
+        /**
+         * Sets the command to determine if its messages will be ephemeral
+         * @param onlyEphemeral Whether the command will only ever send ephemeral messages
+         * @return {@link BotCommandOptions}
+         */
         @NonNull
         public BotCommandOptions setOnlyEphemeral(boolean onlyEphemeral) {
             this.onlyEphemeral = onlyEphemeral;
             return this;
         }
 
+        /**
+         * Sets the command to be active or not for use
+         * @param isActive Whether the command is active or not
+         * @return {@link BotCommandOptions}
+         */
         @NonNull
         public BotCommandOptions setActive(boolean isActive) {
             this.isActive = isActive;
             return this;
         }
 
+        /**
+         * Sets the command to defer replies
+         * @param deferReplies Whether the command will defer replies
+         * @return {@link BotCommandOptions}
+         */
         @NonNull
         public BotCommandOptions setDeferReplies(boolean deferReplies) {
             this.deferReplies = deferReplies;
             return this;
         }
 
+        /**
+         * Sets the command to use ratelimits
+         * @param useRatelimits Whether the command will use ratelimits
+         * @return {@link BotCommandOptions}
+         */
         @NonNull
         public BotCommandOptions setUseRatelimits(boolean useRatelimits) {
             this.useRatelimits = useRatelimits;
             return this;
         }
 
+        /**
+         * Sets the command to make messages expire
+         * @param messagesExpire Whether the command will make messages expire
+         * @return {@link BotCommandOptions}
+         */
         @NonNull
         public BotCommandOptions setMessagesExpire(boolean messagesExpire) {
             this.messagesExpire = messagesExpire;
             return this;
         }
 
+        /**
+         * Sets the command's visibility
+         * @param commandVisibility The command's visibility
+         * @return {@link BotCommandOptions}
+         */
+        @NonNull
+        public BotCommandOptions setCommandVisibility(@NonNull CommandVisibility commandVisibility) {
+            this.commandVisibility = commandVisibility;
+            return this;
+        }
+
+        /**
+         * Sets the command's type
+         * @param commandType The command's type
+         * @return {@link BotCommandOptions}
+         */
+        @NonNull
+        public BotCommandOptions setCommandType(@NonNull Command.Type commandType) {
+            this.commandType = commandType;
+            return this;
+        }
+
+        /**
+         * Sets the command's type of ephemeral
+         * @param typeOfEphemeral The command's type of ephemeral
+         * @return {@link BotCommandOptions}
+         */
         @NonNull
         public BotCommandOptions setTypeOfEphemeral(@NonNull TypeOfEphemeral typeOfEphemeral) {
             this.typeOfEphemeral = typeOfEphemeral;
             return this;
         }
 
+        /**
+         * Sets the command's guilds to register in
+         * <p>
+         * This is only used if the command's visibility is {@link CommandVisibility#GUILD}. To apply to all guilds, leave the array empty!
+         * @param guildsToRegisterIn The command's guilds to register in
+         * @return {@link BotCommandOptions}
+         */
+        @NonNull
+        public BotCommandOptions setGuildsToRegisterIn(@NonNull ArrayList<Long> guildsToRegisterIn) {
+            this.guildsToRegisterIn = guildsToRegisterIn;
+            return this;
+        }
+
+        /**
+         * Validates the command options
+         * @return Whether the command options are valid
+         */
         public boolean validate() {
-            return name != null && description != null;
+            return name != null && (description != null || (commandType == Command.Type.USER || commandType == Command.Type.MESSAGE));
         }
     }
 
     protected final HashMap<Long, Long> ratelimitMap = new HashMap<>();
+    protected final ArrayList<Long> guildsToRegisterIn;
     protected final String name;
     protected final String description;
     protected final long ratelimitLength;
@@ -202,6 +325,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     protected final boolean deferReplies;
     protected final boolean useRatelimits;
     protected final boolean messagesExpire;
+    protected final CommandVisibility commandVisibility;
+    protected final Command.Type commandType;
     protected final TypeOfEphemeral ephemeralType;
     protected long commandId;
     protected CoffeeCore core;
@@ -212,7 +337,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
     public BotCommand(@NonNull BotCommandOptions options) {
         if(!options.validate())
-            throw new IllegalArgumentException("Name and description weren't set!");
+            throw new IllegalArgumentException("Validation failed! Ensure your command is configured properly.");
 
         name = options.name;
         description = options.description;
@@ -224,7 +349,10 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         deferReplies = options.deferReplies;
         useRatelimits = options.useRatelimits;
         messagesExpire = options.messagesExpire;
+        commandVisibility = options.commandVisibility;
+        commandType = options.commandType;
         ephemeralType = options.typeOfEphemeral;
+        guildsToRegisterIn = options.guildsToRegisterIn;
     }
 
     /**
@@ -244,7 +372,23 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @param jda {@link JDA} instance
      */
     public void updateCommand(@NonNull JDA jda) {
-        jda.upsertCommand(name, description)
+        CommandData cmdData = getJDACommandData(getCommandType(), getName(), getDescription());
+
+        jda
+                .upsertCommand(cmdData)
+                .queue(command -> commandId = command.getIdLong());
+    }
+
+    /**
+     * Guild-specific method used to update the command. This method is called when the bot is started and when the command is updated.
+     * <p><b>This method should be overridden if the command uses subcommands.</b></p>
+     * @param guild {@link Guild} to update the command in
+     */
+    public void updateCommand(@NonNull Guild guild) {
+        CommandData cmdData = getJDACommandData(getCommandType(), getName(), getDescription());
+
+        guild
+                .upsertCommand(cmdData)
                 .queue(command -> commandId = command.getIdLong());
     }
 
@@ -259,6 +403,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @return a nonnull {@link CommandResponse} containing either a {@link MessageEmbed} or String
      */
     @NonNull
+    @Experimental
     public CommandResponse<T> beforeRunCommand(long userId, @NonNull E event) {
         throw new UnsupportedOperationException("beforeRunCommand needs to be overridden!");
     }
@@ -294,7 +439,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     public String getName() {
         return name;
     }
-    @NonNull
+    @Nullable
     public String getDescription() {
         return description;
     }
@@ -332,8 +477,21 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     public boolean doMessagesExpire() {
         return messagesExpire;
     }
+    @NonNull
     public TypeOfEphemeral getEphemeralType() {
         return ephemeralType;
+    }
+    @NonNull
+    public CommandVisibility getCommandVisibility() {
+        return commandVisibility;
+    }
+    @NonNull
+    public Command.Type getCommandType() {
+        return commandType;
+    }
+    @NonNull
+    public CoffeeCore getCore() {
+        return core;
     }
 
     /**
@@ -511,12 +669,42 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     }
 
     /**
+     * Provides the basic command data for a JDA command
+     * @param type The type of command
+     * @param name The name of the command
+     * @param desc The description of the command
+     * @return The command data
+     * @throws IllegalArgumentException If the command type is invalid or if the command is a slash command and does not have a description
+     */
+    @NonNull
+    protected static CommandData getJDACommandData(@NonNull Command.Type type, @NonNull String name, @Nullable String desc) {
+        switch(type) {
+            case SLASH -> {
+                if(desc == null)
+                    throw new IllegalArgumentException("Slash commands must have a description");
+
+                return Commands.slash(name, desc);
+            }
+            case USER -> {
+                return Commands.user(name);
+            }
+            case MESSAGE -> {
+                return Commands.message(name);
+            }
+            default -> throw new IllegalArgumentException("Invalid command type");
+        }
+    }
+
+    /**
      * Generates a command response for when a command is inactive
      * @return The command response
      */
     @NonNull
     private static CommandResponse<MessageEmbed> inactiveCommandResponse() {
-        return new CommandResponse<>(new EmbedBuilder().setDescription("This command is currently not active").build(), null);
+        return new CommandResponse<>(
+                new EmbedBuilder().setDescription("This command is currently not active").setColor(Color.RED).build(),
+                null
+        );
     }
 }
 

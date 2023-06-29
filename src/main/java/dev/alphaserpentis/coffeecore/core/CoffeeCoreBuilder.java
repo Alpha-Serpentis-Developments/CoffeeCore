@@ -56,7 +56,7 @@ public class CoffeeCoreBuilder<T> {
     protected BotSettings settings = null;
     protected AbstractServerDataHandler<?> serverDataHandler = null;
     protected CommandsHandler commandsHandler = null;
-    protected ChunkingFilter chunkingFilter = ChunkingFilter.ALL;
+    protected ChunkingFilter chunkingFilter = ChunkingFilter.NONE;
     protected Collection<CacheFlag> enabledCacheFlags = new ArrayList<>();
     protected Collection<CacheFlag> disabledCacheFlags = new ArrayList<>() {
         {
@@ -64,11 +64,7 @@ public class CoffeeCoreBuilder<T> {
             add(CacheFlag.VOICE_STATE);
         }
     };
-    protected Collection<GatewayIntent> enabledGatewayIntents = new ArrayList<>() {
-        {
-            add(GatewayIntent.GUILD_MEMBERS);
-        }
-    };
+    protected Collection<GatewayIntent> enabledGatewayIntents = new ArrayList<>();
     protected Collection<GatewayIntent> disabledGatewayIntents = new ArrayList<>();
     protected BuilderConfiguration builderConfiguration = BuilderConfiguration.DEFAULT;
     protected MemberCachePolicy memberCachePolicy = MemberCachePolicy.NONE;
@@ -79,8 +75,7 @@ public class CoffeeCoreBuilder<T> {
      * Builds a {@link CoffeeCore} instance with the configured settings. Initialization will begin inside Coffee Core's
      * constructor.
      * Coffee Core will shut down if the bot is misconfigured within Discord (e.g., invalid token, invalid permissions).
-     * <p><b>Be aware that {@link CoffeeCoreBuilder#chunkingFilter}, {@link CoffeeCoreBuilder#disabledCacheFlags},
-     * {@link CoffeeCoreBuilder#enabledGatewayIntents}, {@link CoffeeCoreBuilder#builderConfiguration}, and
+     * <p><b>Be aware that {@link CoffeeCoreBuilder#disabledCacheFlags}, {@link CoffeeCoreBuilder#builderConfiguration}, and
      * {@link CoffeeCoreBuilder#memberCachePolicy} contain default values.</b>
      * @param token The Discord bot token.
      * @return {@link CoffeeCore}.

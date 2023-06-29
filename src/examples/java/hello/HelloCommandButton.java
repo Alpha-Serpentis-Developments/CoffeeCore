@@ -1,16 +1,15 @@
 package hello;
 
+import dev.alphaserpentis.coffeecore.commands.ButtonCommand;
+import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
-import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
-import dev.alphaserpentis.coffeecore.commands.ButtonCommand;
-import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,7 +57,7 @@ public class HelloCommandButton extends ButtonCommand<MessageEmbed, SlashCommand
 
     @Override
     @NonNull
-    public Collection<ItemComponent> addButtonsToMessage(@NonNull GenericCommandInteractionEvent event) {
+    public Collection<ItemComponent> addButtonsToMessage(@NonNull SlashCommandInteractionEvent event) {
         return Arrays.asList(new ItemComponent[] {
                 getButton("hello"),
                 getButton("goodbye"),

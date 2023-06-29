@@ -15,6 +15,12 @@ import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import java.util.Collection;
 import java.util.HashMap;
 
+/**
+ * A command that can utilize buttons
+ * @param <T> The type of object to return when the command is executed.
+ * @param <E> The type of event that triggers the command.
+ * @see dev.alphaserpentis.coffeecore.commands.BotCommand
+ */
 public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent> extends BotCommand<T, E> {
     /**
      * A {@link HashMap} of buttons that can be added to a message.
@@ -40,7 +46,7 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
      * @return A collection of buttons to add to the message. The collection may be empty.
      */
     @NonNull
-    public abstract Collection<ItemComponent> addButtonsToMessage(@NonNull final GenericCommandInteractionEvent event);
+    public abstract Collection<ItemComponent> addButtonsToMessage(@NonNull final E event);
 
     /**
      * Get a {@link Button} by its key.

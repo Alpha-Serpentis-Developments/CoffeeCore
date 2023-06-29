@@ -121,8 +121,8 @@ public class CommandsHandler extends ListenerAdapter {
     @SuppressWarnings("unchecked")
     public void onSlashCommandInteraction(@NonNull SlashCommandInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?, SlashCommandInteractionEvent> cmd = (BotCommand<?, SlashCommandInteractionEvent>) getCommand(event.getName());
-            Message msg = cmd.handleReply(event, Objects.requireNonNull(cmd));
+            BotCommand<?, SlashCommandInteractionEvent> cmd = Objects.requireNonNull((BotCommand<?, SlashCommandInteractionEvent>) getCommand(event.getName()));
+            Message msg = cmd.handleReply(event, cmd);
 
             if(cmd.doMessagesExpire())
                 BotCommand.letMessageExpire(cmd, msg);
@@ -133,8 +133,8 @@ public class CommandsHandler extends ListenerAdapter {
     @SuppressWarnings("unchecked")
     public void onUserContextInteraction(@NonNull UserContextInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?, UserContextInteractionEvent> cmd = (BotCommand<?, UserContextInteractionEvent>) getCommand(event.getName());
-            Message msg = cmd.handleReply(event, Objects.requireNonNull(cmd));
+            BotCommand<?, UserContextInteractionEvent> cmd = Objects.requireNonNull((BotCommand<?, UserContextInteractionEvent>) getCommand(event.getName()));
+            Message msg = cmd.handleReply(event, cmd);
 
             if(cmd.doMessagesExpire())
                 BotCommand.letMessageExpire(cmd, msg);
@@ -145,8 +145,8 @@ public class CommandsHandler extends ListenerAdapter {
     @SuppressWarnings("unchecked")
     public void onMessageContextInteraction(@NonNull MessageContextInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?, MessageContextInteractionEvent> cmd = (BotCommand<?, MessageContextInteractionEvent>) getCommand(event.getName());
-            Message msg = cmd.handleReply(event, Objects.requireNonNull(cmd));
+            BotCommand<?, MessageContextInteractionEvent> cmd = Objects.requireNonNull((BotCommand<?, MessageContextInteractionEvent>) getCommand(event.getName()));
+            Message msg = cmd.handleReply(event, cmd);
 
             if(cmd.doMessagesExpire())
                 BotCommand.letMessageExpire(cmd, msg);
@@ -156,7 +156,7 @@ public class CommandsHandler extends ListenerAdapter {
     @Override
     public void onButtonInteraction(@NonNull ButtonInteractionEvent event) {
         executor.submit(() -> {
-            ButtonCommand<?, ?> cmd = (ButtonCommand<?, ?>) getCommand(event.getButton().getId().substring(0, event.getButton().getId().indexOf("_")));
+            ButtonCommand<?, ?> cmd = Objects.requireNonNull((ButtonCommand<?, ?>) getCommand(event.getButton().getId().substring(0, event.getButton().getId().indexOf("_"))));
             cmd.runButtonInteraction(event);
         });
     }
@@ -164,7 +164,7 @@ public class CommandsHandler extends ListenerAdapter {
     @Override
     public void onModalInteraction(@NonNull ModalInteractionEvent event) {
         executor.submit(() -> {
-            ModalCommand cmd = (ModalCommand) getCommand(event.getModalId().substring(0, event.getModalId().indexOf("_")));
+            ModalCommand cmd = Objects.requireNonNull((ModalCommand) getCommand(event.getModalId().substring(0, event.getModalId().indexOf("_"))));
             cmd.runModalInteraction(event);
         });
     }
