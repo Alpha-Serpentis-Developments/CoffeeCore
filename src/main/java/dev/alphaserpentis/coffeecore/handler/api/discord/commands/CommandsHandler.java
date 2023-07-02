@@ -7,6 +7,7 @@ import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent;
@@ -61,42 +62,79 @@ public class CommandsHandler extends ListenerAdapter {
             boolean updateCommands
     ) {
         List<JDA> shards = core.isSharded() ? core.getShardManager().getShards() : List.of(core.getJda());
-        List<Command> listOfActiveCommands;
-        List<String> detectedCommandNames = new ArrayList<>();
+        List<Command> listOfActiveGlobalCommands;
+        List<String> detectedGlobalCommandNames = new ArrayList<>(), detectedGuildCommandNames = new ArrayList<>();
+
+        this.mappingOfCommands.putAll(mappingOfCommands);
 
         for(JDA shard: shards) {
-            listOfActiveCommands = shard.retrieveCommands().complete();
+            listOfActiveGlobalCommands = shard.retrieveCommands().complete();
 
-            this.mappingOfCommands.putAll(mappingOfCommands);
-
-            // Checks for the detected commands
-            for (Iterator<Command> it = listOfActiveCommands.iterator(); it.hasNext(); ) {
+            // Checks for the detected global commands
+            for (Iterator<Command> it = listOfActiveGlobalCommands.iterator(); it.hasNext(); ) {
                 Command cmd = it.next();
                 if(mappingOfCommands.containsKey(cmd.getName())) {
                     BotCommand<?, ?> botCmd = mappingOfCommands.get(cmd.getName());
                     botCmd.setCommandId(cmd.getIdLong());
-                    if(updateCommands)
+                    if(updateCommands) {
                         botCmd.updateCommand(shard);
+                    }
 
-                    detectedCommandNames.add(cmd.getName());
+                    detectedGlobalCommandNames.add(cmd.getName());
 
                     it.remove();
                 }
             }
 
-            // Fills in any gaps or removes any commands
-            for(Command cmd: listOfActiveCommands) { // Removes unused commands
+            // Fills in any gaps or removes any global commands
+            for(Command cmd: listOfActiveGlobalCommands) { // Removes unused global commands
                 shard.deleteCommandById(cmd.getId()).complete();
             }
 
-            if(detectedCommandNames.size() < mappingOfCommands.size()) { // Adds new commands
+            if(detectedGlobalCommandNames.size() < mappingOfCommands.size()) { // Adds new global commands
                 List<String> missingCommands = new ArrayList<>(mappingOfCommands.keySet());
 
-                missingCommands.removeAll(detectedCommandNames);
+                missingCommands.removeAll(detectedGlobalCommandNames);
 
                 for(String cmdName: missingCommands) {
                     BotCommand<?, ?> cmd = mappingOfCommands.get(cmdName);
                     cmd.updateCommand(shard);
+                }
+            }
+
+            // Checks for the detected guild commands
+            for(Guild guild: shard.getGuilds()) {
+                List<Command> listOfActiveGuildCommands = guild.retrieveCommands().complete();
+
+                for (Iterator<Command> it = listOfActiveGuildCommands.iterator(); it.hasNext(); ) {
+                    Command cmd = it.next();
+                    if(mappingOfCommands.containsKey(cmd.getName())) {
+                        BotCommand<?, ?> botCmd = mappingOfCommands.get(cmd.getName());
+                        botCmd.setCommandId(cmd.getIdLong());
+                        if(botCmd.getGuildsToRegisterIn().size() == 0 || botCmd.getGuildsToRegisterIn().contains(guild.getIdLong())) {
+                            botCmd.updateCommand(guild);
+                        }
+
+                        detectedGuildCommandNames.add(cmd.getName());
+
+                        it.remove();
+                    }
+                }
+
+                // Fills in any gaps or removes any guild commands
+                for(Command cmd: listOfActiveGuildCommands) { // Removes unused guild commands
+                    guild.deleteCommandById(cmd.getId()).complete();
+                }
+
+                if(detectedGuildCommandNames.size() < mappingOfCommands.size()) { // Adds new guild commands
+                    List<String> missingCommands = new ArrayList<>(mappingOfCommands.keySet());
+
+                    missingCommands.removeAll(detectedGuildCommandNames);
+
+                    for(String cmdName: missingCommands) {
+                        BotCommand<?, ?> cmd = mappingOfCommands.get(cmdName);
+                        cmd.updateCommand(guild);
+                    }
                 }
             }
         }

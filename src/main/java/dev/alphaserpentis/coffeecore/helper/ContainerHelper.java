@@ -30,8 +30,8 @@ public class ContainerHelper {
      */
     @NonNull
     public List<Guild> getGuilds() {
-        if(container instanceof JDA) {
-            return ((JDA) container).getGuilds();
+        if(container instanceof JDA j) {
+            return j.getGuilds();
         } else {
             return ((ShardManager) container).getGuilds();
         }
@@ -44,8 +44,8 @@ public class ContainerHelper {
      * @see ShardManager#setActivity(Activity)
      */
     public void setActivity(@NonNull Activity activity) {
-        if(container instanceof JDA) {
-            ((JDA) container).getPresence().setActivity(activity);
+        if(container instanceof JDA j) {
+            j.getPresence().setActivity(activity);
         } else {
             ((ShardManager) container).setActivity(activity);
         }

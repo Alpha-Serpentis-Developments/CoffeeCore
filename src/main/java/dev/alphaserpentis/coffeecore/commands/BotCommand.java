@@ -22,6 +22,7 @@ import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import java.awt.*;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -493,6 +494,10 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     public CoffeeCore getCore() {
         return core;
     }
+    @NonNull
+    public ArrayList<Long> getGuildsToRegisterIn() {
+        return guildsToRegisterIn;
+    }
 
     /**
      * Handles the reply of a command.
@@ -518,6 +523,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @return {@link WebhookMessageCreateAction}
      */
     @NonNull
+    @SuppressWarnings("unchecked")
     protected WebhookMessageCreateAction<?> processDeferredCommand(
             @NonNull E event
     ) {
@@ -525,7 +531,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         try {
             boolean msgIsEphemeral;
             CommandResponse<?> responseFromCommand;
-            Object response;
+            T[] response;
 
             msgIsEphemeral = sendAsEphemeral(this, event.getGuild());
             if (isOnlyEmbed()) {
@@ -540,19 +546,19 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
                     event.deferReply(responseBeforeRunning.messageIsEphemeral()).complete();
                     if(responseBeforeRunning.messageResponse() != null) {
-                        MessageEmbed message = (MessageEmbed) responseBeforeRunning.messageResponse();
+                        MessageEmbed[] messages = (MessageEmbed[]) responseBeforeRunning.messageResponse();
 
-                        event.replyEmbeds(message).complete();
+                        event.replyEmbeds(Arrays.asList(messages)).complete();
                     }
                 }
 
                 responseFromCommand = isActive() ? runCommand(event.getUser().getIdLong(), event) : inactiveCommandResponse();
-                response = responseFromCommand.messageResponse();
+                response = (T[]) responseFromCommand.messageResponse();
                 if (isUsingRatelimits() && !isUserRatelimited(event.getUser().getIdLong())) {
                     ratelimitMap.put(event.getUser().getIdLong(), Instant.now().getEpochSecond() + getRatelimitLength());
                 }
 
-                return hook.sendMessageEmbeds((MessageEmbed) response).setEphemeral(responseFromCommand.messageIsEphemeral());
+                return hook.sendMessageEmbeds(Arrays.asList((MessageEmbed[]) response)).setEphemeral(responseFromCommand.messageIsEphemeral());
             } else {
                 if(getEphemeralType() == TypeOfEphemeral.DEFAULT) {
                     if (!msgIsEphemeral && event.getGuild() != null) {
@@ -565,17 +571,17 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
                     event.deferReply(responseBeforeRunning.messageIsEphemeral()).complete();
                     if(responseBeforeRunning.messageResponse() != null) {
-                        event.reply((String) responseBeforeRunning.messageResponse()).complete();
+                        event.reply((String) responseBeforeRunning.messageResponse()[0]).complete();
                     }
                 }
 
                 responseFromCommand = isActive() ? runCommand(event.getUser().getIdLong(), event) : inactiveCommandResponse();
-                response = responseFromCommand.messageResponse();
+                response = (T[]) responseFromCommand.messageResponse();
                 if (isUsingRatelimits() && !isUserRatelimited(event.getUser().getIdLong())) {
                     ratelimitMap.put(event.getUser().getIdLong(), Instant.now().getEpochSecond() + getRatelimitLength());
                 }
 
-                return hook.sendMessage((String) response);
+                return hook.sendMessage((String) response[0]);
             }
         } catch(Exception e) {
             return hook.sendMessageEmbeds(handleError(e));
@@ -587,6 +593,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @param event {@link E} that contains the interaction
      * @return {@link ReplyCallbackAction}
      */
+    @SuppressWarnings("unchecked")
     @NonNull
     protected ReplyCallbackAction processNonDeferredCommand(
             @NonNull E event
@@ -594,24 +601,24 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         try {
             boolean msgIsEphemeral;
             CommandResponse<?> responseFromCommand;
-            Object response;
+            T[] response;
             ReplyCallbackAction reply;
 
             responseFromCommand = isActive() ? runCommand(event.getUser().getIdLong(), event) : inactiveCommandResponse();
-            response = responseFromCommand.messageResponse();
+            response = (T[]) responseFromCommand.messageResponse();
             msgIsEphemeral = sendAsEphemeral(this, event.getGuild());
 
             if (isOnlyEmbed()) {
                 if (!msgIsEphemeral && event.getGuild() != null) {
-                    reply = event.replyEmbeds((MessageEmbed) response).setEphemeral(false);
+                    reply = event.replyEmbeds(Arrays.asList((MessageEmbed[]) response)).setEphemeral(false);
                 } else {
-                    reply = event.replyEmbeds((MessageEmbed) response).setEphemeral(msgIsEphemeral);
+                    reply = event.replyEmbeds(Arrays.asList((MessageEmbed[]) response)).setEphemeral(msgIsEphemeral);
                 }
             } else {
                 if (!msgIsEphemeral && event.getGuild() != null) {
-                    reply = event.reply((String) response).setEphemeral(false);
+                    reply = event.reply((String) response[0]).setEphemeral(false);
                 } else {
-                    reply = event.reply((String) response).setEphemeral(msgIsEphemeral);
+                    reply = event.reply((String) response[0]).setEphemeral(msgIsEphemeral);
                 }
             }
 
