@@ -74,6 +74,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         protected boolean isActive = true;
         protected boolean deferReplies = false;
         protected boolean useRatelimits = false;
+        protected boolean forgiveRatelimitOnError = false;
         protected boolean messagesExpire = false;
         protected CommandVisibility commandVisibility = CommandVisibility.GLOBAL;
         protected Command.Type commandType = Command.Type.SLASH;
@@ -249,6 +250,17 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         }
 
         /**
+         * Sets the command to forgive ratelimits on an error
+         * @param forgiveRatelimitOnError Whether the command will forgive ratelimits on an error
+         * @return {@link BotCommandOptions}
+         */
+        @NonNull
+        public BotCommandOptions setForgiveRatelimitOnError(boolean forgiveRatelimitOnError) {
+            this.forgiveRatelimitOnError = forgiveRatelimitOnError;
+            return this;
+        }
+
+        /**
          * Sets the command to make messages expire
          * @param messagesExpire Whether the command will make messages expire
          * @return {@link BotCommandOptions}
@@ -325,6 +337,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     protected final boolean isActive;
     protected final boolean deferReplies;
     protected final boolean useRatelimits;
+    protected final boolean forgiveRatelimitOnError;
     protected final boolean messagesExpire;
     protected final CommandVisibility commandVisibility;
     protected final Command.Type commandType;
@@ -349,6 +362,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         isActive = options.isActive;
         deferReplies = options.deferReplies;
         useRatelimits = options.useRatelimits;
+        forgiveRatelimitOnError = options.forgiveRatelimitOnError;
         messagesExpire = options.messagesExpire;
         commandVisibility = options.commandVisibility;
         commandType = options.commandType;
@@ -466,12 +480,16 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     public boolean isUsingRatelimits() {
         return useRatelimits;
     }
+    public boolean isForgivingRatelimitOnError() {
+        return forgiveRatelimitOnError;
+    }
     public boolean isUserRatelimited(long userId) {
         long ratelimit = ratelimitMap.getOrDefault(userId, 0L);
 
         if(ratelimit != 0) {
             return ratelimit > Instant.now().getEpochSecond();
         } else {
+            ratelimitMap.remove(userId);
             return false;
         }
     }
@@ -584,6 +602,9 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                 return hook.sendMessage((String) response[0]);
             }
         } catch(Exception e) {
+            if(isForgivingRatelimitOnError()) {
+                ratelimitMap.remove(event.getUser().getIdLong());
+            }
             return hook.sendMessageEmbeds(handleError(e));
         }
     }
