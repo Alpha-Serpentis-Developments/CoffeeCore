@@ -17,13 +17,11 @@ public class SetCustomData extends BotCommand<String, SlashCommandInteractionEve
 
     public SetCustomData() {
         super(
-                new BotCommandOptions(
-                        "set",
-                        "Sets the custom data of the server.",
-                        false,
-                        false,
-                        TypeOfEphemeral.DEFAULT
-                )
+                new BotCommandOptions()
+                        .setName("set")
+                        .setDescription("Sets the custom data of the server")
+                        .setOnlyEmbed(false)
+                        .setOnlyEphemeral(false)
         );
     }
 
@@ -35,7 +33,7 @@ public class SetCustomData extends BotCommand<String, SlashCommandInteractionEve
         String subcommand = event.getSubcommandName();
 
         if(subcommand.equals("view")) {
-            return new CommandResponse<>("The custom data of this server is: " + customServerData.getCustomData(), isOnlyEphemeral());
+            return new CommandResponse<>(isOnlyEphemeral(), "The custom data of this server is: " + customServerData.getCustomData());
         } else if(subcommand.equals("set")) {
             String data = event.getOption("data").getAsString();
             customServerData.setCustomData(data);
@@ -44,7 +42,7 @@ public class SetCustomData extends BotCommand<String, SlashCommandInteractionEve
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            return new CommandResponse<>("The custom data of this server has been set to: " + data, isOnlyEphemeral());
+            return new CommandResponse<>(isOnlyEphemeral(), "The custom data of this server has been set to: " + data);
         } else {
             throw new RuntimeException("Unknown subcommand: " + subcommand);
         }

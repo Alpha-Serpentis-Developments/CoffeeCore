@@ -18,13 +18,11 @@ public class HelloCommandButton extends ButtonCommand<MessageEmbed, SlashCommand
 
     public HelloCommandButton() {
         super(
-                new BotCommandOptions(
-                        "hellobutton",
-                        "Says hello to you using a button!",
-                        true,
-                        false,
-                        TypeOfEphemeral.DEFAULT
-                )
+                new BotCommandOptions()
+                        .setName("hellobutton")
+                        .setDescription("Says hello to you using a button!")
+                        .setOnlyEmbed(true)
+                        .setDeferReplies(true)
         );
 
         addButton("hello", ButtonStyle.PRIMARY, "Hello!", false);

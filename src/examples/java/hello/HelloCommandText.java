@@ -9,13 +9,11 @@ public class HelloCommandText extends BotCommand<String, SlashCommandInteraction
 
     public HelloCommandText() {
         super(
-                new BotCommandOptions(
-                        "hello",
-                        "Says hello to you!",
-                        false,
-                        false,
-                        TypeOfEphemeral.DEFAULT
-                )
+                new BotCommandOptions()
+                        .setName("hello")
+                        .setDescription("Says hello to you!")
+                        .setOnlyEmbed(false)
+                        .setOnlyEphemeral(false)
         );
     }
 
@@ -26,7 +24,8 @@ public class HelloCommandText extends BotCommand<String, SlashCommandInteraction
             @NonNull SlashCommandInteractionEvent event
     ) {
         return new CommandResponse<>(
-                "Hello, " + event.getUser().getAsMention() + "!", isOnlyEphemeral()
+                isOnlyEphemeral(),
+                "Hello, " + event.getUser().getAsMention() + "!"
         );
     }
 }

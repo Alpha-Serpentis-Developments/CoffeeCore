@@ -6,20 +6,28 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 /**
  * A record class that holds the response to a command. If both {@code messageResponse} and {@code messageIsEphemeral}
  * are null, an {@link IllegalArgumentException} will be thrown.
- * @param messageResponse The response to the command which is either an array of {@link MessageEmbed} or a {@link String}.
+ * @param messageResponse The response to the command which is var args of several {@link MessageEmbed} or a <b>SINGLE</b> {@link String}
  * @param messageIsEphemeral Whether the response should be ephemeral or not.
  * @param <T> The type of the response which must be either a {@link MessageEmbed} or a {@link String}.
  */
-public record CommandResponse<T>(T[] messageResponse, Boolean messageIsEphemeral) {
+public record CommandResponse<T>(Boolean messageIsEphemeral, T... messageResponse) {
+    @SafeVarargs
     public CommandResponse(
-            @Nullable T[] messageResponse,
-            @Nullable Boolean messageIsEphemeral
+            @Nullable Boolean messageIsEphemeral,
+            @Nullable T... messageResponse
     ) {
-        if(messageResponse instanceof String[] && messageResponse.length > 1) {
-            throw new IllegalArgumentException("messageResponse cannot be a String[] with a length greater than 1");
-        }
-        if(messageResponse == null && messageIsEphemeral == null) {
-            throw new IllegalArgumentException("Both messageResponse and messageIsEphemeral cannot be null");
+        if (messageResponse != null) {
+            if (messageResponse instanceof String[]) {
+                if (messageResponse.length > 1) {
+                    throw new IllegalArgumentException("messageResponse cannot be a String[] with a length greater than 1");
+                }
+            } else {
+                throw new IllegalArgumentException("messageResponse must be of type String[]");
+            }
+        } else {
+            if (messageIsEphemeral != null) {
+                throw new IllegalArgumentException("messageIsEphemeral cannot be true if messageResponse is null");
+            }
         }
 
         this.messageResponse = messageResponse;
@@ -31,22 +39,22 @@ public record CommandResponse<T>(T[] messageResponse, Boolean messageIsEphemeral
             @Nullable MessageEmbed messageResponse,
             @Nullable Boolean messageIsEphemeral
     ) {
-        this((T[]) new MessageEmbed[] {messageResponse}, messageIsEphemeral);
+        this(messageIsEphemeral, (T) messageResponse);
     }
 
     @SuppressWarnings("unchecked")
     public CommandResponse(
-            @Nullable MessageEmbed[] messageResponse,
-            @Nullable Boolean messageIsEphemeral
+            @Nullable Boolean messageIsEphemeral,
+            @Nullable MessageEmbed... messageResponse
     ) {
-        this((T[]) messageResponse, messageIsEphemeral);
+        this(messageIsEphemeral, (T) messageResponse);
     }
 
     @SuppressWarnings("unchecked")
     public CommandResponse(
-            @Nullable String messageResponse,
-            @Nullable Boolean messageIsEphemeral
+            @Nullable Boolean messageIsEphemeral,
+            @Nullable String messageResponse
     ) {
-        this((T[]) new String[] {messageResponse}, messageIsEphemeral);
+        this(messageIsEphemeral, (T) messageResponse);
     }
 }
