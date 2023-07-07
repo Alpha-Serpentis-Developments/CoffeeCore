@@ -61,11 +61,21 @@ public class CommandsHandler extends ListenerAdapter {
             @NonNull HashMap<String, BotCommand<?, ?>> mappingOfCommands,
             boolean updateCommands
     ) {
+        HashMap<String, BotCommand<?, ?>> mappingOfGlobalCommands = new HashMap<>(), mappingOfGuildCommands = new HashMap<>();
         List<JDA> shards = core.isSharded() ? core.getShardManager().getShards() : List.of(core.getJda());
         List<Command> listOfActiveGlobalCommands;
         List<String> detectedGlobalCommandNames = new ArrayList<>(), detectedGuildCommandNames = new ArrayList<>();
 
         this.mappingOfCommands.putAll(mappingOfCommands);
+
+        // Separate the global and guild commands
+        for(Map.Entry<String, BotCommand<?, ?>> entry: mappingOfCommands.entrySet()) {
+            if(entry.getValue().getCommandVisibility() == BotCommand.CommandVisibility.GLOBAL) {
+                mappingOfGlobalCommands.put(entry.getKey(), entry.getValue());
+            } else {
+                mappingOfGuildCommands.put(entry.getKey(), entry.getValue());
+            }
+        }
 
         for(JDA shard: shards) {
             listOfActiveGlobalCommands = shard.retrieveCommands().complete();
@@ -74,7 +84,12 @@ public class CommandsHandler extends ListenerAdapter {
             for (Iterator<Command> it = listOfActiveGlobalCommands.iterator(); it.hasNext(); ) {
                 Command cmd = it.next();
                 if(mappingOfCommands.containsKey(cmd.getName())) {
-                    BotCommand<?, ?> botCmd = mappingOfCommands.get(cmd.getName());
+                    BotCommand<?, ?> botCmd = mappingOfGlobalCommands.get(cmd.getName());
+
+                    if(botCmd == null) {
+                        continue;
+                    }
+
                     botCmd.setCommandId(cmd.getIdLong());
                     if(updateCommands) {
                         botCmd.updateCommand(shard);
@@ -91,8 +106,8 @@ public class CommandsHandler extends ListenerAdapter {
                 shard.deleteCommandById(cmd.getId()).complete();
             }
 
-            if(detectedGlobalCommandNames.size() < mappingOfCommands.size()) { // Adds new global commands
-                List<String> missingCommands = new ArrayList<>(mappingOfCommands.keySet());
+            if(detectedGlobalCommandNames.size() < mappingOfGlobalCommands.size()) { // Adds new global commands
+                List<String> missingCommands = new ArrayList<>(mappingOfGlobalCommands.keySet());
 
                 missingCommands.removeAll(detectedGlobalCommandNames);
 
@@ -102,6 +117,8 @@ public class CommandsHandler extends ListenerAdapter {
                 }
             }
 
+            detectedGlobalCommandNames.clear();
+
             // Checks for the detected guild commands
             for(Guild guild: shard.getGuilds()) {
                 List<Command> listOfActiveGuildCommands = guild.retrieveCommands().complete();
@@ -109,15 +126,22 @@ public class CommandsHandler extends ListenerAdapter {
                 for (Iterator<Command> it = listOfActiveGuildCommands.iterator(); it.hasNext(); ) {
                     Command cmd = it.next();
                     if(mappingOfCommands.containsKey(cmd.getName())) {
-                        BotCommand<?, ?> botCmd = mappingOfCommands.get(cmd.getName());
-                        botCmd.setCommandId(cmd.getIdLong());
-                        if(botCmd.getGuildsToRegisterIn().size() == 0 || botCmd.getGuildsToRegisterIn().contains(guild.getIdLong())) {
-                            botCmd.updateCommand(guild);
+                        BotCommand<?, ?> botCmd = mappingOfGuildCommands.get(cmd.getName());
+
+                        if(botCmd == null) {
+                            continue;
                         }
 
-                        detectedGuildCommandNames.add(cmd.getName());
+                        if (botCmd.getGuildsToRegisterIn().size() == 0 || botCmd.getGuildsToRegisterIn().contains(guild.getIdLong())) {
+                            botCmd.setCommandId(cmd.getIdLong());
+                            if(updateCommands) {
+                                botCmd.updateCommand(guild);
+                            }
 
-                        it.remove();
+                            detectedGuildCommandNames.add(cmd.getName());
+
+                            it.remove();
+                        }
                     }
                 }
 
@@ -126,16 +150,18 @@ public class CommandsHandler extends ListenerAdapter {
                     guild.deleteCommandById(cmd.getId()).complete();
                 }
 
-                if(detectedGuildCommandNames.size() < mappingOfCommands.size()) { // Adds new guild commands
-                    List<String> missingCommands = new ArrayList<>(mappingOfCommands.keySet());
+                if(detectedGuildCommandNames.size() < mappingOfGuildCommands.size()) { // Adds new guild commands
+                    List<String> missingCommands = new ArrayList<>(mappingOfGuildCommands.keySet());
 
                     missingCommands.removeAll(detectedGuildCommandNames);
 
                     for(String cmdName: missingCommands) {
-                        BotCommand<?, ?> cmd = mappingOfCommands.get(cmdName);
+                        BotCommand<?, ?> cmd = mappingOfGuildCommands.get(cmdName);
                         cmd.updateCommand(guild);
                     }
                 }
+
+                detectedGuildCommandNames.clear();
             }
         }
     }

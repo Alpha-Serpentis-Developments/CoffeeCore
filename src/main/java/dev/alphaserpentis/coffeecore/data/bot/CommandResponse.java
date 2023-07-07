@@ -19,10 +19,10 @@ public record CommandResponse<T>(Boolean messageIsEphemeral, T... messageRespons
         if (messageResponse != null) {
             if (messageResponse instanceof String[]) {
                 if (messageResponse.length > 1) {
-                    throw new IllegalArgumentException("messageResponse cannot be a String[] with a length greater than 1");
+                    throw new IllegalArgumentException("messageResponse cannot be more than one String");
                 }
-            } else {
-                throw new IllegalArgumentException("messageResponse must be of type String[]");
+            } else if (!(messageResponse instanceof MessageEmbed[])) {
+                throw new IllegalArgumentException("messageResponse must be a String[] or MessageEmbed[]");
             }
         } else {
             if (messageIsEphemeral != null) {
@@ -39,7 +39,7 @@ public record CommandResponse<T>(Boolean messageIsEphemeral, T... messageRespons
             @Nullable MessageEmbed messageResponse,
             @Nullable Boolean messageIsEphemeral
     ) {
-        this(messageIsEphemeral, (T) messageResponse);
+        this(messageIsEphemeral, (T[]) new MessageEmbed[]{messageResponse});
     }
 
     @SuppressWarnings("unchecked")
@@ -47,7 +47,7 @@ public record CommandResponse<T>(Boolean messageIsEphemeral, T... messageRespons
             @Nullable Boolean messageIsEphemeral,
             @Nullable MessageEmbed... messageResponse
     ) {
-        this(messageIsEphemeral, (T) messageResponse);
+        this(messageIsEphemeral, (T[]) messageResponse);
     }
 
     @SuppressWarnings("unchecked")
@@ -55,6 +55,6 @@ public record CommandResponse<T>(Boolean messageIsEphemeral, T... messageRespons
             @Nullable Boolean messageIsEphemeral,
             @Nullable String messageResponse
     ) {
-        this(messageIsEphemeral, (T) messageResponse);
+        this(messageIsEphemeral, (T[]) new String[]{messageResponse});
     }
 }
