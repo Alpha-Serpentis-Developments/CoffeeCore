@@ -645,6 +645,9 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
             return reply;
         } catch(Exception e) {
+            if(isForgivingRatelimitOnError()) {
+                ratelimitMap.remove(event.getUser().getIdLong());
+            }
             return event.replyEmbeds(handleError(e));
         }
     }
