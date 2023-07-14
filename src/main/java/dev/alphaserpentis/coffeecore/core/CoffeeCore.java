@@ -162,7 +162,7 @@ public class CoffeeCore {
      * Get the bot's {@link dev.alphaserpentis.coffeecore.data.bot.AboutInformation} instance
      * @return {@link dev.alphaserpentis.coffeecore.data.bot.AboutInformation}
      */
-    @NonNull
+    @Nullable
     public AboutInformation getAboutInformation() {
         return settings.getAboutInformation();
     }
