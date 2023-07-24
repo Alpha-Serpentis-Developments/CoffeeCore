@@ -238,12 +238,13 @@ public class CoffeeCoreBuilder<T> {
     @SuppressWarnings("unchecked")
     private T createBuilderInstance(@NonNull String token) {
         if(enableSharding) {
-            DefaultShardManagerBuilder shardManagerBuilder = null;
+            DefaultShardManagerBuilder shardManagerBuilder;
 
             switch(builderConfiguration) {
                 case NONE -> shardManagerBuilder = DefaultShardManagerBuilder.create(token, enabledGatewayIntents);
                 case LIGHT -> shardManagerBuilder = DefaultShardManagerBuilder.createLight(token);
                 case DEFAULT -> shardManagerBuilder = DefaultShardManagerBuilder.createDefault(token);
+                default -> throw new IllegalStateException("Unexpected value: " + builderConfiguration);
             }
 
             return (T) shardManagerBuilder
@@ -255,12 +256,13 @@ public class CoffeeCoreBuilder<T> {
                     .setMemberCachePolicy(memberCachePolicy)
                     .setShardsTotal(shardsTotal);
         } else {
-            JDABuilder jdaBuilder = null;
+            JDABuilder jdaBuilder;
 
             switch(builderConfiguration) {
                 case NONE -> jdaBuilder = JDABuilder.create(token, enabledGatewayIntents);
                 case LIGHT -> jdaBuilder = JDABuilder.createLight(token);
                 case DEFAULT -> jdaBuilder = JDABuilder.createDefault(token);
+                default -> throw new IllegalStateException("Unexpected value: " + builderConfiguration);
             }
 
             return (T) jdaBuilder

@@ -66,9 +66,10 @@ public class CommandsHandler extends ListenerAdapter {
     ) {
         HashMap<String, BotCommand<?, ?>> mappingOfGlobalCommands = new HashMap<>();
         HashMap<String, BotCommand<?, ?>> mappingOfGuildCommands = new HashMap<>();
+        List<String> detectedGlobalCommandNames = new ArrayList<>();
+        List<String> detectedGuildCommandNames = new ArrayList<>();
         List<JDA> shards = core.isSharded() ? core.getShardManager().getShards() : List.of(core.getJda());
         List<Command> listOfActiveGlobalCommands;
-        List<String> detectedGlobalCommandNames = new ArrayList<>(), detectedGuildCommandNames = new ArrayList<>();
 
         this.mappingOfCommands.putAll(mappingOfCommands);
 

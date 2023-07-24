@@ -19,7 +19,7 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 
-import java.awt.*;
+import java.awt.Color;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +32,25 @@ import java.util.concurrent.TimeUnit;
  * @param <E> Type of {@link GenericCommandInteractionEvent} that will be used to pass events to the command.
  */
 public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
+
+    protected final HashMap<Long, Long> ratelimitMap = new HashMap<>();
+    protected final ArrayList<Long> guildsToRegisterIn;
+    protected final String name;
+    protected final String description;
+    protected final long ratelimitLength;
+    protected final long messageExpirationLength;
+    protected final boolean onlyEmbed;
+    protected final boolean onlyEphemeral;
+    protected final boolean isActive;
+    protected final boolean deferReplies;
+    protected final boolean useRatelimits;
+    protected final boolean forgiveRatelimitOnError;
+    protected final boolean messagesExpire;
+    protected final CommandVisibility commandVisibility;
+    protected final Command.Type commandType;
+    protected final TypeOfEphemeral ephemeralType;
+    protected long commandId;
+    protected CoffeeCore core;
 
     public enum CommandVisibility {
         /**
@@ -327,25 +346,6 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         }
     }
 
-    protected final HashMap<Long, Long> ratelimitMap = new HashMap<>();
-    protected final ArrayList<Long> guildsToRegisterIn;
-    protected final String name;
-    protected final String description;
-    protected final long ratelimitLength;
-    protected final long messageExpirationLength;
-    protected final boolean onlyEmbed;
-    protected final boolean onlyEphemeral;
-    protected final boolean isActive;
-    protected final boolean deferReplies;
-    protected final boolean useRatelimits;
-    protected final boolean forgiveRatelimitOnError;
-    protected final boolean messagesExpire;
-    protected final CommandVisibility commandVisibility;
-    protected final Command.Type commandType;
-    protected final TypeOfEphemeral ephemeralType;
-    protected long commandId;
-    protected CoffeeCore core;
-
     public BotCommand() {
         throw new UnsupportedOperationException("Unsupported constructor");
     }
@@ -470,7 +470,9 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     public long getMessageExpirationLength() {
         return messageExpirationLength;
     }
-    public boolean isOnlyEmbed() { return onlyEmbed; }
+    public boolean isOnlyEmbed() {
+        return onlyEmbed;
+    }
     public boolean isOnlyEphemeral() {
         return onlyEphemeral || !isActive;
     }

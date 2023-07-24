@@ -50,6 +50,7 @@ public class HelloCommandButton extends ButtonCommand<MessageEmbed, SlashCommand
             case "hello" -> event.reply("Hello, " + event.getUser().getAsMention() + "!").queue();
             case "goodbye" -> event.reply("Goodbye, " + event.getUser().getAsMention() + "!").queue();
             case "mystery" -> event.reply("How did you click on this?").queue();
+            default -> throw new IllegalStateException("Unexpected value: " + key);
         }
     }
 
