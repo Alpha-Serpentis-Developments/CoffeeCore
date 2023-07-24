@@ -92,6 +92,7 @@ public class CoffeeCore {
                 Path path = Path.of(settings.getServerDataPath());
                 this.serverDataHandler = new ServerDataHandler<>(
                         path,
+                        this,
                         new TypeToken<>() {
                         },
                         new ServerDataDeserializer<>()
@@ -308,7 +309,7 @@ public class CoffeeCore {
                 jda.awaitReady();
             }
         } else {
-            throw new IllegalArgumentException("The container must be either a JDA instance or a ShardManager instance.");
+            throw new IllegalArgumentException("The container must either be a JDA or ShardManager instance.");
         }
     }
 

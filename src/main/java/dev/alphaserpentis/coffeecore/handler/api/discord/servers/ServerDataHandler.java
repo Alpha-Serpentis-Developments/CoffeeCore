@@ -4,7 +4,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
+import dev.alphaserpentis.coffeecore.commands.BotCommand;
+import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import dev.alphaserpentis.coffeecore.data.server.ServerData;
+import dev.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
@@ -13,6 +16,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,6 +24,10 @@ import java.util.Map;
  * @param <T> The type of {@link ServerData} to handle.
  */
 public class ServerDataHandler<T extends ServerData> extends AbstractServerDataHandler<T> {
+    /**
+     * Cached guild commands. <b>This expects that the commands do not change after caching</b>
+     */
+    private List<BotCommand<?,?>> cachedGuildCommands = null;
 
     /**
      * Initializes the server data handler.
@@ -30,10 +38,11 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
      */
     public ServerDataHandler(
             @NonNull Path path,
+            @NonNull CoffeeCore core,
             @NonNull TypeToken<Map<Long, T>> typeToken,
             @NonNull JsonDeserializer<Map<Long, T>> jsonDeserializer
     ) throws IOException {
-        super(path);
+        super(path, core);
         Gson gson;
         Reader reader;
 
@@ -58,7 +67,10 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
 
     @Override
     public void onGuildJoin(@NonNull GuildJoinEvent event) {
+        CommandsHandler commandsHandler = getCore().getCommandsHandler();
+
         serverDataHashMap.put(event.getGuild().getIdLong(), createNewServerData());
+        commandsHandler.upsertGuildCommandsToGuild(getCachedGuildCommands(), event.getGuild());
         try {
             updateServerData();
         } catch (IOException e) {
@@ -74,5 +86,13 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @NonNull
+    protected List<BotCommand<?,?>> getCachedGuildCommands() {
+        if(cachedGuildCommands == null) {
+            cachedGuildCommands = getCore().getCommandsHandler().getGuildCommands();
+        }
+        return cachedGuildCommands;
     }
 }

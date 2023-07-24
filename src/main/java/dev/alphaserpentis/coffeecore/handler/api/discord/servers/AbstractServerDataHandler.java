@@ -2,6 +2,7 @@ package dev.alphaserpentis.coffeecore.handler.api.discord.servers;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import dev.alphaserpentis.coffeecore.data.server.ServerData;
 import dev.alphaserpentis.coffeecore.helper.ContainerHelper;
 import io.reactivex.rxjava3.annotations.NonNull;
@@ -23,6 +24,10 @@ import java.util.Map;
  */
 public abstract class AbstractServerDataHandler<T extends ServerData> extends ListenerAdapter {
     /**
+     * The {@link CoffeeCore} instance.
+     */
+    private final CoffeeCore core;
+    /**
      * Path to the server data file.
      */
     private final Path pathToFile;
@@ -32,9 +37,11 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
     public Map<Long, T> serverDataHashMap = new HashMap<>();
 
     public AbstractServerDataHandler(
-            @NonNull Path path
+            @NonNull Path path,
+            @NonNull CoffeeCore core
     ) {
         pathToFile = path;
+        this.core = core;
     }
 
     /**
@@ -70,6 +77,15 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
     @Nullable
     public T getServerData(long guildId) {
         return serverDataHashMap.get(guildId);
+    }
+
+    /**
+     * Gets the {@link CoffeeCore} instance.
+     * @return {@link CoffeeCore}
+     */
+    @NonNull
+    public CoffeeCore getCore() {
+        return core;
     }
 
     /**

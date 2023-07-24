@@ -21,6 +21,9 @@ import net.dv8tion.jda.api.interactions.commands.Command;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
+/**
+ * The handler for all the commands to be registered with the bot. This handles registration and execution of the commands.
+ */
 public class CommandsHandler extends ListenerAdapter {
     /**
      * The mapping of {@link BotCommand} that have been registered to the bot. This is used to check for commands that are already
@@ -167,6 +170,15 @@ public class CommandsHandler extends ListenerAdapter {
     }
 
     /**
+     * Provided a list of {@link BotCommand}, this will add the commands to the specified {@link Guild}
+     * @param cmds The list of commands to add
+     * @param guild The guild to add the commands to
+     */
+    public void upsertGuildCommandsToGuild(@NonNull List<BotCommand<?,?>> cmds, @NonNull Guild guild) {
+        cmds.stream().filter(cmd -> cmd.getCommandVisibility() == BotCommand.CommandVisibility.GUILD).forEach(cmd -> cmd.updateCommand(guild));
+    }
+
+    /**
      * Gets a {@link BotCommand} from the {@link #mappingOfCommands}.
      * @param name The name of the command to get
      * @return BotCommand or {@code null} if the command is not found
@@ -176,9 +188,30 @@ public class CommandsHandler extends ListenerAdapter {
         return mappingOfCommands.get(name);
     }
 
+    /**
+     * Gets a list of all the commands that are registered.
+     * <br>
+     * <b>Recommended to cache the result of this method.</b>
+     * @return An {@link ArrayList} of {@link BotCommand} that are registered
+     */
     @NonNull
     public ArrayList<BotCommand<?, ? extends GenericCommandInteractionEvent>> getCommands() {
         return new ArrayList<>(mappingOfCommands.values());
+    }
+
+    /**
+     * Gets a list of the guild commands that are registered. May return a non-null empty list.
+     * <br>
+     * <b>Recommended to cache the result of this method.</b>
+     * @return An {@link ArrayList} of {@link BotCommand} that are registered as guild commands
+     */
+    @NonNull
+    public ArrayList<BotCommand<?, ? extends GenericCommandInteractionEvent>> getGuildCommands() {
+        return new ArrayList<>(
+                mappingOfCommands.values().stream().filter(
+                        cmd -> cmd.getCommandVisibility() == BotCommand.CommandVisibility.GUILD
+                ).toList()
+        );
     }
 
     @Override
