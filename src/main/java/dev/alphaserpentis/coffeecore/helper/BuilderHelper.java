@@ -14,7 +14,9 @@ public class BuilderHelper<T> {
 
     public BuilderHelper(@NonNull T builder) {
         if(!(builder instanceof JDABuilder) && !(builder instanceof DefaultShardManagerBuilder))
-            throw new IllegalArgumentException("The builder must be either a JDABuilder or a DefaultShardManagerBuilder.");
+            throw new IllegalArgumentException(
+                    "The builder must be either a JDABuilder or a DefaultShardManagerBuilder."
+            );
 
         this.builder = builder;
     }

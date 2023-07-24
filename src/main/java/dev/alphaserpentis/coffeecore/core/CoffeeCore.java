@@ -92,7 +92,6 @@ public class CoffeeCore {
                 Path path = Path.of(settings.getServerDataPath());
                 this.serverDataHandler = new ServerDataHandler<>(
                         path,
-                        this,
                         new TypeToken<>() {
                         },
                         new ServerDataDeserializer<>()
@@ -101,7 +100,7 @@ public class CoffeeCore {
                 this.serverDataHandler = serverDataHandler;
             }
 
-            this.serverDataHandler.init(containerHelper);
+            this.serverDataHandler.init(containerHelper, this);
         } catch (IllegalStateException | InterruptedException | IOException | IllegalArgumentException e) {
             e.printStackTrace();
             System.exit(1);

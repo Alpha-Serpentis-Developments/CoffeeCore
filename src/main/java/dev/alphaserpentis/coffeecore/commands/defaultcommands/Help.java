@@ -18,6 +18,10 @@ public class Help extends BotCommand<MessageEmbed, SlashCommandInteractionEvent>
         );
     }
 
+    public Help(@NonNull BotCommandOptions options) {
+        super(options);
+    }
+
     @Override
     @NonNull
     public CommandResponse<MessageEmbed> runCommand(long userId, @NonNull SlashCommandInteractionEvent event) {

@@ -26,7 +26,7 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
     /**
      * The {@link CoffeeCore} instance.
      */
-    private final CoffeeCore core;
+    private CoffeeCore core;
     /**
      * Path to the server data file.
      */
@@ -37,11 +37,9 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
     public Map<Long, T> serverDataHashMap = new HashMap<>();
 
     public AbstractServerDataHandler(
-            @NonNull Path path,
-            @NonNull CoffeeCore core
+            @NonNull Path path
     ) {
         pathToFile = path;
-        this.core = core;
     }
 
     /**
@@ -49,7 +47,9 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
      * @param container The {@link ContainerHelper} instance to get the servers from.
      * @throws IOException If the bot fails to write to the server data file.
      */
-    public void init(@NonNull ContainerHelper container) throws IOException {
+    public void init(@NonNull ContainerHelper container, @NonNull CoffeeCore core) throws IOException {
+        this.core = core;
+
         // Check the current servers
         if(serverDataHashMap == null)
             serverDataHashMap = new HashMap<>();

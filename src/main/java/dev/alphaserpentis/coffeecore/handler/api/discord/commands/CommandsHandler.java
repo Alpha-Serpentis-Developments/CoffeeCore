@@ -64,7 +64,8 @@ public class CommandsHandler extends ListenerAdapter {
             @NonNull HashMap<String, BotCommand<?, ?>> mappingOfCommands,
             boolean updateCommands
     ) {
-        HashMap<String, BotCommand<?, ?>> mappingOfGlobalCommands = new HashMap<>(), mappingOfGuildCommands = new HashMap<>();
+        HashMap<String, BotCommand<?, ?>> mappingOfGlobalCommands = new HashMap<>();
+        HashMap<String, BotCommand<?, ?>> mappingOfGuildCommands = new HashMap<>();
         List<JDA> shards = core.isSharded() ? core.getShardManager().getShards() : List.of(core.getJda());
         List<Command> listOfActiveGlobalCommands;
         List<String> detectedGlobalCommandNames = new ArrayList<>(), detectedGuildCommandNames = new ArrayList<>();
@@ -135,7 +136,8 @@ public class CommandsHandler extends ListenerAdapter {
                             continue;
                         }
 
-                        if (botCmd.getGuildsToRegisterIn().size() == 0 || botCmd.getGuildsToRegisterIn().contains(guild.getIdLong())) {
+                        if (botCmd.getGuildsToRegisterIn().size() == 0 ||
+                                botCmd.getGuildsToRegisterIn().contains(guild.getIdLong())) {
                             botCmd.setCommandId(cmd.getIdLong());
                             if(updateCommands) {
                                 botCmd.updateCommand(guild);
@@ -175,7 +177,10 @@ public class CommandsHandler extends ListenerAdapter {
      * @param guild The guild to add the commands to
      */
     public void upsertGuildCommandsToGuild(@NonNull List<BotCommand<?,?>> cmds, @NonNull Guild guild) {
-        cmds.stream().filter(cmd -> cmd.getCommandVisibility() == BotCommand.CommandVisibility.GUILD).forEach(cmd -> cmd.updateCommand(guild));
+        cmds.stream().filter(
+                cmd -> cmd.getCommandVisibility() == BotCommand.CommandVisibility.GUILD).forEach(
+                        cmd -> cmd.updateCommand(guild)
+        );
     }
 
     /**
@@ -218,7 +223,9 @@ public class CommandsHandler extends ListenerAdapter {
     @SuppressWarnings("unchecked")
     public void onSlashCommandInteraction(@NonNull SlashCommandInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?, SlashCommandInteractionEvent> cmd = Objects.requireNonNull((BotCommand<?, SlashCommandInteractionEvent>) getCommand(event.getName()));
+            BotCommand<?, SlashCommandInteractionEvent> cmd = Objects.requireNonNull(
+                    (BotCommand<?, SlashCommandInteractionEvent>) getCommand(event.getName())
+            );
             Message msg = cmd.handleReply(event, cmd);
 
             if(cmd.doMessagesExpire())
@@ -230,7 +237,9 @@ public class CommandsHandler extends ListenerAdapter {
     @SuppressWarnings("unchecked")
     public void onUserContextInteraction(@NonNull UserContextInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?, UserContextInteractionEvent> cmd = Objects.requireNonNull((BotCommand<?, UserContextInteractionEvent>) getCommand(event.getName()));
+            BotCommand<?, UserContextInteractionEvent> cmd = Objects.requireNonNull(
+                    (BotCommand<?, UserContextInteractionEvent>) getCommand(event.getName())
+            );
             Message msg = cmd.handleReply(event, cmd);
 
             if(cmd.doMessagesExpire())
@@ -242,7 +251,9 @@ public class CommandsHandler extends ListenerAdapter {
     @SuppressWarnings("unchecked")
     public void onMessageContextInteraction(@NonNull MessageContextInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?, MessageContextInteractionEvent> cmd = Objects.requireNonNull((BotCommand<?, MessageContextInteractionEvent>) getCommand(event.getName()));
+            BotCommand<?, MessageContextInteractionEvent> cmd = Objects.requireNonNull(
+                    (BotCommand<?, MessageContextInteractionEvent>) getCommand(event.getName())
+            );
             Message msg = cmd.handleReply(event, cmd);
 
             if(cmd.doMessagesExpire())
@@ -253,7 +264,11 @@ public class CommandsHandler extends ListenerAdapter {
     @Override
     public void onButtonInteraction(@NonNull ButtonInteractionEvent event) {
         executor.submit(() -> {
-            ButtonCommand<?, ?> cmd = Objects.requireNonNull((ButtonCommand<?, ?>) getCommand(event.getButton().getId().substring(0, event.getButton().getId().indexOf("_"))));
+            ButtonCommand<?, ?> cmd = Objects.requireNonNull(
+                    (ButtonCommand<?, ?>) getCommand(
+                            event.getButton().getId().substring(0, event.getButton().getId().indexOf("_"))
+                    )
+            );
             cmd.runButtonInteraction(event);
         });
     }
@@ -261,7 +276,9 @@ public class CommandsHandler extends ListenerAdapter {
     @Override
     public void onModalInteraction(@NonNull ModalInteractionEvent event) {
         executor.submit(() -> {
-            ModalCommand cmd = Objects.requireNonNull((ModalCommand) getCommand(event.getModalId().substring(0, event.getModalId().indexOf("_"))));
+            ModalCommand cmd = Objects.requireNonNull(
+                    (ModalCommand) getCommand(event.getModalId().substring(0, event.getModalId().indexOf("_")))
+            );
             cmd.runModalInteraction(event);
         });
     }

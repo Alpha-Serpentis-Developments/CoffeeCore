@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import dev.alphaserpentis.coffeecore.commands.BotCommand;
-import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import dev.alphaserpentis.coffeecore.data.server.ServerData;
 import dev.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;
 import io.reactivex.rxjava3.annotations.NonNull;
@@ -38,11 +37,10 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
      */
     public ServerDataHandler(
             @NonNull Path path,
-            @NonNull CoffeeCore core,
             @NonNull TypeToken<Map<Long, T>> typeToken,
             @NonNull JsonDeserializer<Map<Long, T>> jsonDeserializer
     ) throws IOException {
-        super(path, core);
+        super(path);
         Gson gson;
         Reader reader;
 

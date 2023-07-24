@@ -27,6 +27,10 @@ public class About extends BotCommand<MessageEmbed, SlashCommandInteractionEvent
         );
     }
 
+    public About(@NonNull BotCommandOptions options) {
+        super(options);
+    }
+
     @Override
     @NonNull
     public CommandResponse<MessageEmbed> runCommand(long userId, @NonNull SlashCommandInteractionEvent event) {

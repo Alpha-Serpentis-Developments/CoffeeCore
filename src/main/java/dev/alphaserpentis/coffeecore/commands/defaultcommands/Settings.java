@@ -26,6 +26,10 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
         );
     }
 
+    public Settings(@NonNull BotCommandOptions options) {
+        super(options);
+    }
+
     @Override
     @NonNull
     public CommandResponse<MessageEmbed> runCommand(long userId, @NonNull SlashCommandInteractionEvent event) {

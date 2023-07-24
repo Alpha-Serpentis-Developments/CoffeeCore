@@ -91,7 +91,13 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
      * @param disabled Determines if the button is disabled.
      * @throws IllegalArgumentException If the key is already in use.
      */
-    public void addButton(@NonNull String key, @NonNull ButtonStyle style, @Nullable String label, @Nullable Emoji emoji, boolean disabled) {
+    public void addButton(
+            @NonNull String key,
+            @NonNull ButtonStyle style,
+            @Nullable String label,
+            @Nullable Emoji emoji,
+            boolean disabled
+    ) {
         if(buttonHashMap.containsKey(key))
             throw new IllegalArgumentException("The key " + key + " is already in use!");
 

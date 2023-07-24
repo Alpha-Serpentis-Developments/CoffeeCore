@@ -322,7 +322,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
          * @return Whether the command options are valid
          */
         public boolean validate() {
-            return name != null && (description != null || (commandType == Command.Type.USER || commandType == Command.Type.MESSAGE));
+            return name != null &&
+                    (description != null || (commandType == Command.Type.USER || commandType == Command.Type.MESSAGE));
         }
     }
 
@@ -435,7 +436,9 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         if(isUserRatelimited(userId)) {
             return new CommandResponse<>(
                     new EmbedBuilder().setDescription(
-                            "You are still rate limited. Expires in " + (ratelimitMap.get(userId) - Instant.now().getEpochSecond()) + " seconds."
+                            "You are still rate limited. Expires in " + (
+                                    ratelimitMap.get(userId) - Instant.now().getEpochSecond()
+                            ) + " seconds."
                     ).build(),
                     onlyEphemeral
             );
@@ -576,7 +579,9 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                     ratelimitMap.put(event.getUser().getIdLong(), Instant.now().getEpochSecond() + getRatelimitLength());
                 }
 
-                return hook.sendMessageEmbeds(Arrays.asList((MessageEmbed[]) response)).setEphemeral(responseFromCommand.messageIsEphemeral());
+                return hook.sendMessageEmbeds(
+                        Arrays.asList((MessageEmbed[]) response)).setEphemeral(responseFromCommand.messageIsEphemeral()
+                );
             } else {
                 if(getEphemeralType() == TypeOfEphemeral.DEFAULT) {
                     if (!msgIsEphemeral && event.getGuild() != null) {
@@ -656,7 +661,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         if(guild == null)
             return cmd.isOnlyEphemeral();
         else
-            return cmd.isOnlyEphemeral() || cmd.core.getServerDataHandler().serverDataHashMap.get(guild.getIdLong()).getOnlyEphemeral();
+            return cmd.isOnlyEphemeral() ||
+                    cmd.core.getServerDataHandler().serverDataHashMap.get(guild.getIdLong()).getOnlyEphemeral();
     }
 
     /**
@@ -684,12 +690,18 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         eb.setDescription("The command failed to execute due to: " + e.getClass().getSimpleName());
         if(e.getMessage() != null) {
             if(e.getMessage().length() > MessageEmbed.TEXT_MAX_LENGTH) {
-                eb.addField("Error Message", e.getMessage().substring(0, MessageEmbed.TEXT_MAX_LENGTH), false);
+                eb.addField(
+                        "Error Message", e.getMessage().substring(0, MessageEmbed.TEXT_MAX_LENGTH),
+                        false
+                );
             } else {
                 eb.addField("Error Message", e.getMessage(), false);
             }
         } else {
-            eb.addField("Error Message", "Error message unable to be generated? Cause of error: " + e.getCause(), false);
+            eb.addField(
+                    "Error Message", "Error message unable to be generated? Cause of error: " + e.getCause(),
+                    false
+            );
         }
         for(int i = 0; i < e.getStackTrace().length; i++) {
             eb.addField("Error Stack " + i, e.getStackTrace()[i].toString(), false);

@@ -20,6 +20,10 @@ public class Shutdown extends BotCommand<MessageEmbed, SlashCommandInteractionEv
         );
     }
 
+    public Shutdown(@NonNull BotCommandOptions options) {
+        super(options);
+    }
+
     @Override
     @NonNull
     public CommandResponse<MessageEmbed> runCommand(long userId, @NonNull SlashCommandInteractionEvent event) {

@@ -1,5 +1,7 @@
 package dev.alphaserpentis.coffeecore.data.server;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Stores a server's data.
  * <p>
@@ -7,6 +9,7 @@ package dev.alphaserpentis.coffeecore.data.server;
  * </p>
  */
 public class ServerData {
+    @SerializedName("onlyEphemeral")
     private boolean onlyEphemeral = true;
 
     public ServerData() {}

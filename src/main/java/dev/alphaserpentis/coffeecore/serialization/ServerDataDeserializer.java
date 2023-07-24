@@ -15,7 +15,11 @@ public class ServerDataDeserializer<T extends ServerData> implements JsonDeseria
 
     @Override
     @SuppressWarnings("unchecked")
-    public Map<Long, T> deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+    public Map<Long, T> deserialize(
+            JsonElement jsonElement,
+            Type type,
+            JsonDeserializationContext jsonDeserializationContext
+    ) throws JsonParseException {
         Map<Long, T> serverDataMap = new HashMap<>();
 
         Gson gson = new Gson();
