@@ -111,6 +111,7 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
 
     protected void writeToJSON(@NonNull Gson gson, @NonNull Object data) throws IOException {
         Writer writer = Files.newBufferedWriter(pathToFile);
+
         gson.toJson(data, writer);
         writer.close();
     }

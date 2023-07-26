@@ -583,6 +583,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             @NonNull E event
     ) {
         InteractionHook hook = event.getHook();
+
         try {
             boolean msgIsEphemeral;
             CommandResponse<?> responseFromCommand;
@@ -609,6 +610,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
                 responseFromCommand = isActive() ? runCommand(event.getUser().getIdLong(), event) : inactiveCommandResponse();
                 response = (T[]) responseFromCommand.messageResponse();
+
                 if (isUsingRatelimits() && !isUserRatelimited(event.getUser().getIdLong())) {
                     ratelimitMap.put(event.getUser().getIdLong(), Instant.now().getEpochSecond() + getRatelimitLength());
                 }
@@ -634,6 +636,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
                 responseFromCommand = isActive() ? runCommand(event.getUser().getIdLong(), event) : inactiveCommandResponse();
                 response = (T[]) responseFromCommand.messageResponse();
+
                 if (isUsingRatelimits() && !isUserRatelimited(event.getUser().getIdLong())) {
                     ratelimitMap.put(event.getUser().getIdLong(), Instant.now().getEpochSecond() + getRatelimitLength());
                 }
@@ -644,6 +647,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             if(isForgivingRatelimitOnError()) {
                 ratelimitMap.remove(event.getUser().getIdLong());
             }
+
             return hook.sendMessageEmbeds(handleError(e));
         }
     }
@@ -687,6 +691,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             if(isForgivingRatelimitOnError()) {
                 ratelimitMap.remove(event.getUser().getIdLong());
             }
+
             return event.replyEmbeds(handleError(e));
         }
     }

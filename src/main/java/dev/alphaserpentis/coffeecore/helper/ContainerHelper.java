@@ -16,6 +16,7 @@ import java.util.List;
  * @see ShardManager
  */
 public class ContainerHelper {
+
     private final IGuildChannelContainer container;
 
     public ContainerHelper(@NonNull IGuildChannelContainer container) {

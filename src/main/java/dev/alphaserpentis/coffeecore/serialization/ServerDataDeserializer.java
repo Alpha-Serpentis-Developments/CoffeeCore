@@ -21,7 +21,6 @@ public class ServerDataDeserializer<T extends ServerData> implements JsonDeseria
             JsonDeserializationContext jsonDeserializationContext
     ) throws JsonParseException {
         Map<Long, T> serverDataMap = new HashMap<>();
-
         Gson gson = new Gson();
         JsonObject object = jsonElement.getAsJsonObject();
 

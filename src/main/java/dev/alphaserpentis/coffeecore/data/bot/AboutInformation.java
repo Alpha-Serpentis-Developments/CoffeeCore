@@ -4,8 +4,8 @@ import dev.alphaserpentis.coffeecore.commands.defaultcommands.About;
 import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 
-import java.awt.*;
-import java.util.ArrayList;
+import java.awt.Color;
+import java.util.List;
 
 /**
  * A record that provides information to the {@link About} command. Fields are nullable, and will be ignored if null.
@@ -20,7 +20,7 @@ public record AboutInformation(
         @Nullable String description,
         @Nullable String footer,
         @Nullable Color color,
-        @Nullable ArrayList<MessageEmbed.Field> fields,
+        @Nullable List<MessageEmbed.Field> fields,
         boolean displayShardingInfo,
         boolean displayServersInfo
 ) {
@@ -37,7 +37,7 @@ public record AboutInformation(
             @Nullable String description,
             @Nullable String footer,
             @Nullable Color color,
-            @Nullable ArrayList<MessageEmbed.Field> fields
+            @Nullable List<MessageEmbed.Field> fields
     ) {
         this(description, footer, color, fields, true, true);
     }

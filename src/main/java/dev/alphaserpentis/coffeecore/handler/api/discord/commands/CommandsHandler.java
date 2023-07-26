@@ -18,7 +18,12 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -145,8 +150,7 @@ public class CommandsHandler extends ListenerAdapter {
             );
             Message msg = cmd.handleReply(event, cmd);
 
-            if(cmd.doMessagesExpire())
-                BotCommand.letMessageExpire(cmd, msg);
+            BotCommand.letMessageExpire(cmd, msg);
         });
     }
 
@@ -159,8 +163,7 @@ public class CommandsHandler extends ListenerAdapter {
             );
             Message msg = cmd.handleReply(event, cmd);
 
-            if(cmd.doMessagesExpire())
-                BotCommand.letMessageExpire(cmd, msg);
+            BotCommand.letMessageExpire(cmd, msg);
         });
     }
 
@@ -173,8 +176,7 @@ public class CommandsHandler extends ListenerAdapter {
             );
             Message msg = cmd.handleReply(event, cmd);
 
-            if(cmd.doMessagesExpire())
-                BotCommand.letMessageExpire(cmd, msg);
+            BotCommand.letMessageExpire(cmd, msg);
         });
     }
 
@@ -186,6 +188,7 @@ public class CommandsHandler extends ListenerAdapter {
                             event.getButton().getId().substring(0, event.getButton().getId().indexOf("_"))
                     )
             );
+
             cmd.runButtonInteraction(event);
         });
     }
@@ -196,6 +199,7 @@ public class CommandsHandler extends ListenerAdapter {
             ModalCommand cmd = Objects.requireNonNull(
                     (ModalCommand) getCommand(event.getModalId().substring(0, event.getModalId().indexOf("_")))
             );
+
             cmd.runModalInteraction(event);
         });
     }
@@ -211,6 +215,7 @@ public class CommandsHandler extends ListenerAdapter {
         // Checks for the detected global commands
         for(Iterator<Command> it = listOfActiveGlobalCommands.iterator(); it.hasNext(); ) {
             Command cmd = it.next();
+
             if(mappingOfCommands.containsKey(cmd.getName())) {
                 BotCommand<?, ?> botCmd = mappingOfGlobalCommands.get(cmd.getName());
 
@@ -258,6 +263,7 @@ public class CommandsHandler extends ListenerAdapter {
 
         for (Iterator<Command> it = listOfActiveGuildCommands.iterator(); it.hasNext(); ) {
             Command cmd = it.next();
+
             if(mappingOfCommands.containsKey(cmd.getName())) {
                 BotCommand<?, ?> botCmd = mappingOfGuildCommands.get(cmd.getName());
 

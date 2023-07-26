@@ -184,6 +184,17 @@ public class CoffeeCoreBuilder<T> {
     }
 
     /**
+     * Sets the {@link BuilderConfiguration}.
+     * @param builderConfiguration The builder configuration.
+     * @return {@link CoffeeCoreBuilder} for method chaining.
+     */
+    @NonNull
+    public CoffeeCoreBuilder<?> setBuilderConfiguration(@NonNull BuilderConfiguration builderConfiguration) {
+        this.builderConfiguration = builderConfiguration;
+        return this;
+    }
+
+    /**
      * Sets the {@link MemberCachePolicy}.
      * @param memberCachePolicy The member cache policy.
      * @return {@link CoffeeCoreBuilder} for method chaining.

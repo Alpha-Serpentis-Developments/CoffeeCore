@@ -36,35 +36,47 @@ public class About extends BotCommand<MessageEmbed, SlashCommandInteractionEvent
     public CommandResponse<MessageEmbed> runCommand(long userId, @NonNull SlashCommandInteractionEvent event) {
         AboutInformation info = core.getAboutInformation();
         EmbedBuilder eb = new EmbedBuilder();
-        boolean isSharded = core.isSharded();
 
         eb.setTitle("About " + event.getJDA().getSelfUser().getName());
 
         if(info == null) {
-            eb.setDescription(DEFAULT_DESCRIPTION);
-            eb.setFooter(DEFAULT_FOOTER, event.getUser().getAvatarUrl());
+            setToDefaults(eb, event);
         } else {
-            eb.setDescription(info.description() != null ? info.description() : DEFAULT_DESCRIPTION);
-            eb.setFooter(info.footer() != null ? info.footer() : DEFAULT_FOOTER, event.getUser().getAvatarUrl());
-            if(info.color() != null) eb.setColor(info.color());
-            if(info.fields() != null) info.fields().forEach(eb::addField);
-            if(info.displayShardingInfo())
-                eb.addField(
-                        "Sharding",
-                        "Active: " + (isSharded ? "Yes" : "No") + "\nTotal Shards: " +
-                                (isSharded ? event.getJDA().getShardInfo().getShardTotal() : 1) +
-                                "\nShard ID: " + (isSharded ? event.getJDA().getShardInfo().getShardId() : 0),
-                        false
-                );
-            if(info.displayServersInfo())
-                eb.addField(
-                        "Servers",
-                        "Total: " + new ContainerHelper(core.getActiveContainer()).getGuilds().size(),
-                        false
-                );
+            setToCustomInfo(eb, event, info);
         }
 
         return new CommandResponse<>(eb.build(), isOnlyEphemeral());
     }
 
+    protected void setToDefaults(@NonNull EmbedBuilder eb, @NonNull SlashCommandInteractionEvent event) {
+        eb.setDescription(DEFAULT_DESCRIPTION);
+        eb.setFooter(DEFAULT_FOOTER, event.getUser().getAvatarUrl());
+    }
+
+    protected void setToCustomInfo(
+            @NonNull EmbedBuilder eb,
+            @NonNull SlashCommandInteractionEvent event,
+            @NonNull AboutInformation info
+    ) {
+        boolean isSharded = core.isSharded();
+
+        eb.setDescription(info.description() != null ? info.description() : DEFAULT_DESCRIPTION);
+        eb.setFooter(info.footer() != null ? info.footer() : DEFAULT_FOOTER, event.getUser().getAvatarUrl());
+        if(info.color() != null) eb.setColor(info.color());
+        if(info.fields() != null) info.fields().forEach(eb::addField);
+        if(info.displayShardingInfo())
+            eb.addField(
+                    "Sharding",
+                    "Active: " + (isSharded ? "Yes" : "No") + "\nTotal Shards: " +
+                            (isSharded ? event.getJDA().getShardInfo().getShardTotal() : 1) +
+                            "\nShard ID: " + (isSharded ? event.getJDA().getShardInfo().getShardId() : 0),
+                    false
+            );
+        if(info.displayServersInfo())
+            eb.addField(
+                    "Servers",
+                    "Total: " + new ContainerHelper(core.getActiveContainer()).getGuilds().size(),
+                    false
+            );
+    }
 }

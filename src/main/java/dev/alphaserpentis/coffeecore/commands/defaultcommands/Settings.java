@@ -34,7 +34,9 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
     @NonNull
     public CommandResponse<MessageEmbed> runCommand(long userId, @NonNull SlashCommandInteractionEvent event) {
         EmbedBuilder eb = new EmbedBuilder();
+
         eb.setTitle("Server Settings");
+
         if(event.getGuild() == null) {
             eb.setDescription("This command can only be used in a server.");
         } else {
@@ -67,6 +69,7 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
                 "ephemeral",
                 "Toggle whether the bot's responses are ephemeral"
         );
+
         jda.upsertCommand(name, description).addSubcommands(ephemeral).queue(
                 (cmd) -> setGlobalCommandId(cmd.getIdLong())
         );
@@ -79,6 +82,7 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
     private void setServerEphemeral(long guildId, EmbedBuilder eb) throws IOException {
         ServerDataHandler<?> sdh = (ServerDataHandler<?>) core.getServerDataHandler();
         ServerData sd = sdh.getServerData(guildId);
+
         if(sd.getOnlyEphemeral()) {
             sd.setOnlyEphemeral(false);
             eb.setDescription("The bot's responses are no longer ephemeral.");

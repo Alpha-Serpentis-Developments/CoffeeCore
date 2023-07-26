@@ -13,6 +13,7 @@ public class ServerData {
     private boolean onlyEphemeral = true;
 
     public ServerData() {}
+
     public ServerData(boolean onlyEphemeral) {
         this.onlyEphemeral = onlyEphemeral;
     }
@@ -20,6 +21,7 @@ public class ServerData {
     public void setOnlyEphemeral(boolean onlyEphemeral) {
         this.onlyEphemeral = onlyEphemeral;
     }
+
     public boolean getOnlyEphemeral() {
         return onlyEphemeral;
     }

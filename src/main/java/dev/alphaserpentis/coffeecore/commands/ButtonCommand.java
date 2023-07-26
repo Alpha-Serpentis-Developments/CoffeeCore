@@ -22,10 +22,12 @@ import java.util.HashMap;
  * @see dev.alphaserpentis.coffeecore.commands.BotCommand
  */
 public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent> extends BotCommand<T, E> {
+
     /**
      * A {@link HashMap} of buttons that can be added to a message.
      */
     protected final HashMap<String, Button> buttonHashMap = new HashMap<>();
+
     public ButtonCommand() {
         super();
     }
@@ -134,6 +136,7 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
 
         if(cmd.isDeferReplies()) {
             WebhookMessageCreateAction<?> action = cmd.processDeferredCommand(event);
+
             buttons = addButtonsToMessage(event);
 
             if(buttons.isEmpty())
@@ -142,6 +145,7 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
                 return (Message) action.addActionRow(buttons).complete();
         } else {
             ReplyCallbackAction action = cmd.processNonDeferredCommand(event);
+
             buttons = addButtonsToMessage(event);
 
             if(buttons.isEmpty())

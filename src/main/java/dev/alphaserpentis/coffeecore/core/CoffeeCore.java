@@ -267,6 +267,7 @@ public class CoffeeCore {
      */
     public void registerCommands(@NonNull BotCommand<?, ?>... command) {
         HashMap<String, BotCommand<?, ?>> commands = new HashMap<>();
+
         for(BotCommand<?, ?> cmd: command) {
             commands.put(cmd.getName(), cmd);
         }

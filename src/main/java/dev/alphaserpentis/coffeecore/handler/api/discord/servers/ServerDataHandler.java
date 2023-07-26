@@ -69,6 +69,7 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
 
         serverDataHashMap.put(event.getGuild().getIdLong(), createNewServerData());
         commandsHandler.upsertGuildCommandsToGuild(getCachedGuildCommands(), event.getGuild());
+
         try {
             updateServerData();
         } catch (IOException e) {
@@ -79,6 +80,7 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
     @Override
     public void onGuildLeave(@NonNull GuildLeaveEvent event) {
         serverDataHashMap.remove(event.getGuild().getIdLong());
+
         try {
             updateServerData();
         } catch (IOException e) {
@@ -91,6 +93,7 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
         if(cachedGuildCommands == null) {
             cachedGuildCommands = getCore().getCommandsHandler().getGuildCommands();
         }
+
         return cachedGuildCommands;
     }
 }
