@@ -68,7 +68,7 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
                 "Toggle whether the bot's responses are ephemeral"
         );
         jda.upsertCommand(name, description).addSubcommands(ephemeral).queue(
-                (cmd) -> setCommandId(cmd.getIdLong())
+                (cmd) -> setGlobalCommandId(cmd.getIdLong())
         );
     }
 

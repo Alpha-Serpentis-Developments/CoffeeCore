@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
+    protected final HashMap<Long, Long> guildCommandIds = new HashMap<>();
     protected final HashMap<Long, Long> ratelimitMap = new HashMap<>();
     protected final ArrayList<Long> guildsToRegisterIn;
     protected final String name;
@@ -49,7 +50,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     protected final CommandVisibility commandVisibility;
     protected final Command.Type commandType;
     protected final TypeOfEphemeral ephemeralType;
-    protected long commandId;
+    protected long globalCommandId;
     protected CoffeeCore core;
 
     public enum CommandVisibility {
@@ -392,7 +393,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
         jda
                 .upsertCommand(cmdData)
-                .queue(command -> commandId = command.getIdLong());
+                .queue(command -> globalCommandId = command.getIdLong());
     }
 
     /**
@@ -405,7 +406,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
         guild
                 .upsertCommand(cmdData)
-                .queue(command -> commandId = command.getIdLong());
+                .queue();
     }
 
     /**
@@ -447,47 +448,72 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         }
     }
 
-    public void setCommandId(long id) {
-        commandId = id;
+    public void setGlobalCommandId(long id) {
+        globalCommandId = id;
     }
+
     public void setCore(@NonNull CoffeeCore core) {
         this.core = core;
     }
+
     @NonNull
     public String getName() {
         return name;
     }
+
     @Nullable
     public String getDescription() {
         return description;
     }
-    public long getCommandId() {
-        return commandId;
+
+    public long getGlobalCommandId() {
+        return globalCommandId;
     }
+
+    public long getGuildCommandId(@NonNull Guild guild) {
+        if (!guildCommandIds.containsKey(guild.getIdLong())) {
+            guild.retrieveCommands().complete().forEach(command -> {
+                if (command.getName().equals(getName())) {
+                    guildCommandIds.put(guild.getIdLong(), command.getIdLong());
+                }
+            });
+        }
+
+        return guildCommandIds.get(guild.getIdLong());
+    }
+
     public long getRatelimitLength() {
         return ratelimitLength;
     }
+
     public long getMessageExpirationLength() {
         return messageExpirationLength;
     }
+
     public boolean isOnlyEmbed() {
         return onlyEmbed;
     }
+
     public boolean isOnlyEphemeral() {
         return onlyEphemeral || !isActive;
     }
+
     public boolean isActive() {
         return isActive;
     }
+
     public boolean isDeferReplies() {
         return deferReplies;
     }
+
     public boolean isUsingRatelimits() {
         return useRatelimits;
     }
+
     public boolean isForgivingRatelimitOnError() {
         return forgiveRatelimitOnError;
     }
+
     public boolean isUserRatelimited(long userId) {
         long ratelimit = ratelimitMap.getOrDefault(userId, 0L);
 
@@ -498,25 +524,31 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             return false;
         }
     }
+
     public boolean doMessagesExpire() {
         return messagesExpire;
     }
+
     @NonNull
     public TypeOfEphemeral getEphemeralType() {
         return ephemeralType;
     }
+
     @NonNull
     public CommandVisibility getCommandVisibility() {
         return commandVisibility;
     }
+
     @NonNull
     public Command.Type getCommandType() {
         return commandType;
     }
+
     @NonNull
     public CoffeeCore getCore() {
         return core;
     }
+
     @NonNull
     public ArrayList<Long> getGuildsToRegisterIn() {
         return guildsToRegisterIn;

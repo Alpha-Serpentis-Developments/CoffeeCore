@@ -56,6 +56,6 @@ public class SetCustomData extends BotCommand<String, SlashCommandInteractionEve
         Command cmd = jda.upsertCommand(name, description)
                 .addSubcommands(view, set).complete();
 
-        setCommandId(cmd.getIdLong());
+        setGlobalCommandId(cmd.getIdLong());
     }
 }

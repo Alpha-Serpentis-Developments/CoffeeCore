@@ -15,8 +15,8 @@ import net.dv8tion.jda.api.utils.ChunkingFilter;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Builder class for {@link CoffeeCore}.
@@ -31,7 +31,7 @@ public class CoffeeCoreBuilder<T> {
      * @see JDABuilder#createDefault(String)
      * @see JDABuilder#createLight(String)
      */
-    enum BuilderConfiguration {
+    protected enum BuilderConfiguration {
         /**
          * Creates a {@link JDABuilder} or {@link ShardManager} with the defined gateway intents.
          * @see JDABuilder#create(String, Collection)
@@ -57,15 +57,10 @@ public class CoffeeCoreBuilder<T> {
     protected AbstractServerDataHandler<?> serverDataHandler = null;
     protected CommandsHandler commandsHandler = null;
     protected ChunkingFilter chunkingFilter = ChunkingFilter.NONE;
-    protected Collection<CacheFlag> enabledCacheFlags = new ArrayList<>();
-    protected Collection<CacheFlag> disabledCacheFlags = new ArrayList<>() {
-        {
-            add(CacheFlag.MEMBER_OVERRIDES);
-            add(CacheFlag.VOICE_STATE);
-        }
-    };
-    protected Collection<GatewayIntent> enabledGatewayIntents = new ArrayList<>();
-    protected Collection<GatewayIntent> disabledGatewayIntents = new ArrayList<>();
+    protected Collection<CacheFlag> enabledCacheFlags = List.of();
+    protected Collection<CacheFlag> disabledCacheFlags = List.of(CacheFlag.MEMBER_OVERRIDES, CacheFlag.VOICE_STATE);
+    protected Collection<GatewayIntent> enabledGatewayIntents = List.of();
+    protected Collection<GatewayIntent> disabledGatewayIntents = List.of();
     protected BuilderConfiguration builderConfiguration = BuilderConfiguration.DEFAULT;
     protected MemberCachePolicy memberCachePolicy = MemberCachePolicy.NONE;
     protected boolean enableSharding = false;
