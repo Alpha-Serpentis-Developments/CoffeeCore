@@ -90,6 +90,7 @@ public class CoffeeCore {
 
             if(serverDataHandler == null) {
                 Path path = Path.of(settings.getServerDataPath());
+
                 this.serverDataHandler = new ServerDataHandler<>(
                         path,
                         new TypeToken<>() {
@@ -305,7 +306,8 @@ public class CoffeeCore {
             jda.awaitReady();
         } else if(container instanceof ShardManager sm) {
             shardManager = sm;
-            for(JDA jda: shardManager.getShardCache()) {
+
+            for(JDA jda: shardManager.getShards()) {
                 jda.awaitReady();
             }
         } else {
@@ -320,6 +322,7 @@ public class CoffeeCore {
      */
     public void addEventListenersToContainer(@NonNull Object... listeners) {
         IGuildChannelContainer container = getActiveContainer();
+
         if(container instanceof JDA j) {
             j.addEventListener(listeners);
         } else if(container instanceof ShardManager sm) {

@@ -94,11 +94,21 @@ public class CommandsHandler extends ListenerAdapter {
     }
 
     /**
+     * Provided an ID for a guild, it will deregister the command IDs to that guild.
+     * @param guildId The ID of the guild to deregister the commands from
+     */
+    public void deregisterCommands(long guildId) {
+        getGuildCommands().forEach(
+                cmd -> cmd.removeGuildCommandId(guildId)
+        );
+    }
+
+    /**
      * Provided a list of {@link BotCommand}, this will add the commands to the specified {@link Guild}
      * @param cmds The list of commands to add
      * @param guild The guild to add the commands to
      */
-    public void upsertGuildCommandsToGuild(@NonNull List<BotCommand<?,?>> cmds, @NonNull Guild guild) {
+    public void upsertGuildCommandsToGuild(@NonNull List<BotCommand<?, ?>> cmds, @NonNull Guild guild) {
         cmds.stream().filter(
                 cmd -> cmd.getCommandVisibility() == BotCommand.CommandVisibility.GUILD).forEach(
                         cmd -> cmd.updateCommand(guild)

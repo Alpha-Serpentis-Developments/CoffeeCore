@@ -21,9 +21,10 @@ import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 
 import java.awt.Color;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,7 +36,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
     protected final HashMap<Long, Long> guildCommandIds = new HashMap<>();
     protected final HashMap<Long, Long> ratelimitMap = new HashMap<>();
-    protected final ArrayList<Long> guildsToRegisterIn;
+    protected final Collection<Long> guildsToRegisterIn;
     protected final String name;
     protected final String description;
     protected final long ratelimitLength;
@@ -99,7 +100,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         protected CommandVisibility commandVisibility = CommandVisibility.GLOBAL;
         protected Command.Type commandType = Command.Type.SLASH;
         protected TypeOfEphemeral typeOfEphemeral = TypeOfEphemeral.DEFAULT;
-        protected ArrayList<Long> guildsToRegisterIn = new ArrayList<>();
+        protected Collection<Long> guildsToRegisterIn = List.of();
 
         public BotCommandOptions() {}
 
@@ -332,7 +333,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
          * @return {@link BotCommandOptions}
          */
         @NonNull
-        public BotCommandOptions setGuildsToRegisterIn(@NonNull ArrayList<Long> guildsToRegisterIn) {
+        public BotCommandOptions setGuildsToRegisterIn(@NonNull List<Long> guildsToRegisterIn) {
             this.guildsToRegisterIn = guildsToRegisterIn;
             return this;
         }
@@ -376,7 +377,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * Method used to execute the command. Should contain the main logic of the command.
      * @param userId is the ID of the user who called the command
      * @param event is the {@link SlashCommandInteractionEvent} that contains the interaction
-     * @return a nonnull {@link CommandResponse} containing either a {@link MessageEmbed} or {@link Message}
+     * @return a nonnull {@link CommandResponse} containing either a {@link MessageEmbed} or {@link String}
      */
     @NonNull
     public abstract CommandResponse<T> runCommand(final long userId, @NonNull final E event);
@@ -446,6 +447,14 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Removes the guild command ID for the provided guild ID
+     * @param guildId is the ID of the guild to remove the command ID for
+     */
+    public void removeGuildCommandId(long guildId) {
+        guildCommandIds.remove(guildId);
     }
 
     public void setGlobalCommandId(long id) {
@@ -550,7 +559,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     }
 
     @NonNull
-    public ArrayList<Long> getGuildsToRegisterIn() {
+    public Collection<Long> getGuildsToRegisterIn() {
         return guildsToRegisterIn;
     }
 

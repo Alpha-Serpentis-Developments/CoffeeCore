@@ -25,15 +25,15 @@ import java.util.List;
 public class CoffeeCoreBuilder<T> {
 
     /**
-     * Enum used to determine how the {@link JDABuilder} or {@link DefaultShardManagerBuilder} is configured initially
-     *
+     * Enum used to determine how the {@link JDABuilder} or {@link DefaultShardManagerBuilder} is configured initially.
+     * Configuration may change by JDA.
      * @see JDABuilder#create(Collection)
      * @see JDABuilder#createDefault(String)
      * @see JDABuilder#createLight(String)
      */
-    protected enum BuilderConfiguration {
+    public enum BuilderConfiguration {
         /**
-         * Creates a {@link JDABuilder} or {@link ShardManager} with the defined gateway intents.
+         * Creates a {@link JDABuilder} or {@link ShardManager} with JDA's low memory profile.
          * @see JDABuilder#create(String, Collection)
          * @see DefaultShardManagerBuilder#create(String, Collection)
          */

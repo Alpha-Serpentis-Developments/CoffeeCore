@@ -26,7 +26,7 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
     /**
      * Cached guild commands. <b>This expects that the commands do not change after caching</b>
      */
-    private List<BotCommand<?,?>> cachedGuildCommands = null;
+    private List<BotCommand<?, ?>> cachedGuildCommands = null;
 
     /**
      * Initializes the server data handler.
@@ -79,7 +79,10 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
 
     @Override
     public void onGuildLeave(@NonNull GuildLeaveEvent event) {
+        CommandsHandler commandsHandler = getCore().getCommandsHandler();
+
         serverDataHashMap.remove(event.getGuild().getIdLong());
+        commandsHandler.deregisterCommands(event.getGuild().getIdLong());
 
         try {
             updateServerData();
@@ -89,7 +92,7 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
     }
 
     @NonNull
-    protected List<BotCommand<?,?>> getCachedGuildCommands() {
+    protected List<BotCommand<?, ?>> getCachedGuildCommands() {
         if(cachedGuildCommands == null) {
             cachedGuildCommands = getCore().getCommandsHandler().getGuildCommands();
         }
