@@ -221,8 +221,10 @@ public class CoffeeCore {
      */
     public void shutdown(@NonNull Duration duration) throws InterruptedException {
         IGuildChannelContainer container = getActiveContainer();
+
         if(container instanceof JDA j) {
             j.shutdown();
+
             if(j.awaitShutdown(duration)) {
                 j.shutdownNow();
                 j.awaitShutdown();
