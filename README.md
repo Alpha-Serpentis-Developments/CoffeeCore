@@ -25,7 +25,7 @@ Latest Release:
 <dependency>
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.4.1-alpha</version>
+    <version>0.5.0-alpha</version>
 </dependency>
 ```
 
@@ -94,7 +94,7 @@ UPDATE_COMMANDS_AT_LAUNCH=true
 REGISTER_DEFAULT_COMMANDS=true
 ```
 
-2. Create a new CoffeeCore instance using CoffeeCoreBuilder and load in your bot settings from the `.env` file (or other source):
+2. Create a new CoffeeCore instance using CoffeeCoreBuilder and (optionally) load in your bot settings from the `.env` file (or other source):
 
 ```java
 public static void main(String[] args) throws Exception {
@@ -126,14 +126,15 @@ public static void main(String[] args) throws Exception {
 ## Writing a Command
 
 Currently, Coffee Core supports three types of commands:
-- `BotCommand`: Purely uses the slash command to execute an action
+- `BotCommand`: The base command type
 - `ButtonCommand`: Extends off of `BotCommand` and adds the ability to use buttons
 - `ModalCommand`: An interface that enables the use of modal dialogs
 
 When using `BotCommand` or `ButtonCommand`, `BotCommand` has a generic type that represents the type of data that will be
 returned when the command is executed. For example, if you want to return a `MessageEmbed` when the command is executed,
-you would use `BotCommand<MessageEmbed>`. Otherwise, if you want to respond back with only a message, you would use
-`BotCommand<String>`.
+you would use `BotCommand<MessageEmbed, ...>`. Otherwise, if you want to respond back with only a message, you would use
+`BotCommand<String, ...>`. For the second generic type, it represents the type of event that will be used to execute the
+command. For example, if you want to use a `SlashCommandInteractionEvent`, you would use `BotCommand<..., SlashCommandInteractionEvent>`.
 
 ### Using `BotCommand`
 
@@ -141,7 +142,7 @@ you would use `BotCommand<MessageEmbed>`. Otherwise, if you want to respond back
 public class ExampleCommand extends BotCommand<MessageEmbed, SlashCommandInteractionEvent> {
     public ExampleCommand() {
         super(
-                new BotCommand.BotCommandOptions()
+                new BotCommandOptions()
                         .setName("example")
                         .setDescription("An example command")
                         .setOnlyEmbed(true) // Must match with the generic type (e.g., true if MessageEmbed, false if String)
@@ -167,7 +168,7 @@ To add buttons, you can use the `addButton(...)` method. When adding buttons, yo
 button, a `ButtonStyle`, a label, and whether the button is disabled. Optionally, there's a fifth parameter that allows
 you to provide an `Emoji`.
 
-Check out an example [here](https://github.com/Alpha-Serpentis-Developments/CoffeeCore/blob/main/src/examples/java/hello/HelloCommandButton.java)
+Check out an example [here](https://github.com/Alpha-Serpentis-Developments/CoffeeCore/blob/main/src/test/java/hello/HelloCommandButton.java)
 
 ```java
 public class ExampleCommand extends ButtonCommand<MessageEmbed, SlashCommandInteractionEvent> {
