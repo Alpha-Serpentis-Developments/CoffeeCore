@@ -25,7 +25,7 @@ Latest Release:
 <dependency>
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.4.1-alpha</version>
+    <version>0.5.0-alpha</version>
 </dependency>
 ```
 
@@ -35,7 +35,7 @@ Latest Snapshot:
 <dependency>
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.4.1-alpha-SNAPSHOT</version>
+    <version>0.5.0-alpha-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -70,33 +70,19 @@ You can also exclude the `dotenv-java` package if you do not intend to use it.
 
 ### Creating a bot
 
-**Note**: By default, Coffee Core will enable `GUILD_MEMBERS`, a privileged intent. Additionally,
-when Coffee Core is being created, it uses JDA's default configuration via [`JDABuilder.createDefault`](https://ci.dv8tion.net/job/JDA5/javadoc/net/dv8tion/jda/api/JDABuilder.html#createDefault(java.lang.String))
-then applies the provided settings. In addition, the Coffee Core builder has its own default settings to configure JDA.
-
 The default settings are as follows:
 
-```java
-public class CoffeeCoreBuilder {
-    // Some properties omitted...
-    protected ChunkingFilter chunkingFilter = ChunkingFilter.ALL;
-    protected Collection<CacheFlag> disabledCacheFlags = new ArrayList<>() {
-        {
-            add(CacheFlag.MEMBER_OVERRIDES);
-            add(CacheFlag.VOICE_STATE);
-        }
-    };
-    protected Collection<GatewayIntent> enabledGatewayIntents = new ArrayList<>() {
-        {
-            add(GatewayIntent.GUILD_MEMBERS);
-        }
-    };
-    protected JDABuilderConfiguration jdaBuilderConfiguration = JDABuilderConfiguration.DEFAULT;
-    protected MemberCachePolicy memberCachePolicy = MemberCachePolicy.NONE;
+- **Chunking Filter**: `ChunkingFilter.NONE`
+- **Enabled Cache Flags**: None
+- **Disabled Cache Flags**: `MEMBER_OVERRIDES` and `VOICE_STATE`
+- **Enabled Gateway Intents**: None
+- **Disabled Gateway Intents**: None
+- **Member Cache Policy**: `MemberCachePolicy.NONE`
+- **Sharding**: Disabled
+- **Shards Total**: -1 (set by Discord)
+- **Builder Configuration**: `BuilderConfiguration.DEFAULT`
 
-    // Methods omitted...
-}
-```
+**Note**: `BuilderConfiguration` is the equivalent of `JDABuilder` or `DefaultShardManagerBuilder`, depending on if the bot is sharded or not
 
 1. (Optional) Create a new `.env` file in the root of your project and fill it out with the following (adjust to your liking):
 
@@ -108,7 +94,7 @@ UPDATE_COMMANDS_AT_LAUNCH=true
 REGISTER_DEFAULT_COMMANDS=true
 ```
 
-2. Create a new CoffeeCore instance using CoffeeCoreBuilder and load in your bot settings from the `.env` file (or other source):
+2. Create a new CoffeeCore instance using CoffeeCoreBuilder and (optionally) load in your bot settings from the `.env` file (or other source):
 
 ```java
 public static void main(String[] args) throws Exception {
@@ -134,28 +120,29 @@ public static void main(String[] args) throws Exception {
 
     // Register your commands with core.registerCommands(...)
     core.registerCommands(new MyEpicCommand(), new QuackCommand());
-    }
+}
 ```
 
 ## Writing a Command
 
 Currently, Coffee Core supports three types of commands:
-- `BotCommand`: Purely uses the slash command to execute an action
+- `BotCommand`: The base command type
 - `ButtonCommand`: Extends off of `BotCommand` and adds the ability to use buttons
 - `ModalCommand`: An interface that enables the use of modal dialogs
 
 When using `BotCommand` or `ButtonCommand`, `BotCommand` has a generic type that represents the type of data that will be
 returned when the command is executed. For example, if you want to return a `MessageEmbed` when the command is executed,
-you would use `BotCommand<MessageEmbed>`. Otherwise, if you want to respond back with only a message, you would use
-`BotCommand<String>`.
+you would use `BotCommand<MessageEmbed, ...>`. Otherwise, if you want to respond back with only a message, you would use
+`BotCommand<String, ...>`. For the second generic type, it represents the type of event that will be used to execute the
+command. For example, if you want to use a `SlashCommandInteractionEvent`, you would use `BotCommand<..., SlashCommandInteractionEvent>`.
 
 ### Using `BotCommand`
 
 ```java
-public class ExampleCommand extends BotCommand<MessageEmbed> {
+public class ExampleCommand extends BotCommand<MessageEmbed, SlashCommandInteractionEvent> {
     public ExampleCommand() {
         super(
-                new BotCommand.BotCommandOptions()
+                new BotCommandOptions()
                         .setName("example")
                         .setDescription("An example command")
                         .setOnlyEmbed(true) // Must match with the generic type (e.g., true if MessageEmbed, false if String)
@@ -181,10 +168,10 @@ To add buttons, you can use the `addButton(...)` method. When adding buttons, yo
 button, a `ButtonStyle`, a label, and whether the button is disabled. Optionally, there's a fifth parameter that allows
 you to provide an `Emoji`.
 
-Check out an example [here](https://github.com/Alpha-Serpentis-Developments/CoffeeCore/blob/main/src/examples/java/hello/HelloCommandButton.java)
+Check out an example [here](https://github.com/Alpha-Serpentis-Developments/CoffeeCore/blob/main/src/test/java/hello/HelloCommandButton.java)
 
 ```java
-public class ExampleCommand extends ButtonCommand<MessageEmbed> {
+public class ExampleCommand extends ButtonCommand<MessageEmbed, SlashCommandInteractionEvent> {
     public ExampleCommand() {
         super(
                 // set your BotCommandOptions
@@ -211,7 +198,7 @@ public class ExampleCommand extends ButtonCommand<MessageEmbed> {
     @Override
     @NonNull
     public Collection<ItemComponent> addButtonsToMessage(@NonNull GenericCommandInteractionEvent event) {
-        return Arrays.asList(new ItemComponent[] {
+        return Arrays.asList(new ItemComponent[]{
                 getButton("primary"),
                 getButton("secondary"),
                 getButton("danger")

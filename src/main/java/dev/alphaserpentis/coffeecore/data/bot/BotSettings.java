@@ -6,10 +6,26 @@ import io.reactivex.rxjava3.annotations.NonNull;
  * Class used to contain settings for the bot.
  */
 public class BotSettings {
+
+    /**
+     * The Discord user ID of the bot owner.
+     */
     private final long botOwnerId;
+    /**
+     * The path to the server data file.
+     */
     private final String serverDataPath;
+    /**
+     * Whether to update the commands at launch.
+     */
     private final boolean updateCommandsAtLaunch;
+    /**
+     * Whether to register the default commands.
+     */
     private final boolean registerDefaultCommands;
+    /**
+     * Optional information to highlight what the bot is about.
+     */
     private AboutInformation aboutInformation = null;
 
     public BotSettings(

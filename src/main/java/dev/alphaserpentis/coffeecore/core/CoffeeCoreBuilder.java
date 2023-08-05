@@ -15,24 +15,25 @@ import net.dv8tion.jda.api.utils.ChunkingFilter;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Builder class for {@link CoffeeCore}.
+ * @param <T> Represents either a {@link JDABuilder} or {@link DefaultShardManagerBuilder}
  */
 public class CoffeeCoreBuilder<T> {
 
     /**
-     * Enum used to determine how the {@link JDABuilder} or {@link DefaultShardManagerBuilder} is configured initially
-     *
+     * Enum used to determine how the {@link JDABuilder} or {@link DefaultShardManagerBuilder} is configured initially.
+     * Configuration may change by JDA.
      * @see JDABuilder#create(Collection)
      * @see JDABuilder#createDefault(String)
      * @see JDABuilder#createLight(String)
      */
-    enum BuilderConfiguration {
+    public enum BuilderConfiguration {
         /**
-         * Creates a {@link JDABuilder} or {@link ShardManager} with the defined gateway intents.
+         * Creates a {@link JDABuilder} or {@link ShardManager} with JDA's low memory profile.
          * @see JDABuilder#create(String, Collection)
          * @see DefaultShardManagerBuilder#create(String, Collection)
          */
@@ -55,20 +56,11 @@ public class CoffeeCoreBuilder<T> {
     protected BotSettings settings = null;
     protected AbstractServerDataHandler<?> serverDataHandler = null;
     protected CommandsHandler commandsHandler = null;
-    protected ChunkingFilter chunkingFilter = ChunkingFilter.ALL;
-    protected Collection<CacheFlag> enabledCacheFlags = new ArrayList<>();
-    protected Collection<CacheFlag> disabledCacheFlags = new ArrayList<>() {
-        {
-            add(CacheFlag.MEMBER_OVERRIDES);
-            add(CacheFlag.VOICE_STATE);
-        }
-    };
-    protected Collection<GatewayIntent> enabledGatewayIntents = new ArrayList<>() {
-        {
-            add(GatewayIntent.GUILD_MEMBERS);
-        }
-    };
-    protected Collection<GatewayIntent> disabledGatewayIntents = new ArrayList<>();
+    protected ChunkingFilter chunkingFilter = ChunkingFilter.NONE;
+    protected Collection<CacheFlag> enabledCacheFlags = List.of();
+    protected Collection<CacheFlag> disabledCacheFlags = List.of(CacheFlag.MEMBER_OVERRIDES, CacheFlag.VOICE_STATE);
+    protected Collection<GatewayIntent> enabledGatewayIntents = List.of();
+    protected Collection<GatewayIntent> disabledGatewayIntents = List.of();
     protected BuilderConfiguration builderConfiguration = BuilderConfiguration.DEFAULT;
     protected MemberCachePolicy memberCachePolicy = MemberCachePolicy.NONE;
     protected boolean enableSharding = false;
@@ -78,8 +70,7 @@ public class CoffeeCoreBuilder<T> {
      * Builds a {@link CoffeeCore} instance with the configured settings. Initialization will begin inside Coffee Core's
      * constructor.
      * Coffee Core will shut down if the bot is misconfigured within Discord (e.g., invalid token, invalid permissions).
-     * <p><b>Be aware that {@link CoffeeCoreBuilder#chunkingFilter}, {@link CoffeeCoreBuilder#disabledCacheFlags},
-     * {@link CoffeeCoreBuilder#enabledGatewayIntents}, {@link CoffeeCoreBuilder#builderConfiguration}, and
+     * <p><b>Be aware that {@link CoffeeCoreBuilder#disabledCacheFlags}, {@link CoffeeCoreBuilder#builderConfiguration}, and
      * {@link CoffeeCoreBuilder#memberCachePolicy} contain default values.</b>
      * @param token The Discord bot token.
      * @return {@link CoffeeCore}.
@@ -88,18 +79,12 @@ public class CoffeeCoreBuilder<T> {
     public CoffeeCore build(
             @NonNull String token
     ) {
-        BuilderHelper<?> builderHelper = new BuilderHelper<>(createBuilderInstance(token));
-
-        if(serverDataHandler != null) {
-            return new CoffeeCore(
-                    settings,
-                    builderHelper.build(),
-                    serverDataHandler,
-                    commandsHandler
-            );
-        } else {
-            return new CoffeeCore(settings, builderHelper.build());
-        }
+        return new CoffeeCore(
+                settings,
+                new BuilderHelper<>(createBuilderInstance(token)).build(),
+                serverDataHandler,
+                commandsHandler
+        );
     }
 
     /**
@@ -199,6 +184,17 @@ public class CoffeeCoreBuilder<T> {
     }
 
     /**
+     * Sets the {@link BuilderConfiguration}.
+     * @param builderConfiguration The builder configuration.
+     * @return {@link CoffeeCoreBuilder} for method chaining.
+     */
+    @NonNull
+    public CoffeeCoreBuilder<?> setBuilderConfiguration(@NonNull BuilderConfiguration builderConfiguration) {
+        this.builderConfiguration = builderConfiguration;
+        return this;
+    }
+
+    /**
      * Sets the {@link MemberCachePolicy}.
      * @param memberCachePolicy The member cache policy.
      * @return {@link CoffeeCoreBuilder} for method chaining.
@@ -248,12 +244,13 @@ public class CoffeeCoreBuilder<T> {
     @SuppressWarnings("unchecked")
     private T createBuilderInstance(@NonNull String token) {
         if(enableSharding) {
-            DefaultShardManagerBuilder shardManagerBuilder = null;
+            DefaultShardManagerBuilder shardManagerBuilder;
 
             switch(builderConfiguration) {
                 case NONE -> shardManagerBuilder = DefaultShardManagerBuilder.create(token, enabledGatewayIntents);
                 case LIGHT -> shardManagerBuilder = DefaultShardManagerBuilder.createLight(token);
                 case DEFAULT -> shardManagerBuilder = DefaultShardManagerBuilder.createDefault(token);
+                default -> throw new IllegalStateException("Unexpected value: " + builderConfiguration);
             }
 
             return (T) shardManagerBuilder
@@ -265,12 +262,13 @@ public class CoffeeCoreBuilder<T> {
                     .setMemberCachePolicy(memberCachePolicy)
                     .setShardsTotal(shardsTotal);
         } else {
-            JDABuilder jdaBuilder = null;
+            JDABuilder jdaBuilder;
 
             switch(builderConfiguration) {
                 case NONE -> jdaBuilder = JDABuilder.create(token, enabledGatewayIntents);
                 case LIGHT -> jdaBuilder = JDABuilder.createLight(token);
                 case DEFAULT -> jdaBuilder = JDABuilder.createDefault(token);
+                default -> throw new IllegalStateException("Unexpected value: " + builderConfiguration);
             }
 
             return (T) jdaBuilder

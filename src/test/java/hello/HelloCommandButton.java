@@ -1,31 +1,28 @@
 package hello;
 
+import dev.alphaserpentis.coffeecore.commands.ButtonCommand;
+import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
-import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
-import dev.alphaserpentis.coffeecore.commands.ButtonCommand;
-import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-public class HelloCommandButton extends ButtonCommand<MessageEmbed> {
+public class HelloCommandButton extends ButtonCommand<MessageEmbed, SlashCommandInteractionEvent> {
 
     public HelloCommandButton() {
         super(
-                new BotCommandOptions(
-                        "hellobutton",
-                        "Says hello to you using a button!",
-                        true,
-                        false,
-                        TypeOfEphemeral.DEFAULT
-                )
+                new BotCommandOptions()
+                        .setName("hellobutton")
+                        .setDescription("Says hello to you using a button!")
+                        .setOnlyEmbed(true)
+                        .setDeferReplies(true)
         );
 
         addButton("hello", ButtonStyle.PRIMARY, "Hello!", false);
@@ -49,18 +46,17 @@ public class HelloCommandButton extends ButtonCommand<MessageEmbed> {
     public void runButtonInteraction(@NonNull ButtonInteractionEvent event) {
         String key = convertComponentIdToKey(event.getComponentId());
 
-        if (key.equals("hello")) {
-            event.reply("Hello, " + event.getUser().getAsMention() + "!").queue();
-        } else if (key.equals("goodbye")) {
-            event.reply("Goodbye, " + event.getUser().getAsMention() + "!").queue();
-        } else if (key.equals("mystery")) {
-            event.reply("How did you click on this?").queue();
+        switch (key) {
+            case "hello" -> event.reply("Hello, " + event.getUser().getAsMention() + "!").queue();
+            case "goodbye" -> event.reply("Goodbye, " + event.getUser().getAsMention() + "!").queue();
+            case "mystery" -> event.reply("How did you click on this?").queue();
+            default -> throw new IllegalStateException("Unexpected value: " + key);
         }
     }
 
     @Override
     @NonNull
-    public Collection<ItemComponent> addButtonsToMessage(@NonNull GenericCommandInteractionEvent event) {
+    public Collection<ItemComponent> addButtonsToMessage(@NonNull SlashCommandInteractionEvent event) {
         return Arrays.asList(new ItemComponent[] {
                 getButton("hello"),
                 getButton("goodbye"),

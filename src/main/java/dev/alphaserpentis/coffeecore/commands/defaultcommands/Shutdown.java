@@ -9,7 +9,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 
 import java.time.Duration;
 
-public class Shutdown extends BotCommand<MessageEmbed> {
+public class Shutdown extends BotCommand<MessageEmbed, SlashCommandInteractionEvent> {
 
     public Shutdown() {
         super(
@@ -18,6 +18,10 @@ public class Shutdown extends BotCommand<MessageEmbed> {
                         .setDescription("Shuts down the bot. This may or may not respond.")
                         .setOnlyEmbed(true)
         );
+    }
+
+    public Shutdown(@NonNull BotCommandOptions options) {
+        super(options);
     }
 
     @Override

@@ -13,19 +13,18 @@ import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 
 import java.io.IOException;
 
-public class SetCustomData extends BotCommand<String> {
+public class SetCustomData extends BotCommand<String, SlashCommandInteractionEvent> {
 
     public SetCustomData() {
         super(
-                new BotCommandOptions(
-                        "set",
-                        "Sets the custom data of the server.",
-                        false,
-                        false,
-                        TypeOfEphemeral.DEFAULT
-                )
+                new BotCommandOptions()
+                        .setName("set")
+                        .setDescription("Sets the custom data of the server")
+                        .setOnlyEmbed(false)
+                        .setOnlyEphemeral(false)
         );
     }
+
     @Override
     @NonNull
     public CommandResponse<String> runCommand(long userId, @NonNull SlashCommandInteractionEvent event) {
@@ -34,7 +33,7 @@ public class SetCustomData extends BotCommand<String> {
         String subcommand = event.getSubcommandName();
 
         if(subcommand.equals("view")) {
-            return new CommandResponse<>("The custom data of this server is: " + customServerData.getCustomData(), isOnlyEphemeral());
+            return new CommandResponse<>(isOnlyEphemeral(), "The custom data of this server is: " + customServerData.getCustomData());
         } else if(subcommand.equals("set")) {
             String data = event.getOption("data").getAsString();
             customServerData.setCustomData(data);
@@ -43,7 +42,7 @@ public class SetCustomData extends BotCommand<String> {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            return new CommandResponse<>("The custom data of this server has been set to: " + data, isOnlyEphemeral());
+            return new CommandResponse<>(isOnlyEphemeral(), "The custom data of this server has been set to: " + data);
         } else {
             throw new RuntimeException("Unknown subcommand: " + subcommand);
         }
@@ -57,6 +56,6 @@ public class SetCustomData extends BotCommand<String> {
         Command cmd = jda.upsertCommand(name, description)
                 .addSubcommands(view, set).complete();
 
-        setCommandId(cmd.getIdLong());
+        setGlobalCommandId(cmd.getIdLong());
     }
 }

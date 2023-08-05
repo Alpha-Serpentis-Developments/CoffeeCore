@@ -57,28 +57,23 @@ public class CoffeeCore {
             @NonNull BotSettings settings,
             @NonNull IGuildChannelContainer container
     ) {
-        this.settings = settings;
+        this(settings, container, null, null);
+    }
 
-        try {
-            determineAndSetContainer(container);
+    public CoffeeCore(
+            @NonNull BotSettings settings,
+            @NonNull IGuildChannelContainer container,
+            @Nullable AbstractServerDataHandler<?> serverDataHandler
+    ) {
+        this(settings, container, serverDataHandler, null);
+    }
 
-            ContainerHelper containerHelper = new ContainerHelper(container);
-            Path path = Path.of(settings.getServerDataPath());
-            serverDataHandler = new ServerDataHandler<>(
-                    path,
-                    new TypeToken<>() {},
-                    new ServerDataDeserializer<>()
-            );
-
-            serverDataHandler.init(containerHelper);
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-
-        commandsHandler = new CommandsHandler(this, Executors.newCachedThreadPool());
-
-        addEventListenersToContainer(this.commandsHandler, this.serverDataHandler);
+    public CoffeeCore(
+            @NonNull BotSettings settings,
+            @NonNull IGuildChannelContainer container,
+            @Nullable CommandsHandler commandsHandler
+    ) {
+        this(settings, container, null, commandsHandler);
     }
 
     public CoffeeCore(
@@ -95,6 +90,7 @@ public class CoffeeCore {
 
             if(serverDataHandler == null) {
                 Path path = Path.of(settings.getServerDataPath());
+
                 this.serverDataHandler = new ServerDataHandler<>(
                         path,
                         new TypeToken<>() {
@@ -105,14 +101,15 @@ public class CoffeeCore {
                 this.serverDataHandler = serverDataHandler;
             }
 
-            this.serverDataHandler.init(containerHelper);
+            this.serverDataHandler.init(containerHelper, this);
         } catch (IllegalStateException | InterruptedException | IOException | IllegalArgumentException e) {
             e.printStackTrace();
             System.exit(1);
         }
         this.commandsHandler = Objects.requireNonNullElseGet(
-                commandsHandler, () -> new CommandsHandler(this, Executors.newCachedThreadPool())
+                commandsHandler, () -> new CommandsHandler(Executors.newCachedThreadPool())
         );
+        this.commandsHandler.setCore(this);
 
         addEventListenersToContainer(this.commandsHandler, this.serverDataHandler);
     }
@@ -166,7 +163,7 @@ public class CoffeeCore {
      * Get the bot's {@link dev.alphaserpentis.coffeecore.data.bot.AboutInformation} instance
      * @return {@link dev.alphaserpentis.coffeecore.data.bot.AboutInformation}
      */
-    @NonNull
+    @Nullable
     public AboutInformation getAboutInformation() {
         return settings.getAboutInformation();
     }
@@ -224,8 +221,10 @@ public class CoffeeCore {
      */
     public void shutdown(@NonNull Duration duration) throws InterruptedException {
         IGuildChannelContainer container = getActiveContainer();
+
         if(container instanceof JDA j) {
             j.shutdown();
+
             if(j.awaitShutdown(duration)) {
                 j.shutdownNow();
                 j.awaitShutdown();
@@ -269,9 +268,10 @@ public class CoffeeCore {
      * so it is best to register all commands instead of registering them one by one.
      * @param command The command or commands to register.
      */
-    public void registerCommands(@NonNull BotCommand<?>... command) {
-        HashMap<String, BotCommand<?>> commands = new HashMap<>();
-        for(BotCommand<?> cmd: command) {
+    public void registerCommands(@NonNull BotCommand<?, ?>... command) {
+        HashMap<String, BotCommand<?, ?>> commands = new HashMap<>();
+
+        for(BotCommand<?, ?> cmd: command) {
             commands.put(cmd.getName(), cmd);
         }
 
@@ -282,7 +282,7 @@ public class CoffeeCore {
             commands.put("shutdown", new Shutdown());
         }
 
-        for(BotCommand<?> cmd: commands.values()) {
+        for(BotCommand<?, ?> cmd: commands.values()) {
             cmd.setCore(this);
         }
 
@@ -308,11 +308,12 @@ public class CoffeeCore {
             jda.awaitReady();
         } else if(container instanceof ShardManager sm) {
             shardManager = sm;
-            for(JDA jda: shardManager.getShardCache()) {
+
+            for(JDA jda: shardManager.getShards()) {
                 jda.awaitReady();
             }
         } else {
-            throw new IllegalArgumentException("The container must be either a JDA instance or a ShardManager instance.");
+            throw new IllegalArgumentException("The container must either be a JDA or ShardManager instance.");
         }
     }
 
@@ -323,6 +324,7 @@ public class CoffeeCore {
      */
     public void addEventListenersToContainer(@NonNull Object... listeners) {
         IGuildChannelContainer container = getActiveContainer();
+
         if(container instanceof JDA j) {
             j.addEventListener(listeners);
         } else if(container instanceof ShardManager sm) {

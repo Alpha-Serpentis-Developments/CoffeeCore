@@ -15,7 +15,7 @@ import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 
 import java.io.IOException;
 
-public class Settings extends BotCommand<MessageEmbed> {
+public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEvent> {
 
     public Settings() {
         super(
@@ -26,11 +26,17 @@ public class Settings extends BotCommand<MessageEmbed> {
         );
     }
 
+    public Settings(@NonNull BotCommandOptions options) {
+        super(options);
+    }
+
     @Override
     @NonNull
     public CommandResponse<MessageEmbed> runCommand(long userId, @NonNull SlashCommandInteractionEvent event) {
         EmbedBuilder eb = new EmbedBuilder();
+
         eb.setTitle("Server Settings");
+
         if(event.getGuild() == null) {
             eb.setDescription("This command can only be used in a server.");
         } else {
@@ -63,8 +69,9 @@ public class Settings extends BotCommand<MessageEmbed> {
                 "ephemeral",
                 "Toggle whether the bot's responses are ephemeral"
         );
+
         jda.upsertCommand(name, description).addSubcommands(ephemeral).queue(
-                (cmd) -> setCommandId(cmd.getIdLong())
+                (cmd) -> setGlobalCommandId(cmd.getIdLong())
         );
     }
 
@@ -75,6 +82,7 @@ public class Settings extends BotCommand<MessageEmbed> {
     private void setServerEphemeral(long guildId, EmbedBuilder eb) throws IOException {
         ServerDataHandler<?> sdh = (ServerDataHandler<?>) core.getServerDataHandler();
         ServerData sd = sdh.getServerData(guildId);
+
         if(sd.getOnlyEphemeral()) {
             sd.setOnlyEphemeral(false);
             eb.setDescription("The bot's responses are no longer ephemeral.");

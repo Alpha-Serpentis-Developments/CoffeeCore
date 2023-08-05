@@ -6,15 +6,15 @@
 
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.4.1-alpha</version>
+    <version>0.5.0-alpha</version>
     <name>Coffee Core</name>
     <description>Coffee Core is a JDA-based framework for Discord bots</description>
     <url>https://asrp.dev/#coffee-core</url>
 
     <licenses>
         <license>
-            <name>GNU General Public License v2.0</name>
-            <url>https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html</url>
+            <name>Apache-2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
         </license>
     </licenses>
 
@@ -42,7 +42,7 @@
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
-            <version>5.0.0-beta.10</version>
+            <version>5.0.0-beta.12</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -79,25 +79,6 @@
             </resource>
         </resources>
         <plugins>
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-assembly-plugin</artifactId>-->
-<!--                <version>3.4.2</version>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <id>make-assembly</id>-->
-<!--                        <phase>package</phase>-->
-<!--                        <goals> <goal>single</goal> </goals>-->
-<!--                        <configuration>-->
-<!--                            <descriptorRefs>-->
-<!--                                <descriptorRef>jar-with-dependencies</descriptorRef>-->
-<!--                            </descriptorRefs>-->
-<!--                            <finalName>${project.artifactId}_${project.version}</finalName>-->
-<!--                            <appendAssemblyId>false</appendAssemblyId>-->
-<!--                        </configuration>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>

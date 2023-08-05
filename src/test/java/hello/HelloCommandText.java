@@ -5,17 +5,15 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import dev.alphaserpentis.coffeecore.commands.BotCommand;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 
-public class HelloCommandText extends BotCommand<String> {
+public class HelloCommandText extends BotCommand<String, SlashCommandInteractionEvent> {
 
     public HelloCommandText() {
         super(
-                new BotCommandOptions(
-                        "hello",
-                        "Says hello to you!",
-                        false,
-                        false,
-                        TypeOfEphemeral.DEFAULT
-                )
+                new BotCommandOptions()
+                        .setName("hello")
+                        .setDescription("Says hello to you!")
+                        .setOnlyEmbed(false)
+                        .setOnlyEphemeral(false)
         );
     }
 
@@ -26,7 +24,8 @@ public class HelloCommandText extends BotCommand<String> {
             @NonNull SlashCommandInteractionEvent event
     ) {
         return new CommandResponse<>(
-                "Hello, " + event.getUser().getAsMention() + "!", isOnlyEphemeral()
+                isOnlyEphemeral(),
+                "Hello, " + event.getUser().getAsMention() + "!"
         );
     }
 }

@@ -7,17 +7,15 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import dev.alphaserpentis.coffeecore.commands.BotCommand;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 
-public class HelloCommandEmbed extends BotCommand<MessageEmbed> {
+public class HelloCommandEmbed extends BotCommand<MessageEmbed, SlashCommandInteractionEvent> {
 
     public HelloCommandEmbed() {
         super(
-                new BotCommandOptions(
-                        "helloembed",
-                        "Says hello to you but in an embed!",
-                        true,
-                        false,
-                        TypeOfEphemeral.DEFAULT
-                )
+                new BotCommandOptions()
+                        .setName("helloembed")
+                        .setDescription("Says hello to you but in an embed!")
+                        .setOnlyEmbed(true)
+                        .setDeferReplies(true)
         );
     }
 

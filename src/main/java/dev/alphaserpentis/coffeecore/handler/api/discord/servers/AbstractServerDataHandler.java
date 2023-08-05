@@ -2,6 +2,7 @@ package dev.alphaserpentis.coffeecore.handler.api.discord.servers;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import dev.alphaserpentis.coffeecore.data.server.ServerData;
 import dev.alphaserpentis.coffeecore.helper.ContainerHelper;
 import io.reactivex.rxjava3.annotations.NonNull;
@@ -23,6 +24,10 @@ import java.util.Map;
  */
 public abstract class AbstractServerDataHandler<T extends ServerData> extends ListenerAdapter {
     /**
+     * The {@link CoffeeCore} instance.
+     */
+    private CoffeeCore core;
+    /**
      * Path to the server data file.
      */
     private final Path pathToFile;
@@ -42,7 +47,9 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
      * @param container The {@link ContainerHelper} instance to get the servers from.
      * @throws IOException If the bot fails to write to the server data file.
      */
-    public void init(@NonNull ContainerHelper container) throws IOException {
+    public void init(@NonNull ContainerHelper container, @NonNull CoffeeCore core) throws IOException {
+        this.core = core;
+
         // Check the current servers
         if(serverDataHashMap == null)
             serverDataHashMap = new HashMap<>();
@@ -73,6 +80,15 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
     }
 
     /**
+     * Gets the {@link CoffeeCore} instance.
+     * @return {@link CoffeeCore}
+     */
+    @NonNull
+    public CoffeeCore getCore() {
+        return core;
+    }
+
+    /**
      * Gets the {@link Path} to the server data file.
      * @return {@link Path}
      */
@@ -95,6 +111,7 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
 
     protected void writeToJSON(@NonNull Gson gson, @NonNull Object data) throws IOException {
         Writer writer = Files.newBufferedWriter(pathToFile);
+
         gson.toJson(data, writer);
         writer.close();
     }
