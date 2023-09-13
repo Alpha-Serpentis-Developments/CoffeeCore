@@ -6,10 +6,10 @@
 
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.5.0-alpha</version>
+    <version>0.5.1-alpha-SNAPSHOT</version>
     <name>Coffee Core</name>
     <description>Coffee Core is a JDA-based framework for Discord bots</description>
-    <url>https://asrp.dev/#coffee-core</url>
+    <url>https://asrp.dev/#libraries</url>
 
     <licenses>
         <license>
@@ -23,6 +23,8 @@
             <id>AlphaSerpentis</id>
             <name>Amethyst C</name>
             <email>amethyst@alphaserpentis.dev</email>
+            <organization>Alpha Serpentis Developments</organization>
+            <organizationUrl>https://alphaserpentis.dev</organizationUrl>
         </developer>
     </developers>
 
@@ -42,7 +44,7 @@
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
-            <version>5.0.0-beta.12</version>
+            <version>5.0.0-beta.13</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -52,7 +54,7 @@
         <dependency>
             <groupId>io.reactivex.rxjava3</groupId>
             <artifactId>rxjava</artifactId>
-            <version>3.1.6</version>
+            <version>3.1.7</version>
         </dependency>
         <dependency>
             <groupId>io.github.cdimascio</groupId>

@@ -599,6 +599,11 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             T[] response;
 
             msgIsEphemeral = sendAsEphemeral(this, event.getGuild());
+
+            if (isUsingRatelimits() && !isUserRatelimited(event.getUser().getIdLong())) {
+                ratelimitMap.put(event.getUser().getIdLong(), Instant.now().getEpochSecond() + getRatelimitLength());
+            }
+
             if (isOnlyEmbed()) {
                 if(ephemeralType == TypeOfEphemeral.DEFAULT) {
                     if (!msgIsEphemeral && event.getGuild() != null) {
@@ -619,10 +624,6 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
                 responseFromCommand = isActive() ? runCommand(event.getUser().getIdLong(), event) : inactiveCommandResponse();
                 response = (T[]) responseFromCommand.messageResponse();
-
-                if (isUsingRatelimits() && !isUserRatelimited(event.getUser().getIdLong())) {
-                    ratelimitMap.put(event.getUser().getIdLong(), Instant.now().getEpochSecond() + getRatelimitLength());
-                }
 
                 return hook.sendMessageEmbeds(
                         Arrays.asList((MessageEmbed[]) response)).setEphemeral(responseFromCommand.messageIsEphemeral()
@@ -645,10 +646,6 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
                 responseFromCommand = isActive() ? runCommand(event.getUser().getIdLong(), event) : inactiveCommandResponse();
                 response = (T[]) responseFromCommand.messageResponse();
-
-                if (isUsingRatelimits() && !isUserRatelimited(event.getUser().getIdLong())) {
-                    ratelimitMap.put(event.getUser().getIdLong(), Instant.now().getEpochSecond() + getRatelimitLength());
-                }
 
                 return hook.sendMessage((String) response[0]);
             }
@@ -680,6 +677,10 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             responseFromCommand = isActive() ? runCommand(event.getUser().getIdLong(), event) : inactiveCommandResponse();
             response = (T[]) responseFromCommand.messageResponse();
             msgIsEphemeral = sendAsEphemeral(this, event.getGuild());
+
+            if (isUsingRatelimits() && !isUserRatelimited(event.getUser().getIdLong())) {
+                ratelimitMap.put(event.getUser().getIdLong(), Instant.now().getEpochSecond() + getRatelimitLength());
+            }
 
             if (isOnlyEmbed()) {
                 if (!msgIsEphemeral && event.getGuild() != null) {
