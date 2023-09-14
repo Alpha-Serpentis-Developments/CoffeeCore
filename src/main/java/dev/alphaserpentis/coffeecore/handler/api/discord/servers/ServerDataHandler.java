@@ -15,8 +15,10 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A default implementation of {@link AbstractServerDataHandler} that handles {@link ServerData}.
@@ -48,7 +50,7 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
                 .registerTypeAdapter(serverDataHashMap.getClass(), jsonDeserializer)
                 .create();
         reader = Files.newBufferedReader(path);
-        serverDataHashMap = gson.fromJson(reader, typeToken.getType());
+        serverDataHashMap = Objects.requireNonNullElse(gson.fromJson(reader, typeToken.getType()), new HashMap<>());
     }
 
     /**

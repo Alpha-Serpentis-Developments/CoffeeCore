@@ -35,7 +35,7 @@ Latest Snapshot:
 <dependency>
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.5.0-alpha-SNAPSHOT</version>
+    <version>0.5.1-alpha-SNAPSHOT</version>
 </dependency>
 ```
 
