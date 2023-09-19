@@ -31,6 +31,6 @@ public class HelloCommandEmbed extends BotCommand<MessageEmbed, SlashCommandInte
         eb.setDescription("Hello, " + event.getUser().getAsMention() + "!");
         eb.setColor(0x00FF00);
 
-        return new CommandResponse<>(eb.build(), isOnlyEphemeral());
+        return new CommandResponse<>(isOnlyEphemeral(), eb.build());
     }
 }

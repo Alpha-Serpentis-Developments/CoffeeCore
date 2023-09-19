@@ -119,7 +119,7 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
     /**
      * Convert a component (button) id to a key.
      * @param componentId The component (button) id.
-     * @return The key.
+     * @return {@link String} The key associated with the component (button) id.
      */
     @NonNull
     public String convertComponentIdToKey(@NonNull String componentId) {

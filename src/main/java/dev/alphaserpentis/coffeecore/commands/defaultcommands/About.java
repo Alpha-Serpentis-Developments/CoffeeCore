@@ -45,7 +45,7 @@ public class About extends BotCommand<MessageEmbed, SlashCommandInteractionEvent
             setToCustomInfo(eb, event, info);
         }
 
-        return new CommandResponse<>(eb.build(), isOnlyEphemeral());
+        return new CommandResponse<>(isOnlyEphemeral(), eb.build());
     }
 
     protected void setToDefaults(@NonNull EmbedBuilder eb, @NonNull SlashCommandInteractionEvent event) {

@@ -33,7 +33,7 @@ public class Shutdown extends BotCommand<MessageEmbed, SlashCommandInteractionEv
             eb.setTitle("Denied");
             eb.setDescription("You are not authorized to use this command.");
             eb.setColor(0xff0000);
-            return new CommandResponse<>(eb.build(), isOnlyEphemeral());
+            return new CommandResponse<>(isOnlyEphemeral(), eb.build());
         }
 
         eb.setTitle("Shutting down...");
@@ -46,6 +46,6 @@ public class Shutdown extends BotCommand<MessageEmbed, SlashCommandInteractionEv
             throw new RuntimeException(e);
         }
 
-        return new CommandResponse<>(eb.build(), isOnlyEphemeral());
+        return new CommandResponse<>(isOnlyEphemeral(), eb.build());
     }
 }

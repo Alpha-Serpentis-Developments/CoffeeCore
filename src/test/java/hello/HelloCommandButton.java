@@ -39,7 +39,7 @@ public class HelloCommandButton extends ButtonCommand<MessageEmbed, SlashCommand
         eb.setDescription("Hello, " + event.getUser().getAsMention() + "!");
         eb.setColor(0x00FF00);
 
-        return new CommandResponse<>(eb.build(), isOnlyEphemeral());
+        return new CommandResponse<>(isOnlyEphemeral(), eb.build());
     }
 
     @Override

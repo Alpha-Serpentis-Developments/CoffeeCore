@@ -40,6 +40,6 @@ public class Help extends BotCommand<MessageEmbed, SlashCommandInteractionEvent>
             );
         }
 
-        return new CommandResponse<>(eb.build(), isOnlyEphemeral());
+        return new CommandResponse<>(isOnlyEphemeral(), eb.build());
     }
 }

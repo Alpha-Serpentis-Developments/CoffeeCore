@@ -60,7 +60,7 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
             }
         }
 
-        return new CommandResponse<>(eb.build(), isOnlyEphemeral());
+        return new CommandResponse<>(isOnlyEphemeral(), eb.build());
     }
 
     @Override

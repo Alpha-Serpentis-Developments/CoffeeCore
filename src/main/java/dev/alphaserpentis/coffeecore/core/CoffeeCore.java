@@ -4,6 +4,7 @@ import com.google.gson.reflect.TypeToken;
 import dev.alphaserpentis.coffeecore.commands.BotCommand;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.About;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Help;
+import dev.alphaserpentis.coffeecore.commands.defaultcommands.Restart;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Settings;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Shutdown;
 import dev.alphaserpentis.coffeecore.data.bot.AboutInformation;
@@ -266,20 +267,27 @@ public class CoffeeCore {
     /**
      * Register a {@link BotCommand} or commands to the bot. This method will immediately push the commands to the bot,
      * so it is best to register all commands instead of registering them one by one.
+     * <p>
+     * If a command with the same name is registered, an error will be printed out, but otherwise replace the command.
      * @param command The command or commands to register.
      */
     public void registerCommands(@NonNull BotCommand<?, ?>... command) {
         HashMap<String, BotCommand<?, ?>> commands = new HashMap<>();
-
-        for(BotCommand<?, ?> cmd: command) {
-            commands.put(cmd.getName(), cmd);
-        }
 
         if(settings.isRegisterDefaultCommands()) {
             commands.put("settings", new Settings());
             commands.put("help", new Help());
             commands.put("about", new About());
             commands.put("shutdown", new Shutdown());
+            commands.put("restart", new Restart());
+        }
+
+        for(BotCommand<?, ?> cmd: command) {
+            if(commands.get(cmd.getName()) != null) {
+                System.err.println("Duplicate command name: " + cmd.getName());
+            }
+
+            commands.put(cmd.getName(), cmd);
         }
 
         for(BotCommand<?, ?> cmd: commands.values()) {
