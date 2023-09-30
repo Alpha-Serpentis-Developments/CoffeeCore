@@ -19,7 +19,7 @@ public class Restart extends BotCommand<MessageEmbed, SlashCommandInteractionEve
         super(
                 new BotCommandOptions()
                         .setName("restart")
-                        .setDescription("Restarts a shard. This may or may not response.")
+                        .setDescription("Restarts a shard. This may or may not respond.")
                         .setOnlyEmbed(true)
                         .setDeferReplies(true)
         );

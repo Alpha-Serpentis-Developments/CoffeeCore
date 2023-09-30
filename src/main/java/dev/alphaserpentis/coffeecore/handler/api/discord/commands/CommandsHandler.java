@@ -214,7 +214,7 @@ public class CommandsHandler extends ListenerAdapter {
         });
     }
 
-    private void registerGlobalCommands(
+    protected void registerGlobalCommands(
             @NonNull JDA shard,
             @NonNull HashMap<String, BotCommand<?, ?>> mappingOfGlobalCommands,
             boolean updateCommands
@@ -263,7 +263,7 @@ public class CommandsHandler extends ListenerAdapter {
         detectedGlobalCommandNames.clear();
     }
 
-    private void registerGuildCommands(
+    protected void registerGuildCommands(
             @NonNull Guild guild,
             @NonNull HashMap<String, BotCommand<?, ?>> mappingOfGuildCommands,
             boolean updateCommands
