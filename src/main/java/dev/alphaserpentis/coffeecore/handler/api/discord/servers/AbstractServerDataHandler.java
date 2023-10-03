@@ -17,6 +17,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The abstract class that handles {@link ServerData}.
@@ -24,13 +29,25 @@ import java.util.Map;
  */
 public abstract class AbstractServerDataHandler<T extends ServerData> extends ListenerAdapter {
     /**
+     * Path to the server data file.
+     */
+    private final Path pathToFile;
+    /**
      * The {@link CoffeeCore} instance.
      */
     private CoffeeCore core;
     /**
-     * Path to the server data file.
+     * The {@link Future} of the scheduled executor.
      */
-    private final Path pathToFile;
+    protected ScheduledFuture<?> scheduledFuture;
+    /**
+     * Executor to asynchronously update the server data file.
+     */
+    protected ScheduledExecutorService executor;
+    /**
+     * The last time the server data file was updated.
+     */
+    protected long lastUpdate = 0;
     /**
      * The mapping of server IDs to {@link ServerData}.
      */
@@ -44,10 +61,28 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
 
     /**
      * Initializes the server data handler.
+     * <p>
+     * This will assign a default executor of {@link Executors#newSingleThreadScheduledExecutor()}.
      * @param container The {@link ContainerHelper} instance to get the servers from.
      * @throws IOException If the bot fails to write to the server data file.
      */
     public void init(@NonNull ContainerHelper container, @NonNull CoffeeCore core) throws IOException {
+        init(container, core, Executors.newSingleThreadScheduledExecutor());
+    }
+
+    /**
+     * Initializes the server data handler.
+     * @param container The {@link ContainerHelper} instance to get the servers from.
+     * @param core The {@link CoffeeCore} instance.
+     * @param executor The executor to asynchronously update the server data file.
+     * @throws IOException If the bot fails to write to the server data file.
+     */
+    public void init(
+            @NonNull ContainerHelper container,
+            @NonNull CoffeeCore core,
+            @NonNull ScheduledExecutorService executor
+    ) throws IOException {
+        this.executor = executor;
         this.core = core;
 
         // Check the current servers
@@ -97,23 +132,65 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
         return pathToFile;
     }
 
+    @Nullable
+    public ScheduledFuture<?> getScheduledFuture() {
+        return scheduledFuture;
+    }
+
+    @NonNull
+    protected ScheduledExecutorService getExecutor() {
+        return executor;
+    }
+
     /**
-     * Updates the server data file.
+     * Gets the last time the server data file was updated.
+     * @return UNIX time in seconds of the last update.
+     */
+    protected long getLastUpdate() {
+        return lastUpdate;
+    }
+
+    /**
+     * Tells the executor to update the server data file after some time.
      * @throws IOException If the bot fails to write to the server data file.
      */
     public void updateServerData() throws IOException {
-        Gson gson = new GsonBuilder()
-                .setPrettyPrinting()
-                .create();
+        long currentTime = System.currentTimeMillis() / 1000;
+        long timeBetweenUpdate = currentTime - lastUpdate;
 
-        writeToJSON(gson, serverDataHashMap);
+        if(timeBetweenUpdate < 60 && (scheduledFuture != null && !scheduledFuture.cancel(false))) {
+            return;
+        }
+
+        scheduledFuture = executor.schedule(
+                () -> {
+                    Gson gson = new GsonBuilder()
+                            .setPrettyPrinting()
+                            .create();
+
+                    writeToJSON(gson, serverDataHashMap);
+                },
+                10,
+                TimeUnit.SECONDS
+        );
     }
 
-    protected void writeToJSON(@NonNull Gson gson, @NonNull Object data) throws IOException {
-        Writer writer = Files.newBufferedWriter(pathToFile);
+    /**
+     * Writes the specified data to the server data file.
+     * @param gson The {@link Gson} instance to use to write the data.
+     * @param data The data to write.
+     */
+    protected void writeToJSON(@NonNull Gson gson, @NonNull Object data) {
+        try {
+            Writer writer = Files.newBufferedWriter(pathToFile);
 
-        gson.toJson(data, writer);
-        writer.close();
+            gson.toJson(data, writer);
+            writer.close();
+
+            lastUpdate = System.currentTimeMillis() / 1000;
+        } catch (IOException e) {
+            handleServerDataException(e);
+        }
     }
 
     /**
@@ -121,4 +198,10 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
      * @return A new instance of {@link ServerData}.
      */
     protected abstract T createNewServerData();
+
+    /**
+     * Handle an exception thrown when updating the server data.
+     * @param e The exception thrown.
+     */
+    protected abstract void handleServerDataException(@NonNull Exception e);
 }

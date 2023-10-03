@@ -203,7 +203,7 @@ public class ExampleCommand extends BotCommand<MessageEmbed, SlashCommandInterac
         builder.setTitle("Example Command");
         builder.setDescription("This is an example command!");
 
-        return new CommandResponse<>(builder.build());
+        return new CommandResponse<>(true, builder.build());
     }
 }
 ```
@@ -214,7 +214,7 @@ To add buttons, you can use the `addButton(...)` method. When adding buttons, yo
 button, a `ButtonStyle`, a label, and whether the button is disabled. Optionally, there's a fifth parameter that allows
 you to provide an `Emoji`.
 
-Check out an example [here](https://github.com/Alpha-Serpentis-Developments/CoffeeCore/blob/main/src/test/java/hello/HelloCommandButton.java)
+Check out an example [here](src/test/java/hello/HelloCommandButton.java)
 
 ```java
 public class ExampleCommand extends ButtonCommand<MessageEmbed, SlashCommandInteractionEvent> {
@@ -259,7 +259,7 @@ To be written...
 
 ## Dependencies
 
-- [JDA - 5.0.0-beta.13](https://github.com/DV8FromTheWorld/JDA)
+- [JDA - 5.0.0-beta.15](https://github.com/DV8FromTheWorld/JDA)
 - [Gson - 2.10.1](https://github.com/google/gson)
 - [RxJava - 3.1.7](https://github.com/ReactiveX/RxJava)
 - (Optional) [Dotenv - 3.0.0](https://github.com/cdimascio/dotenv-java)

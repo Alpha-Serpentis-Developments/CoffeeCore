@@ -66,6 +66,11 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
     }
 
     @Override
+    protected void handleServerDataException(@NonNull Exception e) {
+
+    }
+
+    @Override
     public void onGuildJoin(@NonNull GuildJoinEvent event) {
         CommandsHandler commandsHandler = getCore().getCommandsHandler();
 
