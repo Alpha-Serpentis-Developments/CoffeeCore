@@ -152,9 +152,8 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
 
     /**
      * Tells the executor to update the server data file after some time.
-     * @throws IOException If the bot fails to write to the server data file.
      */
-    public void updateServerData() throws IOException {
+    public void updateServerData() {
         long currentTime = System.currentTimeMillis() / 1000;
         long timeBetweenUpdate = currentTime - lastUpdate;
 

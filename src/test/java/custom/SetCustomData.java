@@ -37,11 +37,8 @@ public class SetCustomData extends BotCommand<String, SlashCommandInteractionEve
         } else if(subcommand.equals("set")) {
             String data = event.getOption("data").getAsString();
             customServerData.setCustomData(data);
-            try {
-                core.getServerDataHandler().updateServerData();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            core.getServerDataHandler().updateServerData();
+
             return new CommandResponse<>(isOnlyEphemeral(), "The custom data of this server has been set to: " + data);
         } else {
             throw new RuntimeException("Unknown subcommand: " + subcommand);

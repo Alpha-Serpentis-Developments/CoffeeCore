@@ -67,7 +67,7 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
 
     @Override
     protected void handleServerDataException(@NonNull Exception e) {
-
+        // Write your implementation, by default this won't do anything
     }
 
     @Override
@@ -77,11 +77,7 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
         serverDataHashMap.put(event.getGuild().getIdLong(), createNewServerData());
         commandsHandler.upsertGuildCommandsToGuild(getCachedGuildCommands(), event.getGuild());
 
-        try {
-            updateServerData();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        updateServerData();
     }
 
     @Override
@@ -91,11 +87,7 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
         serverDataHashMap.remove(event.getGuild().getIdLong());
         commandsHandler.deregisterCommands(event.getGuild().getIdLong());
 
-        try {
-            updateServerData();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        updateServerData();
     }
 
     @NonNull
