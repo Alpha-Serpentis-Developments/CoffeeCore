@@ -711,7 +711,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     private void determineRatelimit(long userId, @NonNull CommandResponse<?> responseFromCommand) {
         if(responseFromCommand.forgiveRatelimit() != null && responseFromCommand.forgiveRatelimit()) {
             ratelimitMap.remove(userId);
-        } else if(isUsingRatelimits()) {
+        } else if(isUsingRatelimits() && (ratelimitMap.get(userId) == null || ratelimitMap.get(userId) == 0)) {
             ratelimitMap.put(userId, Instant.now().getEpochSecond() + getRatelimitLength());
         }
     }
