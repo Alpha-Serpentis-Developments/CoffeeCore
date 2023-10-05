@@ -81,7 +81,8 @@ public class CoffeeCore {
             @NonNull BotSettings settings,
             @NonNull IGuildChannelContainer container,
             @Nullable AbstractServerDataHandler<?> serverDataHandler,
-            @Nullable CommandsHandler commandsHandler
+            @Nullable CommandsHandler commandsHandler,
+            @NonNull Object... additionalListeners
     ) {
         this.settings = settings;
 
@@ -112,7 +113,7 @@ public class CoffeeCore {
         );
         this.commandsHandler.setCore(this);
 
-        addEventListenersToContainer(this.commandsHandler, this.serverDataHandler);
+        addEventListenersToContainer(this.commandsHandler, this.serverDataHandler, additionalListeners);
     }
 
     /**

@@ -2,6 +2,7 @@ package dev.alphaserpentis.coffeecore.commands;
 
 import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
+import dev.alphaserpentis.coffeecore.data.server.ServerData;
 import io.reactivex.rxjava3.annotations.Experimental;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
@@ -25,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -443,7 +445,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                     onlyEphemeral,
                     new EmbedBuilder().setDescription(
                             "You are still rate limited. Expires in " + (
-                                    ratelimitMap.get(userId) - Instant.now().getEpochSecond()
+                                    getRatelimitMap().get(userId) - Instant.now().getEpochSecond()
                             ) + " seconds."
                     ).build()
             );
@@ -457,7 +459,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @param guildId is the ID of the guild to remove the command ID for
      */
     public void removeGuildCommandId(long guildId) {
-        guildCommandIds.remove(guildId);
+        getGuildCommandIds().remove(guildId);
     }
 
     public void setGlobalCommandId(long id) {
@@ -466,6 +468,16 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
     public void setCore(@NonNull CoffeeCore core) {
         this.core = core;
+    }
+
+    @NonNull
+    public HashMap<Long, Long> getGuildCommandIds() {
+        return guildCommandIds;
+    }
+
+    @NonNull
+    public HashMap<Long, Long> getRatelimitMap() {
+        return ratelimitMap;
     }
 
     @NonNull
@@ -527,12 +539,12 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     }
 
     public boolean isUserRatelimited(long userId) {
-        long ratelimit = ratelimitMap.getOrDefault(userId, 0L);
+        final long ratelimit = ratelimitMap.getOrDefault(userId, 0L);
 
         if(ratelimit != 0) {
             return ratelimit > Instant.now().getEpochSecond();
         } else {
-            ratelimitMap.remove(userId);
+            getRatelimitMap().remove(userId);
             return false;
         }
     }
@@ -573,10 +585,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @return {@link Message} that is the reply of the command
      */
     @NonNull
-    public Message handleReply(
-            @NonNull final E event,
-            @NonNull final BotCommand<?, E> cmd
-    ) {
+    public Message handleReply(@NonNull final E event, @NonNull final BotCommand<?, E> cmd) {
         if(cmd.isDeferReplies()) {
             return (Message) cmd.processDeferredCommand(event).complete();
         } else {
@@ -590,26 +599,16 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @return {@link WebhookMessageCreateAction}
      */
     @NonNull
-    @SuppressWarnings("unchecked")
-    protected WebhookMessageCreateAction<?> processDeferredCommand(
-            @NonNull E event
-    ) {
-        long userId = event.getUser().getIdLong();
-        boolean msgIsEphemeral;
-        InteractionHook hook = event.getHook();
+    protected WebhookMessageCreateAction<?> processDeferredCommand(@NonNull final E event) {
+        final long userId = event.getUser().getIdLong();
+        final InteractionHook hook = event.getHook();
+        final boolean msgIsEphemeral = determineEphemeralStatus(event);
         T[] response;
-        CommandResponse<?> responseFromCommand;
 
         try {
-            msgIsEphemeral = sendAsEphemeral(this, event.getGuild());
-
             if (isOnlyEmbed()) {
-                if(ephemeralType == TypeOfEphemeral.DEFAULT) {
-                    if (!msgIsEphemeral && event.getGuild() != null) {
-                        event.deferReply(false).complete();
-                    } else {
-                        event.deferReply(msgIsEphemeral).complete();
-                    }
+                if(getEphemeralType() == TypeOfEphemeral.DEFAULT) {
+                    event.deferReply(msgIsEphemeral).complete();
                 } else {
                     CommandResponse<?> responseBeforeRunning = beforeRunCommand(userId, event);
 
@@ -621,21 +620,12 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                     }
                 }
 
-                responseFromCommand = isActive() ? runCommand(userId, event) : inactiveCommandResponse();
-                response = (T[]) responseFromCommand.messageResponse();
+                response = retrieveAndProcessResponse(userId, event);
 
-                determineRatelimit(userId, responseFromCommand);
-
-                return hook.sendMessageEmbeds(
-                        Arrays.asList((MessageEmbed[]) response)).setEphemeral(responseFromCommand.messageIsEphemeral()
-                );
+                return hook.sendMessageEmbeds(Arrays.asList((MessageEmbed[]) response));
             } else {
                 if(getEphemeralType() == TypeOfEphemeral.DEFAULT) {
-                    if (!msgIsEphemeral && event.getGuild() != null) {
-                        hook.setEphemeral(false);
-                    } else {
-                        hook.setEphemeral(msgIsEphemeral);
-                    }
+                    hook.setEphemeral(msgIsEphemeral);
                 } else {
                     CommandResponse<?> responseBeforeRunning = beforeRunCommand(userId, event);
 
@@ -645,16 +635,13 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                     }
                 }
 
-                responseFromCommand = isActive() ? runCommand(userId, event) : inactiveCommandResponse();
-                response = (T[]) responseFromCommand.messageResponse();
-
-                determineRatelimit(userId, responseFromCommand);
+                response = retrieveAndProcessResponse(userId, event);
 
                 return hook.sendMessage((String) response[0]);
             }
         } catch(Exception e) {
             if(isForgivingRatelimitOnError()) {
-                ratelimitMap.remove(userId);
+                getRatelimitMap().remove(userId);
             }
 
             return hook.sendMessageEmbeds(handleError(e));
@@ -666,62 +653,71 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @param event {@link E} that contains the interaction
      * @return {@link ReplyCallbackAction}
      */
-    @SuppressWarnings("unchecked")
     @NonNull
-    protected ReplyCallbackAction processNonDeferredCommand(
-            @NonNull E event
-    ) {
-        long userId = event.getUser().getIdLong();
-        boolean msgIsEphemeral;
-        CommandResponse<?> responseFromCommand;
+    protected ReplyCallbackAction processNonDeferredCommand(@NonNull final E event) {
+        final long userId = event.getUser().getIdLong();
+        final boolean msgIsEphemeral = determineEphemeralStatus(event);
         T[] response;
         ReplyCallbackAction reply;
 
         try {
-            responseFromCommand = isActive() ? runCommand(userId, event) : inactiveCommandResponse();
-            response = (T[]) responseFromCommand.messageResponse();
-            msgIsEphemeral = sendAsEphemeral(this, event.getGuild());
-
-            determineRatelimit(userId, responseFromCommand);
+            response = retrieveAndProcessResponse(userId, event);
 
             if (isOnlyEmbed()) {
-                if (!msgIsEphemeral && event.getGuild() != null) {
-                    reply = event.replyEmbeds(Arrays.asList((MessageEmbed[]) response)).setEphemeral(false);
-                } else {
-                    reply = event.replyEmbeds(Arrays.asList((MessageEmbed[]) response)).setEphemeral(msgIsEphemeral);
-                }
+                reply = event.replyEmbeds(
+                        Arrays.asList((MessageEmbed[]) response)
+                ).setEphemeral(msgIsEphemeral);
             } else {
-                if (!msgIsEphemeral && event.getGuild() != null) {
-                    reply = event.reply((String) response[0]).setEphemeral(false);
-                } else {
-                    reply = event.reply((String) response[0]).setEphemeral(msgIsEphemeral);
-                }
+                reply = event.reply(
+                        (String) response[0]
+                ).setEphemeral(msgIsEphemeral);
             }
 
             return reply;
         } catch(Exception e) {
             if(isForgivingRatelimitOnError()) {
-                ratelimitMap.remove(userId);
+                getRatelimitMap().remove(userId);
             }
 
             return event.replyEmbeds(handleError(e));
         }
     }
 
-    private void determineRatelimit(long userId, @NonNull CommandResponse<?> responseFromCommand) {
-        if(responseFromCommand.forgiveRatelimit() != null && responseFromCommand.forgiveRatelimit()) {
-            ratelimitMap.remove(userId);
-        } else if(isUsingRatelimits() && (ratelimitMap.get(userId) == null || ratelimitMap.get(userId) == 0)) {
-            ratelimitMap.put(userId, Instant.now().getEpochSecond() + getRatelimitLength());
+    /**
+     * Retrieves the response of the command and processes it
+     * @param userId The ID of the user who called the command
+     * @param event {@link E} that contains the interaction
+     * @return The response of the command
+     */
+    @SuppressWarnings("unchecked")
+    @NonNull
+    private T[] retrieveAndProcessResponse(long userId, @NonNull E event) {
+        CommandResponse<?> responseFromCommand = isActive() ? runCommand(userId, event) : inactiveCommandResponse();
+
+        determineRatelimit(userId, responseFromCommand);
+
+        return (T[]) responseFromCommand.messageResponse();
+    }
+
+    private boolean determineEphemeralStatus(@NonNull E event) {
+        if (event.getGuild() == null) {
+            return isOnlyEphemeral();
+        } else {
+            ServerData serverData = getCore().getServerDataHandler().getServerData(event.getGuild().getIdLong());
+            boolean guildEphemeralSetting = Objects.requireNonNull(serverData).getOnlyEphemeral();
+
+            return isOnlyEphemeral() || guildEphemeralSetting;
         }
     }
 
-    private static boolean sendAsEphemeral(@NonNull BotCommand<?, ?> cmd, @Nullable Guild guild) {
-        if(guild == null)
-            return cmd.isOnlyEphemeral();
-        else
-            return cmd.isOnlyEphemeral() ||
-                    cmd.core.getServerDataHandler().serverDataHashMap.get(guild.getIdLong()).getOnlyEphemeral();
+    private void determineRatelimit(long userId, @NonNull CommandResponse<?> responseFromCommand) {
+        if(responseFromCommand.forgiveRatelimit() != null && responseFromCommand.forgiveRatelimit()) {
+            getRatelimitMap().remove(userId);
+        } else if(
+                isUsingRatelimits() && (getRatelimitMap().get(userId) == null || getRatelimitMap().get(userId) == 0)
+        ) {
+            getRatelimitMap().put(userId, Instant.now().getEpochSecond() + getRatelimitLength());
+        }
     }
 
     /**

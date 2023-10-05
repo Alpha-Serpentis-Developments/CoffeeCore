@@ -56,6 +56,7 @@ public class CoffeeCoreBuilder<T> {
     protected BotSettings settings = null;
     protected AbstractServerDataHandler<?> serverDataHandler = null;
     protected CommandsHandler commandsHandler = null;
+    protected Object[] additionalListeners = new Object[0];
     protected ChunkingFilter chunkingFilter = ChunkingFilter.NONE;
     protected Collection<CacheFlag> enabledCacheFlags = List.of();
     protected Collection<CacheFlag> disabledCacheFlags = List.of(CacheFlag.MEMBER_OVERRIDES, CacheFlag.VOICE_STATE);
@@ -83,7 +84,8 @@ public class CoffeeCoreBuilder<T> {
                 settings,
                 new BuilderHelper<>(createBuilderInstance(token)).build(),
                 serverDataHandler,
-                commandsHandler
+                commandsHandler,
+                additionalListeners
         );
     }
 
@@ -120,6 +122,17 @@ public class CoffeeCoreBuilder<T> {
     @NonNull
     public CoffeeCoreBuilder<?> setCommandsHandler(@NonNull CommandsHandler commandsHandler) {
         this.commandsHandler = commandsHandler;
+        return this;
+    }
+
+    /**
+     * Sets the additional listeners for {@link CoffeeCore}.
+     * @param additionalListeners The additional listeners.
+     * @return {@link CoffeeCoreBuilder} for method chaining.
+     */
+    @NonNull
+    public CoffeeCoreBuilder<?> setAdditionalListeners(@NonNull Object... additionalListeners) {
+        this.additionalListeners = additionalListeners;
         return this;
     }
 

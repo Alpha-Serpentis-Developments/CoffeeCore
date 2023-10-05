@@ -57,7 +57,7 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
      */
     @Nullable
     public Button getButton(@NonNull String key) {
-        return buttonHashMap.get(key);
+        return getButtonHashMap().get(key);
     }
 
     /**
@@ -135,7 +135,7 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
         Collection<ItemComponent> buttons;
 
         if(cmd.isDeferReplies()) {
-            WebhookMessageCreateAction<?> action = cmd.processDeferredCommand(event);
+            final WebhookMessageCreateAction<?> action = cmd.processDeferredCommand(event);
 
             buttons = addButtonsToMessage(event);
 
@@ -144,7 +144,7 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
             else
                 return (Message) action.addActionRow(buttons).complete();
         } else {
-            ReplyCallbackAction action = cmd.processNonDeferredCommand(event);
+            final ReplyCallbackAction action = cmd.processNonDeferredCommand(event);
 
             buttons = addButtonsToMessage(event);
 
