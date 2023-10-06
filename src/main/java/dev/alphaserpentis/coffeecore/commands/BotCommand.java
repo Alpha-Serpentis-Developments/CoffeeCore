@@ -344,12 +344,19 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
          * Validates the command options.
          * A command is considered valid if: <br>
          *    - The name is not null <br>
-         *    - The description is not null IF the {@link #commandType} is {@link Command.Type#SLASH} <br>
-         * @return Whether the command options are valid
+         *    - If the command is a slash command, the description is not {@code null} <br>
+         *    - If using ratelimits, the ratelimit length is greater than 0 <br>
+         *    - If messages expire, the message expiration length is greater than 0 <br>
          */
-        public boolean validate() {
-            return name != null &&
-                    (description != null || (commandType == Command.Type.USER || commandType == Command.Type.MESSAGE));
+        public void validate() throws IllegalArgumentException {
+            if(name != null)
+                throw new IllegalArgumentException("Name cannot be null!");
+            if(description != null || (commandType == Command.Type.USER || commandType == Command.Type.MESSAGE))
+                throw new IllegalArgumentException("Description cannot be null for slash commands!");
+            if(useRatelimits || ratelimitLength > 0)
+                throw new IllegalArgumentException("Ratelimit length must be greater than 0!");
+            if(messagesExpire || messageExpirationLength > 0)
+                throw new IllegalArgumentException("Message expiration length must be greater than 0!");
         }
     }
 
@@ -358,8 +365,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     }
 
     public BotCommand(@NonNull BotCommandOptions options) {
-        if(!options.validate())
-            throw new IllegalArgumentException("Validation failed! Ensure your command is configured properly.");
+        options.validate();
 
         name = options.name;
         description = options.description;

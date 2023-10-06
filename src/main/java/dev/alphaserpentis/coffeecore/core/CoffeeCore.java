@@ -205,15 +205,16 @@ public class CoffeeCore {
     /**
      * Get the bot's {@link SelfUser} instance
      * @return {@link SelfUser}
+     * @throws IllegalStateException If the container has not been determined yet.
      */
     @NonNull
     public SelfUser getSelfUser() {
-        if(getActiveContainer() instanceof JDA j)
+        IGuildChannelContainer container = getActiveContainer();
+
+        if(container instanceof JDA j)
             return j.getSelfUser();
-        else if(getActiveContainer() instanceof ShardManager sm)
-            return sm.getShards().get(0).getSelfUser();
         else
-            throw new IllegalStateException("The container has not been determined yet.");
+            return ((ShardManager) container).getShards().get(0).getSelfUser();
     }
 
     /**
