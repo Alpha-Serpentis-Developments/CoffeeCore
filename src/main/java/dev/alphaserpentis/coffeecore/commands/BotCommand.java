@@ -349,13 +349,13 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
          *    - If messages expire, the message expiration length is greater than 0 <br>
          */
         public void validate() throws IllegalArgumentException {
-            if(name != null)
+            if(name == null)
                 throw new IllegalArgumentException("Name cannot be null!");
-            if(description != null || (commandType == Command.Type.USER || commandType == Command.Type.MESSAGE))
+            if(description == null && commandType == Command.Type.SLASH)
                 throw new IllegalArgumentException("Description cannot be null for slash commands!");
-            if(useRatelimits || ratelimitLength > 0)
+            if(useRatelimits && ratelimitLength <= 0)
                 throw new IllegalArgumentException("Ratelimit length must be greater than 0!");
-            if(messagesExpire || messageExpirationLength > 0)
+            if(messagesExpire && messageExpirationLength <= 0)
                 throw new IllegalArgumentException("Message expiration length must be greater than 0!");
         }
     }

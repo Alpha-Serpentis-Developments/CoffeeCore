@@ -82,7 +82,7 @@ public class CoffeeCore {
             @NonNull IGuildChannelContainer container,
             @Nullable AbstractServerDataHandler<?> serverDataHandler,
             @Nullable CommandsHandler commandsHandler,
-            @NonNull Object... additionalListeners
+            @Nullable Object... additionalListeners
     ) {
         this.settings = settings;
 
@@ -113,7 +113,10 @@ public class CoffeeCore {
         );
         this.commandsHandler.setCore(this);
 
-        addEventListenersToContainer(this.commandsHandler, this.serverDataHandler, additionalListeners);
+        if(additionalListeners != null && additionalListeners.length > 0)
+            addEventListenersToContainer(this.commandsHandler, this.serverDataHandler, additionalListeners);
+        else
+            addEventListenersToContainer(this.commandsHandler, this.serverDataHandler);
     }
 
     /**
