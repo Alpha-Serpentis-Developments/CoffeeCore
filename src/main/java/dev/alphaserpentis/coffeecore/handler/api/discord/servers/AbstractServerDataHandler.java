@@ -75,13 +75,12 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
      * @param container The {@link ContainerHelper} instance to get the servers from.
      * @param core The {@link CoffeeCore} instance.
      * @param executor The executor to asynchronously update the server data file.
-     * @throws IOException If the bot fails to write to the server data file.
      */
     public void init(
             @NonNull ContainerHelper container,
             @NonNull CoffeeCore core,
             @NonNull ScheduledExecutorService executor
-    ) throws IOException {
+    ) {
         this.executor = executor;
         this.core = core;
 

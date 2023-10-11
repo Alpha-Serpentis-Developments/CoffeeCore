@@ -77,10 +77,9 @@ public class CommandsHandler extends ListenerAdapter {
 
         // Separate the global and guild commands
         for(Map.Entry<String, BotCommand<?, ?>> entry: mappingOfCommands.entrySet()) {
-            if(entry.getValue().getCommandVisibility() == BotCommand.CommandVisibility.GLOBAL) {
-                mappingOfGlobalCommands.put(entry.getKey(), entry.getValue());
-            } else {
-                mappingOfGuildCommands.put(entry.getKey(), entry.getValue());
+            switch(entry.getValue().getCommandVisibility()) {
+                case GLOBAL -> mappingOfGlobalCommands.put(entry.getKey(), entry.getValue());
+                case GUILD -> mappingOfGuildCommands.put(entry.getKey(), entry.getValue());
             }
         }
 
