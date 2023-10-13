@@ -468,7 +468,15 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         getGuildCommandIds().remove(guildId);
     }
 
+    /**
+     * Sets the global command ID for the command
+     * @param id is the ID of the global command
+     * @throws UnsupportedOperationException if the command is a guild command
+     */
     public void setGlobalCommandId(long id) {
+        if(getCommandVisibility() == CommandVisibility.GUILD)
+            throw new UnsupportedOperationException("Cannot set global command ID for guild command");
+
         globalCommandId = id;
     }
 
@@ -669,7 +677,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         try {
             response = retrieveAndProcessResponse(userId, event);
 
-            if (isOnlyEmbed()) {
+            if(isOnlyEmbed()) {
                 reply = event.replyEmbeds(
                         Arrays.asList((MessageEmbed[]) response)
                 ).setEphemeral(msgIsEphemeral);
@@ -781,7 +789,11 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @throws IllegalArgumentException If the command type is invalid or if the command is a slash command and does not have a description
      */
     @NonNull
-    protected static CommandData getJDACommandData(@NonNull Command.Type type, @NonNull String name, @Nullable String desc) {
+    protected static CommandData getJDACommandData(
+            @NonNull Command.Type type,
+            @NonNull String name,
+            @Nullable String desc
+    ) {
         switch(type) {
             case SLASH -> {
                 if(desc == null)

@@ -322,9 +322,8 @@ public class CoffeeCore {
         } else if(container instanceof ShardManager sm) {
             shardManager = sm;
 
-            for(JDA jda: shardManager.getShards()) {
+            for(JDA jda: shardManager.getShards())
                 jda.awaitReady();
-            }
         } else {
             throw new IllegalArgumentException("The container must either be a JDA or ShardManager instance.");
         }

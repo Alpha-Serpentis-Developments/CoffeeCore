@@ -10,7 +10,6 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.UserContextInteractionEvent;
@@ -18,12 +17,12 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
 import java.util.Objects;
-import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -34,7 +33,7 @@ public class CommandsHandler extends ListenerAdapter {
      * The mapping of {@link BotCommand} that have been registered to the bot. This is used to check for commands that are already
      * registered and update them if necessary.
      */
-    protected final HashMap<String, BotCommand<?, ?>> mappingOfCommands = new HashMap<>();
+    protected final HashMap<String, BotCommand<?, ?>> mapOfCommands = new HashMap<>();
     /**
      * The {@link ExecutorService} that will be used to run the commands.
      */
@@ -62,32 +61,35 @@ public class CommandsHandler extends ListenerAdapter {
      * Provided a mapping of {@link BotCommand}, this will check for any commands that are already registered and update them if
      * necessary. If the command is not registered, it will register it. If the command is registered, but not in the
      * mapping, it will remove it.
-     * @param mappingOfCommands The mapping of commands to check and register
+     * @param mapOfCommands The mapping of commands to check and register
      * @param updateCommands Whether to update the commands if they are already registered
      */
     public void registerCommands(
-            @NonNull HashMap<String, BotCommand<?, ?>> mappingOfCommands,
+            @NonNull HashMap<String, BotCommand<?, ?>> mapOfCommands,
             boolean updateCommands
     ) {
-        HashMap<String, BotCommand<?, ?>> mappingOfGlobalCommands = new HashMap<>();
-        HashMap<String, BotCommand<?, ?>> mappingOfGuildCommands = new HashMap<>();
+        HashMap<String, BotCommand<?, ?>> mapOfGlobalCommands = new HashMap<>();
+        HashMap<String, BotCommand<?, ?>> mapOfGuildCommands = new HashMap<>();
         List<JDA> shards = core.isSharded() ? core.getShardManager().getShards() : List.of(core.getJda());
 
-        this.mappingOfCommands.putAll(mappingOfCommands);
+        this.mapOfCommands.putAll(mapOfCommands);
 
         // Separate the global and guild commands
-        for(Map.Entry<String, BotCommand<?, ?>> entry: mappingOfCommands.entrySet()) {
+        for(Map.Entry<String, BotCommand<?, ?>> entry: mapOfCommands.entrySet()) {
             switch(entry.getValue().getCommandVisibility()) {
-                case GLOBAL -> mappingOfGlobalCommands.put(entry.getKey(), entry.getValue());
-                case GUILD -> mappingOfGuildCommands.put(entry.getKey(), entry.getValue());
+                case GLOBAL -> mapOfGlobalCommands.put(entry.getKey(), entry.getValue());
+                case GUILD -> mapOfGuildCommands.put(entry.getKey(), entry.getValue());
+                default -> throw new IllegalStateException(
+                        "Unexpected value: " + entry.getValue().getCommandVisibility()
+                );
             }
         }
 
         for(JDA shard: shards) {
-            registerGlobalCommands(shard, mappingOfGlobalCommands, updateCommands);
+            registerGlobalCommands(shard, mapOfGlobalCommands, updateCommands);
 
             for(Guild guild: shard.getGuilds()) {
-                registerGuildCommands(guild, mappingOfGuildCommands, updateCommands);
+                registerGuildCommands(guild, mapOfGuildCommands, updateCommands);
             }
         }
     }
@@ -97,9 +99,7 @@ public class CommandsHandler extends ListenerAdapter {
      * @param guildId The ID of the guild to deregister the commands from
      */
     public void deregisterCommands(long guildId) {
-        getGuildCommands().forEach(
-                cmd -> cmd.removeGuildCommandId(guildId)
-        );
+        getGuildCommands().forEach(cmd -> cmd.removeGuildCommandId(guildId));
     }
 
     /**
@@ -109,19 +109,20 @@ public class CommandsHandler extends ListenerAdapter {
      */
     public void upsertGuildCommandsToGuild(@NonNull List<BotCommand<?, ?>> cmds, @NonNull Guild guild) {
         cmds.stream().filter(
-                cmd -> cmd.getCommandVisibility() == BotCommand.CommandVisibility.GUILD).forEach(
-                        cmd -> cmd.updateCommand(guild)
+                cmd -> cmd.getCommandVisibility() == BotCommand.CommandVisibility.GUILD
+        ).forEach(
+                cmd -> cmd.updateCommand(guild)
         );
     }
 
     /**
-     * Gets a {@link BotCommand} from the {@link #mappingOfCommands}.
+     * Gets a {@link BotCommand} from the {@link #mapOfCommands}.
      * @param name The name of the command to get
      * @return BotCommand or {@code null} if the command is not found
      */
     @Nullable
-    public BotCommand<?, ? extends GenericCommandInteractionEvent> getCommand(@NonNull String name) {
-        return mappingOfCommands.get(name);
+    public BotCommand<?, ?> getCommand(@NonNull String name) {
+        return mapOfCommands.get(name);
     }
 
     /**
@@ -131,8 +132,8 @@ public class CommandsHandler extends ListenerAdapter {
      * @return An {@link ArrayList} of {@link BotCommand} that are registered
      */
     @NonNull
-    public ArrayList<BotCommand<?, ? extends GenericCommandInteractionEvent>> getCommands() {
-        return new ArrayList<>(mappingOfCommands.values());
+    public ArrayList<BotCommand<?, ?>> getCommands() {
+        return new ArrayList<>(mapOfCommands.values());
     }
 
     /**
@@ -142,9 +143,9 @@ public class CommandsHandler extends ListenerAdapter {
      * @return An {@link ArrayList} of {@link BotCommand} that are registered as guild commands
      */
     @NonNull
-    public ArrayList<BotCommand<?, ? extends GenericCommandInteractionEvent>> getGuildCommands() {
+    public ArrayList<BotCommand<?, ?>> getGuildCommands() {
         return new ArrayList<>(
-                mappingOfCommands.values().stream().filter(
+                mapOfCommands.values().stream().filter(
                         cmd -> cmd.getCommandVisibility() == BotCommand.CommandVisibility.GUILD
                 ).toList()
         );
@@ -154,9 +155,7 @@ public class CommandsHandler extends ListenerAdapter {
     @SuppressWarnings("unchecked")
     public void onSlashCommandInteraction(@NonNull SlashCommandInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?, SlashCommandInteractionEvent> cmd = Objects.requireNonNull(
-                    (BotCommand<?, SlashCommandInteractionEvent>) getCommand(event.getName())
-            );
+            var cmd = Objects.requireNonNull((BotCommand<?, SlashCommandInteractionEvent>) getCommand(event.getName()));
             Message msg = cmd.handleReply(event, cmd);
 
             BotCommand.letMessageExpire(cmd, msg);
@@ -167,9 +166,7 @@ public class CommandsHandler extends ListenerAdapter {
     @SuppressWarnings("unchecked")
     public void onUserContextInteraction(@NonNull UserContextInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?, UserContextInteractionEvent> cmd = Objects.requireNonNull(
-                    (BotCommand<?, UserContextInteractionEvent>) getCommand(event.getName())
-            );
+            var cmd = Objects.requireNonNull((BotCommand<?, UserContextInteractionEvent>) getCommand(event.getName()));
             Message msg = cmd.handleReply(event, cmd);
 
             BotCommand.letMessageExpire(cmd, msg);
@@ -180,7 +177,7 @@ public class CommandsHandler extends ListenerAdapter {
     @SuppressWarnings("unchecked")
     public void onMessageContextInteraction(@NonNull MessageContextInteractionEvent event) {
         executor.submit(() -> {
-            BotCommand<?, MessageContextInteractionEvent> cmd = Objects.requireNonNull(
+            var cmd = Objects.requireNonNull(
                     (BotCommand<?, MessageContextInteractionEvent>) getCommand(event.getName())
             );
             Message msg = cmd.handleReply(event, cmd);
@@ -192,10 +189,9 @@ public class CommandsHandler extends ListenerAdapter {
     @Override
     public void onButtonInteraction(@NonNull ButtonInteractionEvent event) {
         executor.submit(() -> {
-            ButtonCommand<?, ?> cmd = Objects.requireNonNull(
-                    (ButtonCommand<?, ?>) getCommand(
-                            event.getButton().getId().substring(0, event.getButton().getId().indexOf("_"))
-                    )
+            String buttonId = Objects.requireNonNull(event.getButton().getId());
+            var cmd = Objects.requireNonNull(
+                    (ButtonCommand<?, ?>) getCommand(buttonId.substring(0, buttonId.indexOf("_")))
             );
 
             cmd.runButtonInteraction(event);
@@ -205,8 +201,9 @@ public class CommandsHandler extends ListenerAdapter {
     @Override
     public void onModalInteraction(@NonNull ModalInteractionEvent event) {
         executor.submit(() -> {
-            ModalCommand cmd = Objects.requireNonNull(
-                    (ModalCommand) getCommand(event.getModalId().substring(0, event.getModalId().indexOf("_")))
+            String modalId = Objects.requireNonNull(event.getModalId());
+            var cmd = Objects.requireNonNull(
+                    (ModalCommand) getCommand(modalId.substring(0, modalId.indexOf("_")))
             );
 
             cmd.runModalInteraction(event);
@@ -215,7 +212,7 @@ public class CommandsHandler extends ListenerAdapter {
 
     protected void registerGlobalCommands(
             @NonNull JDA shard,
-            @NonNull HashMap<String, BotCommand<?, ?>> mappingOfGlobalCommands,
+            @NonNull HashMap<String, BotCommand<?, ?>> mapOfGlobalCommands,
             boolean updateCommands
     ) {
         List<Command> listOfActiveGlobalCommands = shard.retrieveCommands().complete();
@@ -225,8 +222,8 @@ public class CommandsHandler extends ListenerAdapter {
         for(Iterator<Command> it = listOfActiveGlobalCommands.iterator(); it.hasNext(); ) {
             Command cmd = it.next();
 
-            if(mappingOfCommands.containsKey(cmd.getName())) {
-                BotCommand<?, ?> botCmd = mappingOfGlobalCommands.get(cmd.getName());
+            if(mapOfCommands.containsKey(cmd.getName())) {
+                BotCommand<?, ?> botCmd = mapOfGlobalCommands.get(cmd.getName());
 
                 if(botCmd == null) {
                     continue;
@@ -244,43 +241,43 @@ public class CommandsHandler extends ListenerAdapter {
         }
 
         // Fills in any gaps or removes any global commands
-        for(Command cmd: listOfActiveGlobalCommands) { // Removes unused global commands
-            shard.deleteCommandById(cmd.getId()).complete();
-        }
+        // Removes unused global commands
+        listOfActiveGlobalCommands.forEach(cmd -> shard.deleteCommandById(cmd.getId()).complete());
 
-        if(detectedGlobalCommandNames.size() < mappingOfGlobalCommands.size()) { // Adds new global commands
-            List<String> missingCommands = new ArrayList<>(mappingOfGlobalCommands.keySet());
+        if(detectedGlobalCommandNames.size() < mapOfGlobalCommands.size()) { // Adds new global commands
+            List<String> missingCommands = new ArrayList<>(mapOfGlobalCommands.keySet());
 
             missingCommands.removeAll(detectedGlobalCommandNames);
 
             for(String cmdName: missingCommands) {
-                BotCommand<?, ?> cmd = mappingOfCommands.get(cmdName);
+                BotCommand<?, ?> cmd = mapOfCommands.get(cmdName);
                 cmd.updateCommand(shard);
             }
         }
 
+        listOfActiveGlobalCommands.clear();
         detectedGlobalCommandNames.clear();
     }
 
     protected void registerGuildCommands(
             @NonNull Guild guild,
-            @NonNull HashMap<String, BotCommand<?, ?>> mappingOfGuildCommands,
+            @NonNull HashMap<String, BotCommand<?, ?>> mapOfGuildCommands,
             boolean updateCommands
     ) {
         List<Command> listOfActiveGuildCommands = guild.retrieveCommands().complete();
         List<String> detectedGuildCommandNames = new ArrayList<>();
 
-        for (Iterator<Command> it = listOfActiveGuildCommands.iterator(); it.hasNext(); ) {
+        for(Iterator<Command> it = listOfActiveGuildCommands.iterator(); it.hasNext(); ) {
             Command cmd = it.next();
 
-            if(mappingOfCommands.containsKey(cmd.getName())) {
-                BotCommand<?, ?> botCmd = mappingOfGuildCommands.get(cmd.getName());
+            if(mapOfCommands.containsKey(cmd.getName())) {
+                BotCommand<?, ?> botCmd = mapOfGuildCommands.get(cmd.getName());
 
                 if(botCmd == null) {
                     continue;
                 }
 
-                if (
+                if(
                         botCmd.getGuildsToRegisterIn().isEmpty() ||
                                 botCmd.getGuildsToRegisterIn().contains(guild.getIdLong())
                 ) {
@@ -296,21 +293,21 @@ public class CommandsHandler extends ListenerAdapter {
         }
 
         // Fills in any gaps or removes any guild commands
-        for(Command cmd: listOfActiveGuildCommands) { // Removes unused guild commands
-            guild.deleteCommandById(cmd.getId()).complete();
-        }
+        // Removes unused guild commands
+        listOfActiveGuildCommands.forEach(cmd -> guild.deleteCommandById(cmd.getId()).complete());
 
-        if(detectedGuildCommandNames.size() < mappingOfGuildCommands.size()) { // Adds new guild commands
-            List<String> missingCommands = new ArrayList<>(mappingOfGuildCommands.keySet());
+        if(detectedGuildCommandNames.size() < mapOfGuildCommands.size()) { // Adds new guild commands
+            List<String> missingCommands = new ArrayList<>(mapOfGuildCommands.keySet());
 
             missingCommands.removeAll(detectedGuildCommandNames);
 
             for(String cmdName: missingCommands) {
-                BotCommand<?, ?> cmd = mappingOfGuildCommands.get(cmdName);
+                BotCommand<?, ?> cmd = mapOfGuildCommands.get(cmdName);
                 cmd.updateCommand(guild);
             }
         }
 
+        listOfActiveGuildCommands.clear();
         detectedGuildCommandNames.clear();
     }
 }
