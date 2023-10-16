@@ -77,9 +77,7 @@ public class CoffeeCoreBuilder<T> {
      * @return {@link CoffeeCore}.
      */
     @NonNull
-    public CoffeeCore build(
-            @NonNull String token
-    ) {
+    public CoffeeCore build(@NonNull String token) {
         return new CoffeeCore(
                 settings,
                 new BuilderHelper<>(createBuilderInstance(token)).build(),

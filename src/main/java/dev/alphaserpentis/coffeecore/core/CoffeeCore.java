@@ -29,7 +29,8 @@ import java.util.Objects;
 import java.util.concurrent.Executors;
 
 /**
- * The core of Coffee Core. This class is responsible for initializing the bot, handling commands, and containing various components.
+ * The core of Coffee Core. This class is responsible for initializing the bot, handling commands, and containing
+ * various components.
  */
 public class CoffeeCore {
 
@@ -89,19 +90,14 @@ public class CoffeeCore {
         try {
             determineAndSetContainer(container);
             ContainerHelper containerHelper = new ContainerHelper(container);
-
-            if(serverDataHandler == null) {
-                Path path = Path.of(settings.getServerDataPath());
-
-                this.serverDataHandler = new ServerDataHandler<>(
-                        path,
-                        new TypeToken<>() {
-                        },
-                        new ServerDataDeserializer<>()
-                );
-            } else {
-                this.serverDataHandler = serverDataHandler;
-            }
+            this.serverDataHandler = Objects.requireNonNullElse(
+                    serverDataHandler,
+                    new ServerDataHandler<>(
+                            Path.of(settings.getServerDataPath()),
+                            new TypeToken<>() {},
+                            new ServerDataDeserializer<>()
+                    )
+            );
 
             this.serverDataHandler.init(containerHelper, this);
         } catch (IllegalStateException | InterruptedException | IOException | IllegalArgumentException e) {

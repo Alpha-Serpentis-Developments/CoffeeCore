@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -53,9 +54,7 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
      */
     public Map<Long, T> serverDataHashMap = new HashMap<>();
 
-    public AbstractServerDataHandler(
-            @NonNull Path path
-    ) {
+    public AbstractServerDataHandler(@NonNull Path path) {
         pathToFile = path;
     }
 
@@ -83,17 +82,12 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
     ) {
         this.executor = executor;
         this.core = core;
-
-        // Check the current servers
-        if(serverDataHashMap == null)
-            serverDataHashMap = new HashMap<>();
+        this.serverDataHashMap = Objects.requireNonNullElse(serverDataHashMap, new HashMap<>());
 
         ArrayList<Long> serversActuallyJoined = new ArrayList<>();
 
         for(Guild g: container.getGuilds()) {
-            if(!serverDataHashMap.containsKey(g.getIdLong())) {
-                serverDataHashMap.put(g.getIdLong(), createNewServerData());
-            }
+            serverDataHashMap.computeIfAbsent(g.getIdLong(), id -> createNewServerData());
             serversActuallyJoined.add(g.getIdLong());
         }
 
@@ -155,10 +149,10 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
     public void updateServerData() {
         long currentTime = System.currentTimeMillis() / 1000;
         long timeBetweenUpdate = currentTime - lastUpdate;
+        ScheduledFuture<?> future = getScheduledFuture();
 
-        if(timeBetweenUpdate < 60 && (scheduledFuture != null && !scheduledFuture.cancel(false))) {
+        if(timeBetweenUpdate < 60 && (future != null && !future.cancel(false)))
             return;
-        }
 
         scheduledFuture = executor.schedule(
                 () -> {

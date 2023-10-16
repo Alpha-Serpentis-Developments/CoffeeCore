@@ -422,7 +422,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     }
 
     /**
-     * A method that <b>REQUIRES</b> to be overridden if to be used for any {@link BotCommand} with an ephemeralType of {@link TypeOfEphemeral#DYNAMIC}
+     * A method that <b>REQUIRES</b> to be overridden if to be used for any {@link BotCommand} with an ephemeralType of
+     * {@link TypeOfEphemeral#DYNAMIC}
      * <p>
      * This method is currently only called if the command is <b>DEFERRED</b>.
      * <p>
@@ -508,16 +509,19 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         return globalCommandId;
     }
 
+    /**
+     * Gets this command's ID associated with this guild
+     * @param guild is the {@link Guild} to get the command ID for
+     * @return a long ID of the command. If the command is not registered in the guild, it will return -1.
+     */
     public long getGuildCommandId(@NonNull Guild guild) {
-        if (!guildCommandIds.containsKey(guild.getIdLong())) {
-            guild.retrieveCommands().complete().forEach(command -> {
-                if (command.getName().equals(getName())) {
-                    guildCommandIds.put(guild.getIdLong(), command.getIdLong());
-                }
-            });
-        }
-
-        return guildCommandIds.get(guild.getIdLong());
+        return guildCommandIds.computeIfAbsent(guild.getIdLong(), id ->
+                guild.retrieveCommands().complete().stream()
+                        .filter(command -> command.getName().equals(getName()))
+                        .findFirst()
+                        .map(Command::getIdLong)
+                        .orElse(-1L)
+        );
     }
 
     public long getRatelimitLength() {
@@ -620,7 +624,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         T[] response;
 
         try {
-            if (isOnlyEmbed()) {
+            if(isOnlyEmbed()) {
                 if(getEphemeralType() == TypeOfEphemeral.DEFAULT) {
                     event.deferReply(msgIsEphemeral).complete();
                 } else {
@@ -644,9 +648,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                     CommandResponse<?> responseBeforeRunning = beforeRunCommand(userId, event);
 
                     event.deferReply(responseBeforeRunning.messageIsEphemeral()).complete();
-                    if(responseBeforeRunning.messageResponse() != null) {
+                    if(responseBeforeRunning.messageResponse() != null)
                         event.reply((String) responseBeforeRunning.messageResponse()[0]).complete();
-                    }
                 }
 
                 response = retrieveAndProcessResponse(userId, event);
@@ -654,9 +657,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                 return hook.sendMessage((String) response[0]);
             }
         } catch(Exception e) {
-            if(isForgivingRatelimitOnError()) {
+            if(isForgivingRatelimitOnError())
                 getRatelimitMap().remove(userId);
-            }
 
             return hook.sendMessageEmbeds(handleError(e));
         }
@@ -677,21 +679,15 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         try {
             response = retrieveAndProcessResponse(userId, event);
 
-            if(isOnlyEmbed()) {
-                reply = event.replyEmbeds(
-                        Arrays.asList((MessageEmbed[]) response)
-                ).setEphemeral(msgIsEphemeral);
-            } else {
-                reply = event.reply(
-                        (String) response[0]
-                ).setEphemeral(msgIsEphemeral);
-            }
+            if(isOnlyEmbed())
+                reply = event.replyEmbeds(Arrays.asList((MessageEmbed[]) response)).setEphemeral(msgIsEphemeral);
+            else
+                reply = event.reply((String) response[0]).setEphemeral(msgIsEphemeral);
 
             return reply;
         } catch(Exception e) {
-            if(isForgivingRatelimitOnError()) {
+            if(isForgivingRatelimitOnError())
                 getRatelimitMap().remove(userId);
-            }
 
             return event.replyEmbeds(handleError(e));
         }
@@ -740,9 +736,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @param message The message to delete
      */
     public static void letMessageExpire(@NonNull BotCommand<?, ?> command, @NonNull Message message) {
-        if(command.doMessagesExpire()) {
+        if(command.doMessagesExpire())
             message.delete().queueAfter(command.getMessageExpirationLength(), TimeUnit.SECONDS);
-        }
     }
 
     /**

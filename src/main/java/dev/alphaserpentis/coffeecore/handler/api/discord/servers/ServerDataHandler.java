@@ -92,10 +92,9 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
 
     @NonNull
     protected List<BotCommand<?, ?>> getCachedGuildCommands() {
-        if(cachedGuildCommands == null) {
+        return Objects.requireNonNullElseGet(cachedGuildCommands, () -> {
             cachedGuildCommands = getCore().getCommandsHandler().getGuildCommands();
-        }
-
-        return cachedGuildCommands;
+            return cachedGuildCommands;
+        });
     }
 }

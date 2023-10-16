@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -155,10 +156,16 @@ public class CommandsHandler extends ListenerAdapter {
     @SuppressWarnings("unchecked")
     public void onSlashCommandInteraction(@NonNull SlashCommandInteractionEvent event) {
         executor.submit(() -> {
-            var cmd = Objects.requireNonNull((BotCommand<?, SlashCommandInteractionEvent>) getCommand(event.getName()));
-            Message msg = cmd.handleReply(event, cmd);
+            try {
+                var cmd = Objects.requireNonNull(
+                        (BotCommand<?, SlashCommandInteractionEvent>) getCommand(event.getName())
+                );
+                Message msg = cmd.handleReply(event, cmd);
 
-            BotCommand.letMessageExpire(cmd, msg);
+                BotCommand.letMessageExpire(cmd, msg);
+            } catch(Exception e) {
+                handleInteractionError(e);
+            }
         });
     }
 
@@ -166,10 +173,16 @@ public class CommandsHandler extends ListenerAdapter {
     @SuppressWarnings("unchecked")
     public void onUserContextInteraction(@NonNull UserContextInteractionEvent event) {
         executor.submit(() -> {
-            var cmd = Objects.requireNonNull((BotCommand<?, UserContextInteractionEvent>) getCommand(event.getName()));
-            Message msg = cmd.handleReply(event, cmd);
+            try {
+                var cmd = Objects.requireNonNull(
+                        (BotCommand<?, UserContextInteractionEvent>) getCommand(event.getName())
+                );
+                Message msg = cmd.handleReply(event, cmd);
 
-            BotCommand.letMessageExpire(cmd, msg);
+                BotCommand.letMessageExpire(cmd, msg);
+            } catch(Exception e) {
+                handleInteractionError(e);
+            }
         });
     }
 
@@ -177,36 +190,48 @@ public class CommandsHandler extends ListenerAdapter {
     @SuppressWarnings("unchecked")
     public void onMessageContextInteraction(@NonNull MessageContextInteractionEvent event) {
         executor.submit(() -> {
-            var cmd = Objects.requireNonNull(
-                    (BotCommand<?, MessageContextInteractionEvent>) getCommand(event.getName())
-            );
-            Message msg = cmd.handleReply(event, cmd);
+            try {
+                var cmd = Objects.requireNonNull(
+                        (BotCommand<?, MessageContextInteractionEvent>) getCommand(event.getName())
+                );
+                Message msg = cmd.handleReply(event, cmd);
 
-            BotCommand.letMessageExpire(cmd, msg);
+                BotCommand.letMessageExpire(cmd, msg);
+            } catch(Exception e) {
+                handleInteractionError(e);
+            }
         });
     }
 
     @Override
     public void onButtonInteraction(@NonNull ButtonInteractionEvent event) {
         executor.submit(() -> {
-            String buttonId = Objects.requireNonNull(event.getButton().getId());
-            var cmd = Objects.requireNonNull(
-                    (ButtonCommand<?, ?>) getCommand(buttonId.substring(0, buttonId.indexOf("_")))
-            );
+            try {
+                String buttonId = Objects.requireNonNull(event.getButton().getId());
+                var cmd = Objects.requireNonNull(
+                        (ButtonCommand<?, ?>) getCommand(buttonId.substring(0, buttonId.indexOf("_")))
+                );
 
-            cmd.runButtonInteraction(event);
+                cmd.runButtonInteraction(event);
+            } catch(Exception e) {
+                handleInteractionError(e);
+            }
         });
     }
 
     @Override
     public void onModalInteraction(@NonNull ModalInteractionEvent event) {
         executor.submit(() -> {
-            String modalId = Objects.requireNonNull(event.getModalId());
-            var cmd = Objects.requireNonNull(
-                    (ModalCommand) getCommand(modalId.substring(0, modalId.indexOf("_")))
-            );
+            try {
+                String modalId = Objects.requireNonNull(event.getModalId());
+                var cmd = Objects.requireNonNull(
+                        (ModalCommand) getCommand(modalId.substring(0, modalId.indexOf("_")))
+                );
 
-            cmd.runModalInteraction(event);
+                cmd.runModalInteraction(event);
+            } catch(Exception e) {
+                handleInteractionError(e);
+            }
         });
     }
 
@@ -225,14 +250,12 @@ public class CommandsHandler extends ListenerAdapter {
             if(mapOfCommands.containsKey(cmd.getName())) {
                 BotCommand<?, ?> botCmd = mapOfGlobalCommands.get(cmd.getName());
 
-                if(botCmd == null) {
+                if(botCmd == null)
                     continue;
-                }
 
                 botCmd.setGlobalCommandId(cmd.getIdLong());
-                if(updateCommands) {
+                if(updateCommands)
                     botCmd.updateCommand(shard);
-                }
 
                 detectedGlobalCommandNames.add(cmd.getName());
 
@@ -273,17 +296,15 @@ public class CommandsHandler extends ListenerAdapter {
             if(mapOfCommands.containsKey(cmd.getName())) {
                 BotCommand<?, ?> botCmd = mapOfGuildCommands.get(cmd.getName());
 
-                if(botCmd == null) {
+                if(botCmd == null)
                     continue;
-                }
 
                 if(
                         botCmd.getGuildsToRegisterIn().isEmpty() ||
                                 botCmd.getGuildsToRegisterIn().contains(guild.getIdLong())
                 ) {
-                    if(updateCommands) {
+                    if(updateCommands)
                         botCmd.updateCommand(guild);
-                    }
 
                     detectedGuildCommandNames.add(cmd.getName());
 
@@ -309,5 +330,15 @@ public class CommandsHandler extends ListenerAdapter {
 
         listOfActiveGuildCommands.clear();
         detectedGuildCommandNames.clear();
+    }
+
+    /**
+     * Handles any uncaught interaction errors
+     * @param e The error that occurred
+     * @return An {@link Optional}
+     */
+    @SuppressWarnings("UnusedReturnValue, UnusedParameters")
+    protected Optional<?> handleInteractionError(@NonNull Throwable e) {
+        return Optional.empty();
     }
 }
