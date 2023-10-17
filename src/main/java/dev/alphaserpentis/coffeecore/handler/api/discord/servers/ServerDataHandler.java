@@ -72,21 +72,15 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
 
     @Override
     public void onGuildJoin(@NonNull GuildJoinEvent event) {
-        CommandsHandler commandsHandler = getCore().getCommandsHandler();
-
         serverDataHashMap.put(event.getGuild().getIdLong(), createNewServerData());
-        commandsHandler.upsertGuildCommandsToGuild(getCachedGuildCommands(), event.getGuild());
-
+        getCore().getCommandsHandler().upsertGuildCommandsToGuild(getCachedGuildCommands(), event.getGuild());
         updateServerData();
     }
 
     @Override
     public void onGuildLeave(@NonNull GuildLeaveEvent event) {
-        CommandsHandler commandsHandler = getCore().getCommandsHandler();
-
         serverDataHashMap.remove(event.getGuild().getIdLong());
-        commandsHandler.deregisterCommands(event.getGuild().getIdLong());
-
+        getCore().getCommandsHandler().deregisterCommands(event.getGuild().getIdLong());
         updateServerData();
     }
 
