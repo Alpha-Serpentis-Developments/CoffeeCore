@@ -41,6 +41,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     protected final Collection<Long> guildsToRegisterIn;
     protected final String name;
     protected final String description;
+    protected final String helpDescription;
     protected final long ratelimitLength;
     protected final long messageExpirationLength;
     protected final boolean onlyEmbed;
@@ -90,6 +91,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     public static class BotCommandOptions {
         protected String name;
         protected String description;
+        protected String helpDescription = null;
         protected long ratelimitLength = 0;
         protected long messageExpirationLength = 0;
         protected boolean onlyEmbed = false;
@@ -192,6 +194,17 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         @NonNull
         public BotCommandOptions setDescription(@NonNull String description) {
             this.description = description;
+            return this;
+        }
+
+        /**
+         * Sets the help description of the command
+         * @param helpDescription The help description of the command
+         * @return {@link BotCommandOptions}
+         */
+        @NonNull
+        public BotCommandOptions setHelpDescription(@NonNull String helpDescription) {
+            this.helpDescription = helpDescription;
             return this;
         }
 
@@ -369,6 +382,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
         name = options.name;
         description = options.description;
+        helpDescription = options.helpDescription;
         ratelimitLength = options.ratelimitLength;
         messageExpirationLength = options.messageExpirationLength;
         onlyEmbed = options.onlyEmbed;
@@ -401,10 +415,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @param jda {@link JDA} instance
      */
     public void updateCommand(@NonNull JDA jda) {
-        CommandData cmdData = getJDACommandData(getCommandType(), getName(), getDescription());
-
         jda
-                .upsertCommand(cmdData)
+                .upsertCommand(getJDACommandData(getCommandType(), getName(), getDescription()))
                 .queue(command -> globalCommandId = command.getIdLong());
     }
 
@@ -414,10 +426,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @param guild {@link Guild} to update the command in
      */
     public void updateCommand(@NonNull Guild guild) {
-        CommandData cmdData = getJDACommandData(getCommandType(), getName(), getDescription());
-
         guild
-                .upsertCommand(cmdData)
+                .upsertCommand(getJDACommandData(getCommandType(), getName(), getDescription()))
                 .queue();
     }
 
@@ -505,6 +515,11 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         return description;
     }
 
+    @Nullable
+    public String getHelpDescription() {
+        return helpDescription;
+    }
+
     public long getGlobalCommandId() {
         return globalCommandId;
     }
@@ -515,7 +530,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @return a long ID of the command. If the command is not registered in the guild, it will return -1.
      */
     public long getGuildCommandId(@NonNull Guild guild) {
-        return guildCommandIds.computeIfAbsent(guild.getIdLong(), id ->
+        return getGuildCommandIds().computeIfAbsent(guild.getIdLong(), id ->
                 guild.retrieveCommands().complete().stream()
                         .filter(command -> command.getName().equals(getName()))
                         .findFirst()
@@ -621,7 +636,6 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         final long userId = event.getUser().getIdLong();
         final InteractionHook hook = event.getHook();
         final boolean msgIsEphemeral = determineEphemeralStatus(event);
-        T[] response;
 
         try {
             if(isOnlyEmbed()) {
@@ -632,15 +646,15 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
                     event.deferReply(responseBeforeRunning.messageIsEphemeral()).complete();
                     if(responseBeforeRunning.messageResponse() != null) {
-                        MessageEmbed[] messages = (MessageEmbed[]) responseBeforeRunning.messageResponse();
-
-                        event.replyEmbeds(Arrays.asList(messages)).complete();
+                        event.replyEmbeds(
+                                Arrays.asList((MessageEmbed[]) responseBeforeRunning.messageResponse())
+                        ).complete();
                     }
                 }
 
-                response = retrieveAndProcessResponse(userId, event);
-
-                return hook.sendMessageEmbeds(Arrays.asList((MessageEmbed[]) response));
+                return hook.sendMessageEmbeds(
+                        Arrays.asList((MessageEmbed[]) retrieveAndProcessResponse(userId, event))
+                );
             } else {
                 if(getEphemeralType() == TypeOfEphemeral.DEFAULT) {
                     hook.setEphemeral(msgIsEphemeral);
@@ -652,9 +666,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                         event.reply((String) responseBeforeRunning.messageResponse()[0]).complete();
                 }
 
-                response = retrieveAndProcessResponse(userId, event);
-
-                return hook.sendMessage((String) response[0]);
+                return hook.sendMessage((String) retrieveAndProcessResponse(userId, event)[0]);
             }
         } catch(Exception e) {
             if(isForgivingRatelimitOnError())
@@ -763,7 +775,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             }
         } else {
             eb.addField(
-                    "Error Message", "Error message unable to be generated? Cause of error: " + e.getCause(),
+                    "Error Message",
+                    "Error message unable to be generated? Cause of error: " + e.getCause(),
                     false
             );
         }

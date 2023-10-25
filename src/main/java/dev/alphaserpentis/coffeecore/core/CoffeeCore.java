@@ -333,10 +333,9 @@ public class CoffeeCore {
     public void addEventListenersToContainer(@NonNull Object... listeners) {
         IGuildChannelContainer container = getActiveContainer();
 
-        if(container instanceof JDA j) {
+        if(container instanceof JDA j)
             j.addEventListener(listeners);
-        } else if(container instanceof ShardManager sm) {
+        else if(container instanceof ShardManager sm)
             sm.addEventListener(listeners);
-        }
     }
 }
