@@ -572,7 +572,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     }
 
     public boolean isUserRatelimited(long userId) {
-        final long ratelimit = ratelimitMap.getOrDefault(userId, 0L);
+        final long ratelimit = getRatelimitMap().getOrDefault(userId, 0L);
 
         if(ratelimit != 0) {
             return ratelimit > Instant.now().getEpochSecond();
@@ -657,7 +657,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                 );
             } else {
                 if(getEphemeralType() == TypeOfEphemeral.DEFAULT) {
-                    hook.setEphemeral(msgIsEphemeral);
+                    event.deferReply(msgIsEphemeral).complete();
                 } else {
                     CommandResponse<?> responseBeforeRunning = beforeRunCommand(userId, event);
 
@@ -666,7 +666,12 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                         event.reply((String) responseBeforeRunning.messageResponse()[0]).complete();
                 }
 
-                return hook.sendMessage((String) retrieveAndProcessResponse(userId, event)[0]);
+                T[] response = retrieveAndProcessResponse(userId, event);
+
+                if(response instanceof MessageEmbed[])
+                    return hook.sendMessageEmbeds(Arrays.asList((MessageEmbed[]) response));
+                else
+                    return hook.sendMessage((String) response[0]);
             }
         } catch(Exception e) {
             if(isForgivingRatelimitOnError())

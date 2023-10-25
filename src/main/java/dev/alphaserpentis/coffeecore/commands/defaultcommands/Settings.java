@@ -14,6 +14,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEvent> {
 
@@ -40,9 +41,9 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
         if(event.getGuild() == null) {
             eb.setDescription("This command can only be used in a server.");
         } else {
-            if(isUserPermissioned(event.getMember())) {
+            if(isUserPermissioned(Objects.requireNonNull(event.getMember()))) {
                 // This will be swapped for a switch statement when more settings are added.
-                if(event.getSubcommandName().equals("ephemeral")) {
+                if(Objects.equals(event.getSubcommandName(), "ephemeral")) {
                     try {
                         setServerEphemeral(event.getGuild().getIdLong(), eb);
                     } catch (IOException e) {

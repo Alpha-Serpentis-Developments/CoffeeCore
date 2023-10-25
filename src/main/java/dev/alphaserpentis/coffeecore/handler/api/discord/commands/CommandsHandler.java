@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 
 /**
  * The handler for all the commands to be registered with the bot. This handles registration and execution of the commands.
@@ -43,6 +44,17 @@ public class CommandsHandler extends ListenerAdapter {
      * The {@link CoffeeCore} instance that this handler is attached to.
      */
     protected CoffeeCore core;
+    /**
+     * The function that will be called when an error occurs in any of the following methods:
+     * <ul>
+     *     <li>{@link #onSlashCommandInteraction(SlashCommandInteractionEvent)}</li>
+     *     <li>{@link #onUserContextInteraction(UserContextInteractionEvent)}</li>
+     *     <li>{@link #onMessageContextInteraction(MessageContextInteractionEvent)}</li>
+     *     <li>{@link #onButtonInteraction(ButtonInteractionEvent)}</li>
+     *     <li>{@link #onModalInteraction(ModalInteractionEvent)}</li>
+     * </ul>
+     */
+    protected Function<Throwable, ?> handleInteractionError;
 
     public CommandsHandler(@NonNull ExecutorService executor) {
         this.executor = executor;
@@ -56,6 +68,10 @@ public class CommandsHandler extends ListenerAdapter {
         if(this.core == null) {
             this.core = core;
         }
+    }
+
+    public void setHandleInteractionError(Function<Throwable, ?> handleInteractionError) {
+        this.handleInteractionError = handleInteractionError;
     }
 
     /**
@@ -339,6 +355,6 @@ public class CommandsHandler extends ListenerAdapter {
      */
     @SuppressWarnings("UnusedReturnValue, UnusedParameters")
     protected Optional<?> handleInteractionError(@NonNull Throwable e) {
-        return Optional.empty();
+        return Optional.ofNullable(handleInteractionError.apply(e));
     }
 }
