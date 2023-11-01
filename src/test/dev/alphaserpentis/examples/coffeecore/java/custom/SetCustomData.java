@@ -1,7 +1,7 @@
-package custom;
+package dev.alphaserpentis.examples.coffeecore.java.custom;
 
-import custom.handler.CustomServerData;
-import custom.handler.CustomServerDataHandler;
+import dev.alphaserpentis.examples.coffeecore.java.custom.handler.CustomServerData;
+import dev.alphaserpentis.examples.coffeecore.java.custom.handler.CustomServerDataHandler;
 import dev.alphaserpentis.coffeecore.commands.BotCommand;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 import io.reactivex.rxjava3.annotations.NonNull;
@@ -53,15 +53,9 @@ public class SetCustomData extends BotCommand<String, SlashCommandInteractionEve
 
     @Override
     public void updateCommand(@NonNull JDA jda) {
-        SubcommandData view = new SubcommandData(
-                "view",
-                "View the custom data of the server."
-        );
-        SubcommandData set = new SubcommandData(
-                "set",
-                "Set the custom data of the server."
-        ).addOption(OptionType.STRING, "data", "The data to set.", true);
-
+        SubcommandData view = new SubcommandData("view", "View the custom data of the server.");
+        SubcommandData set = new SubcommandData("set", "Set the custom data of the server.")
+                .addOption(OptionType.STRING, "data", "The data to set.", true);
         Command cmd = jda.upsertCommand(name, description)
                 .addSubcommands(view, set).complete();
 

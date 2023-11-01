@@ -1,4 +1,4 @@
-package hello;
+package dev.alphaserpentis.examples.coffeecore.java.hello;
 
 import dev.alphaserpentis.coffeecore.commands.ButtonCommand;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public class HelloCommandButton extends ButtonCommand<MessageEmbed, SlashCommandInteractionEvent> {
-
     public HelloCommandButton() {
         super(
                 new BotCommandOptions()
@@ -33,11 +32,10 @@ public class HelloCommandButton extends ButtonCommand<MessageEmbed, SlashCommand
     @Override
     @NonNull
     public CommandResponse<MessageEmbed> runCommand(long userId, @NonNull SlashCommandInteractionEvent event) {
-        EmbedBuilder eb = new EmbedBuilder();
-
-        eb.setTitle("Hello!");
-        eb.setDescription("Hello, " + event.getUser().getAsMention() + "!");
-        eb.setColor(0x00FF00);
+        EmbedBuilder eb = new EmbedBuilder()
+                .setTitle("Hello!")
+                .setDescription("Hello, " + event.getUser().getAsMention() + "!")
+                .setColor(0x00FF00);
 
         return new CommandResponse<>(isOnlyEphemeral(), eb.build());
     }

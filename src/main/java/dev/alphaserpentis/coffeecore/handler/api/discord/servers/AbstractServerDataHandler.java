@@ -10,12 +10,13 @@ import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executors;
@@ -84,9 +85,10 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
         this.core = core;
         this.serverDataHashMap = Objects.requireNonNullElse(serverDataHashMap, new HashMap<>());
 
-        ArrayList<Long> serversActuallyJoined = new ArrayList<>();
+        List<Guild> guilds = container.getGuilds();
+        ArrayList<Long> serversActuallyJoined = new ArrayList<>(guilds.size());
 
-        for(Guild g: container.getGuilds()) {
+        for(Guild g: guilds) {
             serverDataHashMap.computeIfAbsent(g.getIdLong(), id -> createNewServerData());
             serversActuallyJoined.add(g.getIdLong());
         }
@@ -173,11 +175,8 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
      * @param data The data to write.
      */
     protected void writeToJSON(@NonNull Gson gson, @NonNull Object data) {
-        try {
-            Writer writer = Files.newBufferedWriter(pathToFile);
-
+        try(BufferedWriter writer = Files.newBufferedWriter(pathToFile)) {
             gson.toJson(data, writer);
-            writer.close();
 
             lastUpdate = System.currentTimeMillis() / 1000;
         } catch (IOException e) {

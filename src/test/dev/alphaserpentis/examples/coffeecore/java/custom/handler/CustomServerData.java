@@ -1,4 +1,4 @@
-package custom.handler;
+package dev.alphaserpentis.examples.coffeecore.java.custom.handler;
 
 import dev.alphaserpentis.coffeecore.data.server.ServerData;
 
