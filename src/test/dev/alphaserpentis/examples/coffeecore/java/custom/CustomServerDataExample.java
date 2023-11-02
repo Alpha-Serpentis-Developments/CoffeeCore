@@ -27,6 +27,7 @@ public class CustomServerDataExample {
                         new CustomServerDataDeserializer()
                 )
         );
+
         builder.build(dotenv.get("DISCORD_BOT_TOKEN")).registerCommands(setCustomData);
     }
 }
