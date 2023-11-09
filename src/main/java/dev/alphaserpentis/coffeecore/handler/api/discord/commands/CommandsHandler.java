@@ -14,6 +14,7 @@ import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionE
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.UserContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.Command;
 
@@ -55,6 +56,7 @@ public class CommandsHandler extends ListenerAdapter {
      * </ul>
      */
     protected Function<Throwable, ?> handleInteractionError;
+    protected Function<Throwable, ?> handleRegistrationError;
 
     public CommandsHandler(@NonNull ExecutorService executor) {
         this.executor = executor;
@@ -72,6 +74,10 @@ public class CommandsHandler extends ListenerAdapter {
 
     public void setHandleInteractionError(Function<Throwable, ?> handleInteractionError) {
         this.handleInteractionError = handleInteractionError;
+    }
+
+    public void setHandleRegistrationError(Function<Throwable, ?> handleRegistrationError) {
+        this.handleRegistrationError = handleRegistrationError;
     }
 
     /**
@@ -281,7 +287,13 @@ public class CommandsHandler extends ListenerAdapter {
 
         // Fills in any gaps or removes any global commands
         // Removes unused global commands
-        listOfActiveGlobalCommands.forEach(cmd -> shard.deleteCommandById(cmd.getId()).complete());
+        listOfActiveGlobalCommands.forEach(cmd -> {
+            try{
+                shard.deleteCommandById(cmd.getId()).complete();
+            } catch(ErrorResponseException e) {
+                handleRegistrationError(e);
+            }
+        });
 
         if(detectedGlobalCommandNames.size() < mapOfGlobalCommands.size()) { // Adds new global commands
             List<String> missingCommands = new ArrayList<>(mapOfGlobalCommands.keySet());
@@ -305,6 +317,7 @@ public class CommandsHandler extends ListenerAdapter {
     ) {
         List<Command> listOfActiveGuildCommands = guild.retrieveCommands().complete();
         List<String> detectedGuildCommandNames = new ArrayList<>();
+        List<String> ignoredGuildCommandNames = new ArrayList<>();
 
         for(Iterator<Command> it = listOfActiveGuildCommands.iterator(); it.hasNext(); ) {
             Command cmd = it.next();
@@ -325,18 +338,29 @@ public class CommandsHandler extends ListenerAdapter {
                     detectedGuildCommandNames.add(cmd.getName());
 
                     it.remove();
+                } else if(!botCmd.getGuildsToRegisterIn().contains(guild.getIdLong())) {
+                    ignoredGuildCommandNames.add(cmd.getName());
+
+                    it.remove();
                 }
             }
         }
 
         // Fills in any gaps or removes any guild commands
         // Removes unused guild commands
-        listOfActiveGuildCommands.forEach(cmd -> guild.deleteCommandById(cmd.getId()).complete());
+        listOfActiveGuildCommands.forEach(cmd -> {
+            try{
+                guild.deleteCommandById(mapOfGuildCommands.get(cmd.getName()).getGuildCommandId(guild)).complete();
+            } catch(ErrorResponseException e) {
+                handleRegistrationError(e);
+            }
+        });
 
         if(detectedGuildCommandNames.size() < mapOfGuildCommands.size()) { // Adds new guild commands
             List<String> missingCommands = new ArrayList<>(mapOfGuildCommands.keySet());
 
             missingCommands.removeAll(detectedGuildCommandNames);
+            missingCommands.removeAll(ignoredGuildCommandNames);
 
             for(String cmdName: missingCommands) {
                 BotCommand<?, ?> cmd = mapOfGuildCommands.get(cmdName);
@@ -356,5 +380,10 @@ public class CommandsHandler extends ListenerAdapter {
     @SuppressWarnings("UnusedReturnValue, UnusedParameters")
     protected Optional<?> handleInteractionError(@NonNull Throwable e) {
         return Optional.ofNullable(handleInteractionError.apply(e));
+    }
+
+    @SuppressWarnings("UnusedReturnValue, UnusedParameters")
+    protected Optional<?> handleRegistrationError(@NonNull Throwable e) {
+        return Optional.ofNullable(handleRegistrationError.apply(e));
     }
 }
