@@ -56,6 +56,15 @@ public class CommandsHandler extends ListenerAdapter {
      * </ul>
      */
     protected Function<Throwable, ?> handleInteractionError;
+    /**
+     * The function that will be called when an error occurs in any of the following methods:
+     * <ul>
+     *     <li>{@link #registerGlobalCommands(JDA, HashMap, boolean)}</li>
+     *     <li>{@link #registerGuildCommands(Guild, HashMap, boolean)}</li>
+     *     <li>{@link #deregisterCommands(long)}</li>
+     *     <li>{@link #upsertGuildCommandsToGuild(List, Guild)}</li>
+     * </ul>
+     */
     protected Function<Throwable, ?> handleRegistrationError;
 
     public CommandsHandler(@NonNull ExecutorService executor) {
@@ -72,11 +81,11 @@ public class CommandsHandler extends ListenerAdapter {
         }
     }
 
-    public void setHandleInteractionError(Function<Throwable, ?> handleInteractionError) {
+    public void setHandleInteractionError(@NonNull Function<Throwable, ?> handleInteractionError) {
         this.handleInteractionError = handleInteractionError;
     }
 
-    public void setHandleRegistrationError(Function<Throwable, ?> handleRegistrationError) {
+    public void setHandleRegistrationError(@NonNull Function<Throwable, ?> handleRegistrationError) {
         this.handleRegistrationError = handleRegistrationError;
     }
 
@@ -93,7 +102,7 @@ public class CommandsHandler extends ListenerAdapter {
     ) {
         HashMap<String, BotCommand<?, ?>> mapOfGlobalCommands = new HashMap<>();
         HashMap<String, BotCommand<?, ?>> mapOfGuildCommands = new HashMap<>();
-        List<JDA> shards = core.isSharded() ? core.getShardManager().getShards() : List.of(core.getJda());
+        List<JDA> shards = getShards();
 
         this.mapOfCommands.putAll(mapOfCommands);
 
@@ -119,10 +128,17 @@ public class CommandsHandler extends ListenerAdapter {
 
     /**
      * Provided an ID for a guild, it will deregister the command IDs to that guild.
+     * <p><b>This does not remove your guild commands from the guild!</b></p>
      * @param guildId The ID of the guild to deregister the commands from
      */
     public void deregisterCommands(long guildId) {
-        getGuildCommands().forEach(cmd -> cmd.removeGuildCommandId(guildId));
+        getGuildCommands().forEach(cmd -> {
+            try {
+                cmd.removeGuildCommandId(guildId);
+            } catch(ErrorResponseException e) {
+                handleRegistrationError(e);
+            }
+        });
     }
 
     /**
@@ -131,46 +147,14 @@ public class CommandsHandler extends ListenerAdapter {
      * @param guild The guild to add the commands to
      */
     public void upsertGuildCommandsToGuild(@NonNull List<BotCommand<?, ?>> cmds, @NonNull Guild guild) {
-        cmds.stream().filter(
-                cmd -> cmd.getCommandVisibility() == BotCommand.CommandVisibility.GUILD
-        ).forEach(
-                cmd -> cmd.updateCommand(guild)
-        );
-    }
-
-    /**
-     * Gets a {@link BotCommand} from the {@link #mapOfCommands}.
-     * @param name The name of the command to get
-     * @return BotCommand or {@code null} if the command is not found
-     */
-    @Nullable
-    public BotCommand<?, ?> getCommand(@NonNull String name) {
-        return mapOfCommands.get(name);
-    }
-
-    /**
-     * Gets a list of all the commands that are registered.
-     * <br>
-     * <b>Recommended to cache the result of this method.</b>
-     * @return An {@link ArrayList} of {@link BotCommand} that are registered
-     */
-    @NonNull
-    public ArrayList<BotCommand<?, ?>> getCommands() {
-        return new ArrayList<>(mapOfCommands.values());
-    }
-
-    /**
-     * Gets a list of the guild commands that are registered. May return a non-null empty list.
-     * <br>
-     * <b>Recommended to cache the result of this method.</b>
-     * @return An {@link ArrayList} of {@link BotCommand} that are registered as guild commands
-     */
-    @NonNull
-    public ArrayList<BotCommand<?, ?>> getGuildCommands() {
-        return new ArrayList<>(
-                mapOfCommands.values().stream().filter(
-                        cmd -> cmd.getCommandVisibility() == BotCommand.CommandVisibility.GUILD
-                ).toList()
+        cmds.stream().filter(cmd -> isGuildEligibleForCommand(guild, cmd)).forEach(
+                cmd -> {
+                    try {
+                        cmd.updateCommand(guild);
+                    } catch(ErrorResponseException e) {
+                        handleRegistrationError(e);
+                    }
+                }
         );
     }
 
@@ -257,6 +241,54 @@ public class CommandsHandler extends ListenerAdapter {
         });
     }
 
+    /**
+     * Gets a {@link BotCommand} from the {@link #mapOfCommands}.
+     * @param name The name of the command to get
+     * @return BotCommand or {@code null} if the command is not found
+     */
+    @Nullable
+    public BotCommand<?, ?> getCommand(@NonNull String name) {
+        return mapOfCommands.get(name);
+    }
+
+    /**
+     * Gets a list of all the commands that are registered.
+     * <br>
+     * <b>Recommended to cache the result of this method.</b>
+     * @return An {@link ArrayList} of {@link BotCommand} that are registered
+     */
+    @NonNull
+    public ArrayList<BotCommand<?, ?>> getCommands() {
+        return new ArrayList<>(mapOfCommands.values());
+    }
+
+    /**
+     * Gets a list of the guild commands that are registered. May return a non-null empty list.
+     * <br>
+     * <b>Recommended to cache the result of this method.</b>
+     * @return An {@link ArrayList} of {@link BotCommand} that are registered as guild commands
+     */
+    @NonNull
+    public ArrayList<BotCommand<?, ?>> getGuildCommands() {
+        return new ArrayList<>(
+                mapOfCommands.values().stream().filter(
+                        cmd -> cmd.getCommandVisibility() == BotCommand.CommandVisibility.GUILD
+                ).toList()
+        );
+    }
+
+    /**
+     * Returns a boolean if the specified guild is eligible for the specified command.
+     * This will always return false if the visibility is not of {@code GUILD} visibility
+     * @param guild The guild to check
+     * @param cmd The command to check
+     * @return {@code true} if the guild is eligible for the command, {@code false} otherwise
+     */
+    public boolean isGuildEligibleForCommand(@NonNull Guild guild, @NonNull BotCommand<?, ?> cmd) {
+        return cmd.getCommandVisibility() == BotCommand.CommandVisibility.GUILD
+                && (cmd.getGuildsToRegisterIn().isEmpty() || cmd.getGuildsToRegisterIn().contains(guild.getIdLong()));
+    }
+
     protected void registerGlobalCommands(
             @NonNull JDA shard,
             @NonNull HashMap<String, BotCommand<?, ?>> mapOfGlobalCommands,
@@ -301,8 +333,7 @@ public class CommandsHandler extends ListenerAdapter {
             missingCommands.removeAll(detectedGlobalCommandNames);
 
             for(String cmdName: missingCommands) {
-                BotCommand<?, ?> cmd = mapOfCommands.get(cmdName);
-                cmd.updateCommand(shard);
+                mapOfGlobalCommands.get(cmdName).updateCommand(shard);
             }
         }
 
@@ -328,10 +359,7 @@ public class CommandsHandler extends ListenerAdapter {
                 if(botCmd == null)
                     continue;
 
-                if(
-                        botCmd.getGuildsToRegisterIn().isEmpty() ||
-                                botCmd.getGuildsToRegisterIn().contains(guild.getIdLong())
-                ) {
+                if(isGuildEligibleForCommand(guild, botCmd)) {
                     if(updateCommands)
                         botCmd.updateCommand(guild);
 
@@ -363,8 +391,7 @@ public class CommandsHandler extends ListenerAdapter {
             missingCommands.removeAll(ignoredGuildCommandNames);
 
             for(String cmdName: missingCommands) {
-                BotCommand<?, ?> cmd = mapOfGuildCommands.get(cmdName);
-                cmd.updateCommand(guild);
+                mapOfGuildCommands.get(cmdName).updateCommand(guild);
             }
         }
 
@@ -382,8 +409,24 @@ public class CommandsHandler extends ListenerAdapter {
         return Optional.ofNullable(handleInteractionError.apply(e));
     }
 
+    /**
+     * Handles any uncaught registration errors
+     * @param e The error that occurred
+     * @return An {@link Optional}
+     */
     @SuppressWarnings("UnusedReturnValue, UnusedParameters")
     protected Optional<?> handleRegistrationError(@NonNull Throwable e) {
         return Optional.ofNullable(handleRegistrationError.apply(e));
+    }
+
+    /**
+     * Returns a list of JDA instances that are being used by the bot.
+     * @return An immutable list of JDA instances
+     */
+    @NonNull
+    protected List<JDA> getShards() {
+        return core.isSharded()
+                ? Objects.requireNonNull(core.getShardManager()).getShards()
+                : List.of(Objects.requireNonNull(core.getJda()));
     }
 }

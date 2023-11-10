@@ -149,8 +149,7 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
      * Tells the executor to update the server data file after some time.
      */
     public void updateServerData() {
-        long currentTime = System.currentTimeMillis() / 1000;
-        long timeBetweenUpdate = currentTime - lastUpdate;
+        long timeBetweenUpdate = (System.currentTimeMillis() / 1000) - lastUpdate;
         ScheduledFuture<?> future = getScheduledFuture();
 
         if(timeBetweenUpdate < 60 && (future != null && !future.cancel(false)))
