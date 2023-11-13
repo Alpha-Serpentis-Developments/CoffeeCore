@@ -17,25 +17,32 @@ functionality.
 
 **Notice**: Coffee Core requires Java 17+!
 
-### Adding Coffee Core to your project with Maven
+### Adding Coffee Core to Your Project
 
-Latest Release:
+#### Latest Release:
 
+**Maven**
 ```xml
 <dependency>
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.5.0-alpha</version>
+    <version>0.6.0-alpha</version>
 </dependency>
 ```
 
-Latest Snapshot:
+**Gradle**
+```groovy
+implementation 'dev.alphaserpentis:CoffeeCore:0.6.0-alpha'
+```
 
+#### Latest Snapshot:
+
+**Maven**
 ```xml
 <dependency>
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.5.0-alpha-SNAPSHOT</version>
+    <version>0.6.0-alpha-111023-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -68,6 +75,7 @@ You can also exclude the `dotenv-java` package if you do not intend to use it.
 </exclusions>
 ```
 
+- - -
 ### Creating a bot
 
 The default settings are as follows:
@@ -106,10 +114,10 @@ public static void main(String[] args) throws Exception {
     builder
         .setSettings(
             new BotSettings(
-                Long.parseLong(dotenv.get("BOT_OWNER_ID")),
-                dotenv.get("SERVER_DATA_PATH"),
-                Boolean.parseBoolean(dotenv.get("UPDATE_COMMANDS_AT_LAUNCH")),
-                Boolean.parseBoolean(dotenv.get("REGISTER_DEFAULT_COMMANDS"))
+                Long.parseLong(dotenv.get("BOT_OWNER_ID")), // the bot owner's user ID
+                dotenv.get("SERVER_DATA_PATH"), // the path to the server data file
+                Boolean.parseBoolean(dotenv.get("UPDATE_COMMANDS_AT_LAUNCH")), // whether to update commands at launch
+                Boolean.parseBoolean(dotenv.get("REGISTER_DEFAULT_COMMANDS")) // whether to register default commands
             )
         )
         .setServerDataHandler(new MyServerDataHandler()) // (Experimental!) Optionally, assign your own ServerDataHandler
@@ -123,18 +131,56 @@ public static void main(String[] args) throws Exception {
 }
 ```
 
+#### Updating Commands At Launch
+When you update commands at launch, any changes made to the structure of the command (e.g., name, description, subcommands)
+will be reflected in Discord. However, if this is not toggled to `true`, it will not update the changes!
+
+#### Register Default Commands
+If you wish to use the default commands that Coffee Core offers (e.g., `help`, `about`, `shutdown`, `settings`) you can
+set this true to have them added to your bot.
+
+Default commands can still be accessed without toggling the setting to `true` if needed, and can even be extended off of
+to grant more functionality.
+
 ## Writing a Command
 
-Currently, Coffee Core supports three types of commands:
-- `BotCommand`: The base command type
-- `ButtonCommand`: Extends off of `BotCommand` and adds the ability to use buttons
-- `ModalCommand`: An interface that enables the use of modal dialogs
+Coffee Core offers a flexible command system, catering to various interaction types.
+At its core is the `BotCommand` class, which provides the foundational behavior for defining and executing commands.
 
-When using `BotCommand` or `ButtonCommand`, `BotCommand` has a generic type that represents the type of data that will be
-returned when the command is executed. For example, if you want to return a `MessageEmbed` when the command is executed,
-you would use `BotCommand<MessageEmbed, ...>`. Otherwise, if you want to respond back with only a message, you would use
-`BotCommand<String, ...>`. For the second generic type, it represents the type of event that will be used to execute the
-command. For example, if you want to use a `SlashCommandInteractionEvent`, you would use `BotCommand<..., SlashCommandInteractionEvent>`.
+Types of Commands:
+- **Slash Commands (`SLASH`)**: The default type of command. Invoked by typing `/` in Discord.
+- **User Context Menu Options (`USER`)**: Invoked by right-clicking on a user in Discord.
+- **Message Context Menu Options (`MESSAGE`)**: Invoked by right-clicking on a message in Discord.
+
+Regardless of the command type, these types can be used in conjunction with `ButtonCommand` or `ModalCommand` to add
+buttons or modals to your commands.
+
+### Using `CommandResponse`
+The `CommandResponse` class provides a structured way to define the output of a command. Depending on the nature of the
+command, you can choose to send a single string, embed, or multiple embeds.
+
+**Note**: If you're using `String` as your response, you can only return one string!
+
+**Default Constructor**:
+```java
+return new CommandResponse<>(
+        true, // Is the message an ephemeral response
+        true, // If the user's ratelimit should be forgiven after running this command,
+        new EmbedBuilder().setDescription("Hello world!").build() // Takes in generic type T which can either be a String or MessageEmbed
+);
+```
+
+The following constructors omit the `forgiveRatelimit` parameter, which defaults to `false`.
+
+**Single String**:
+```java
+return new CommandResponse<>(true, "Hello world!");
+```
+
+**Multiple Embeds**:
+```java
+return new CommandResponse<>(true, embed1, embed2, embed3);
+```
 
 ### Using `BotCommand`
 
@@ -157,7 +203,7 @@ public class ExampleCommand extends BotCommand<MessageEmbed, SlashCommandInterac
         builder.setTitle("Example Command");
         builder.setDescription("This is an example command!");
 
-        return new CommandResponse<>(builder.build());
+        return new CommandResponse<>(true, builder.build());
     }
 }
 ```
@@ -168,7 +214,7 @@ To add buttons, you can use the `addButton(...)` method. When adding buttons, yo
 button, a `ButtonStyle`, a label, and whether the button is disabled. Optionally, there's a fifth parameter that allows
 you to provide an `Emoji`.
 
-Check out an example [here](https://github.com/Alpha-Serpentis-Developments/CoffeeCore/blob/main/src/test/java/hello/HelloCommandButton.java)
+Check out an example [here](src/test/dev/alphaserpentis/examples/coffeecore/java/hello/HelloCommandButton.java)
 
 ```java
 public class ExampleCommand extends ButtonCommand<MessageEmbed, SlashCommandInteractionEvent> {
@@ -213,7 +259,7 @@ To be written...
 
 ## Dependencies
 
-- [JDA - 5.0.0-beta.10](https://github.com/DV8FromTheWorld/JDA)
+- [JDA - 5.0.0-beta.15](https://github.com/DV8FromTheWorld/JDA)
 - [Gson - 2.10.1](https://github.com/google/gson)
-- [RxJava - 3.1.6](https://github.com/ReactiveX/RxJava)
+- [RxJava - 3.1.7](https://github.com/ReactiveX/RxJava)
 - (Optional) [Dotenv - 3.0.0](https://github.com/cdimascio/dotenv-java)

@@ -23,10 +23,9 @@ public class BuilderHelper<T> {
 
     @NonNull
     public IGuildChannelContainer build() {
-        if(builder instanceof JDABuilder) {
-            return ((JDABuilder) builder).build();
-        } else {
+        if(builder instanceof JDABuilder jdaBuilder)
+            return jdaBuilder.build();
+        else
             return ((DefaultShardManagerBuilder) builder).build();
-        }
     }
 }

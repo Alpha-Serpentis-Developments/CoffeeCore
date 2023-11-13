@@ -4,6 +4,7 @@ import com.google.gson.reflect.TypeToken;
 import dev.alphaserpentis.coffeecore.commands.BotCommand;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.About;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Help;
+import dev.alphaserpentis.coffeecore.commands.defaultcommands.Restart;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Settings;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Shutdown;
 import dev.alphaserpentis.coffeecore.data.bot.AboutInformation;
@@ -28,7 +29,8 @@ import java.util.Objects;
 import java.util.concurrent.Executors;
 
 /**
- * The core of Coffee Core. This class is responsible for initializing the bot, handling commands, and containing various components.
+ * The core of Coffee Core. This class is responsible for initializing the bot, handling commands, and containing
+ * various components.
  */
 public class CoffeeCore {
 
@@ -80,26 +82,22 @@ public class CoffeeCore {
             @NonNull BotSettings settings,
             @NonNull IGuildChannelContainer container,
             @Nullable AbstractServerDataHandler<?> serverDataHandler,
-            @Nullable CommandsHandler commandsHandler
+            @Nullable CommandsHandler commandsHandler,
+            @Nullable Object... additionalListeners
     ) {
         this.settings = settings;
 
         try {
             determineAndSetContainer(container);
             ContainerHelper containerHelper = new ContainerHelper(container);
-
-            if(serverDataHandler == null) {
-                Path path = Path.of(settings.getServerDataPath());
-
-                this.serverDataHandler = new ServerDataHandler<>(
-                        path,
-                        new TypeToken<>() {
-                        },
-                        new ServerDataDeserializer<>()
-                );
-            } else {
-                this.serverDataHandler = serverDataHandler;
-            }
+            this.serverDataHandler = Objects.requireNonNullElse(
+                    serverDataHandler,
+                    new ServerDataHandler<>(
+                            Path.of(settings.getServerDataPath()),
+                            new TypeToken<>() {},
+                            new ServerDataDeserializer<>()
+                    )
+            );
 
             this.serverDataHandler.init(containerHelper, this);
         } catch (IllegalStateException | InterruptedException | IOException | IllegalArgumentException e) {
@@ -111,7 +109,10 @@ public class CoffeeCore {
         );
         this.commandsHandler.setCore(this);
 
-        addEventListenersToContainer(this.commandsHandler, this.serverDataHandler);
+        if(additionalListeners != null && additionalListeners.length > 0)
+            addEventListenersToContainer(this.commandsHandler, this.serverDataHandler, additionalListeners);
+        else
+            addEventListenersToContainer(this.commandsHandler, this.serverDataHandler);
     }
 
     /**
@@ -203,15 +204,16 @@ public class CoffeeCore {
     /**
      * Get the bot's {@link SelfUser} instance
      * @return {@link SelfUser}
+     * @throws IllegalStateException If the container has not been determined yet.
      */
     @NonNull
     public SelfUser getSelfUser() {
-        if(getActiveContainer() instanceof JDA j)
+        IGuildChannelContainer container = getActiveContainer();
+
+        if(container instanceof JDA j)
             return j.getSelfUser();
-        else if(getActiveContainer() instanceof ShardManager sm)
-            return sm.getShards().get(0).getSelfUser();
         else
-            throw new IllegalStateException("The container has not been determined yet.");
+            return ((ShardManager) container).getShards().get(0).getSelfUser();
     }
 
     /**
@@ -266,20 +268,27 @@ public class CoffeeCore {
     /**
      * Register a {@link BotCommand} or commands to the bot. This method will immediately push the commands to the bot,
      * so it is best to register all commands instead of registering them one by one.
+     * <p>
+     * If a command with the same name is registered, an error will be printed out, but otherwise replace the command.
      * @param command The command or commands to register.
      */
     public void registerCommands(@NonNull BotCommand<?, ?>... command) {
         HashMap<String, BotCommand<?, ?>> commands = new HashMap<>();
-
-        for(BotCommand<?, ?> cmd: command) {
-            commands.put(cmd.getName(), cmd);
-        }
 
         if(settings.isRegisterDefaultCommands()) {
             commands.put("settings", new Settings());
             commands.put("help", new Help());
             commands.put("about", new About());
             commands.put("shutdown", new Shutdown());
+            commands.put("restart", new Restart());
+        }
+
+        for(BotCommand<?, ?> cmd: command) {
+            if(commands.get(cmd.getName()) != null) {
+                System.err.println("Duplicate command name: " + cmd.getName());
+            }
+
+            commands.put(cmd.getName(), cmd);
         }
 
         for(BotCommand<?, ?> cmd: commands.values()) {
@@ -309,9 +318,8 @@ public class CoffeeCore {
         } else if(container instanceof ShardManager sm) {
             shardManager = sm;
 
-            for(JDA jda: shardManager.getShards()) {
+            for(JDA jda: shardManager.getShards())
                 jda.awaitReady();
-            }
         } else {
             throw new IllegalArgumentException("The container must either be a JDA or ShardManager instance.");
         }
@@ -325,10 +333,9 @@ public class CoffeeCore {
     public void addEventListenersToContainer(@NonNull Object... listeners) {
         IGuildChannelContainer container = getActiveContainer();
 
-        if(container instanceof JDA j) {
+        if(container instanceof JDA j)
             j.addEventListener(listeners);
-        } else if(container instanceof ShardManager sm) {
+        else if(container instanceof ShardManager sm)
             sm.addEventListener(listeners);
-        }
     }
 }

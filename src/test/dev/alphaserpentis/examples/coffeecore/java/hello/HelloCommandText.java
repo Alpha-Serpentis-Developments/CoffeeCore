@@ -1,4 +1,4 @@
-package hello;
+package dev.alphaserpentis.examples.coffeecore.java.hello;
 
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;

@@ -6,7 +6,6 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import dev.alphaserpentis.coffeecore.commands.BotCommand;
 import dev.alphaserpentis.coffeecore.data.server.ServerData;
-import dev.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
@@ -15,8 +14,10 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A default implementation of {@link AbstractServerDataHandler} that handles {@link ServerData}.
@@ -48,7 +49,7 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
                 .registerTypeAdapter(serverDataHashMap.getClass(), jsonDeserializer)
                 .create();
         reader = Files.newBufferedReader(path);
-        serverDataHashMap = gson.fromJson(reader, typeToken.getType());
+        serverDataHashMap = Objects.requireNonNullElse(gson.fromJson(reader, typeToken.getType()), new HashMap<>());
     }
 
     /**
@@ -64,39 +65,29 @@ public class ServerDataHandler<T extends ServerData> extends AbstractServerDataH
     }
 
     @Override
+    protected void handleServerDataException(@NonNull Exception e) {
+        // Write your implementation, by default this won't do anything
+    }
+
+    @Override
     public void onGuildJoin(@NonNull GuildJoinEvent event) {
-        CommandsHandler commandsHandler = getCore().getCommandsHandler();
-
         serverDataHashMap.put(event.getGuild().getIdLong(), createNewServerData());
-        commandsHandler.upsertGuildCommandsToGuild(getCachedGuildCommands(), event.getGuild());
-
-        try {
-            updateServerData();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        getCore().getCommandsHandler().upsertGuildCommandsToGuild(getCachedGuildCommands(), event.getGuild());
+        updateServerData();
     }
 
     @Override
     public void onGuildLeave(@NonNull GuildLeaveEvent event) {
-        CommandsHandler commandsHandler = getCore().getCommandsHandler();
-
         serverDataHashMap.remove(event.getGuild().getIdLong());
-        commandsHandler.deregisterCommands(event.getGuild().getIdLong());
-
-        try {
-            updateServerData();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        getCore().getCommandsHandler().deregisterCommands(event.getGuild().getIdLong());
+        updateServerData();
     }
 
     @NonNull
     protected List<BotCommand<?, ?>> getCachedGuildCommands() {
-        if(cachedGuildCommands == null) {
+        return Objects.requireNonNullElseGet(cachedGuildCommands, () -> {
             cachedGuildCommands = getCore().getCommandsHandler().getGuildCommands();
-        }
-
-        return cachedGuildCommands;
+            return cachedGuildCommands;
+        });
     }
 }

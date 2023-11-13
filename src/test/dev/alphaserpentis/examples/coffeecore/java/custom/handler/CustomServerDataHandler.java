@@ -1,4 +1,4 @@
-package custom.handler;
+package dev.alphaserpentis.examples.coffeecore.java.custom.handler;
 
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;

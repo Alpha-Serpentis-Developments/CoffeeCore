@@ -2,6 +2,7 @@ package dev.alphaserpentis.coffeecore.commands;
 
 import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
+import dev.alphaserpentis.coffeecore.data.server.ServerData;
 import io.reactivex.rxjava3.annotations.Experimental;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
@@ -25,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -39,6 +41,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     protected final Collection<Long> guildsToRegisterIn;
     protected final String name;
     protected final String description;
+    protected final String helpDescription;
     protected final long ratelimitLength;
     protected final long messageExpirationLength;
     protected final boolean onlyEmbed;
@@ -88,6 +91,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     public static class BotCommandOptions {
         protected String name;
         protected String description;
+        protected String helpDescription = null;
         protected long ratelimitLength = 0;
         protected long messageExpirationLength = 0;
         protected boolean onlyEmbed = false;
@@ -190,6 +194,17 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         @NonNull
         public BotCommandOptions setDescription(@NonNull String description) {
             this.description = description;
+            return this;
+        }
+
+        /**
+         * Sets the help description of the command
+         * @param helpDescription The help description of the command
+         * @return {@link BotCommandOptions}
+         */
+        @NonNull
+        public BotCommandOptions setHelpDescription(@NonNull String helpDescription) {
+            this.helpDescription = helpDescription;
             return this;
         }
 
@@ -339,12 +354,22 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         }
 
         /**
-         * Validates the command options
-         * @return Whether the command options are valid
+         * Validates the command options.
+         * A command is considered valid if: <br>
+         *    - The name is not null <br>
+         *    - If the command is a slash command, the description is not {@code null} <br>
+         *    - If using ratelimits, the ratelimit length is greater than 0 <br>
+         *    - If messages expire, the message expiration length is greater than 0 <br>
          */
-        public boolean validate() {
-            return name != null &&
-                    (description != null || (commandType == Command.Type.USER || commandType == Command.Type.MESSAGE));
+        public void validate() throws IllegalArgumentException {
+            if(name == null)
+                throw new IllegalArgumentException("Name cannot be null!");
+            if(description == null && commandType == Command.Type.SLASH)
+                throw new IllegalArgumentException("Description cannot be null for slash commands!");
+            if(useRatelimits && ratelimitLength <= 0)
+                throw new IllegalArgumentException("Ratelimit length must be greater than 0!");
+            if(messagesExpire && messageExpirationLength <= 0)
+                throw new IllegalArgumentException("Message expiration length must be greater than 0!");
         }
     }
 
@@ -353,11 +378,11 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     }
 
     public BotCommand(@NonNull BotCommandOptions options) {
-        if(!options.validate())
-            throw new IllegalArgumentException("Validation failed! Ensure your command is configured properly.");
+        options.validate();
 
         name = options.name;
         description = options.description;
+        helpDescription = options.helpDescription;
         ratelimitLength = options.ratelimitLength;
         messageExpirationLength = options.messageExpirationLength;
         onlyEmbed = options.onlyEmbed;
@@ -390,10 +415,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @param jda {@link JDA} instance
      */
     public void updateCommand(@NonNull JDA jda) {
-        CommandData cmdData = getJDACommandData(getCommandType(), getName(), getDescription());
-
         jda
-                .upsertCommand(cmdData)
+                .upsertCommand(getJDACommandData(getCommandType(), getName(), getDescription()))
                 .queue(command -> globalCommandId = command.getIdLong());
     }
 
@@ -403,15 +426,14 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @param guild {@link Guild} to update the command in
      */
     public void updateCommand(@NonNull Guild guild) {
-        CommandData cmdData = getJDACommandData(getCommandType(), getName(), getDescription());
-
         guild
-                .upsertCommand(cmdData)
+                .upsertCommand(getJDACommandData(getCommandType(), getName(), getDescription()))
                 .queue();
     }
 
     /**
-     * A method that <b>REQUIRES</b> to be overridden if to be used for any {@link BotCommand} with an ephemeralType of {@link TypeOfEphemeral#DYNAMIC}
+     * A method that <b>REQUIRES</b> to be overridden if to be used for any {@link BotCommand} with an ephemeralType of
+     * {@link TypeOfEphemeral#DYNAMIC}
      * <p>
      * This method is currently only called if the command is <b>DEFERRED</b>.
      * <p>
@@ -437,12 +459,12 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     public CommandResponse<?> checkAndHandleRateLimitedUser(long userId) {
         if(isUserRatelimited(userId)) {
             return new CommandResponse<>(
+                    onlyEphemeral,
                     new EmbedBuilder().setDescription(
                             "You are still rate limited. Expires in " + (
-                                    ratelimitMap.get(userId) - Instant.now().getEpochSecond()
+                                    getRatelimitMap().get(userId) - Instant.now().getEpochSecond()
                             ) + " seconds."
-                    ).build(),
-                    onlyEphemeral
+                    ).build()
             );
         } else {
             return null;
@@ -454,15 +476,33 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @param guildId is the ID of the guild to remove the command ID for
      */
     public void removeGuildCommandId(long guildId) {
-        guildCommandIds.remove(guildId);
+        getGuildCommandIds().remove(guildId);
     }
 
+    /**
+     * Sets the global command ID for the command
+     * @param id is the ID of the global command
+     * @throws UnsupportedOperationException if the command is a guild command
+     */
     public void setGlobalCommandId(long id) {
+        if(getCommandVisibility() == CommandVisibility.GUILD)
+            throw new UnsupportedOperationException("Cannot set global command ID for guild command");
+
         globalCommandId = id;
     }
 
     public void setCore(@NonNull CoffeeCore core) {
         this.core = core;
+    }
+
+    @NonNull
+    public HashMap<Long, Long> getGuildCommandIds() {
+        return guildCommandIds;
+    }
+
+    @NonNull
+    public HashMap<Long, Long> getRatelimitMap() {
+        return ratelimitMap;
     }
 
     @NonNull
@@ -475,20 +515,28 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         return description;
     }
 
+    @Nullable
+    public String getHelpDescription() {
+        return helpDescription;
+    }
+
     public long getGlobalCommandId() {
         return globalCommandId;
     }
 
+    /**
+     * Gets this command's ID associated with this guild
+     * @param guild is the {@link Guild} to get the command ID for
+     * @return a long ID of the command. If the command is not registered in the guild, it will return -1.
+     */
     public long getGuildCommandId(@NonNull Guild guild) {
-        if (!guildCommandIds.containsKey(guild.getIdLong())) {
-            guild.retrieveCommands().complete().forEach(command -> {
-                if (command.getName().equals(getName())) {
-                    guildCommandIds.put(guild.getIdLong(), command.getIdLong());
-                }
-            });
-        }
-
-        return guildCommandIds.get(guild.getIdLong());
+        return getGuildCommandIds().computeIfAbsent(guild.getIdLong(), id ->
+                guild.retrieveCommands().complete().stream()
+                        .filter(command -> command.getName().equals(getName()))
+                        .findFirst()
+                        .map(Command::getIdLong)
+                        .orElse(-1L)
+        );
     }
 
     public long getRatelimitLength() {
@@ -524,12 +572,12 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     }
 
     public boolean isUserRatelimited(long userId) {
-        long ratelimit = ratelimitMap.getOrDefault(userId, 0L);
+        final long ratelimit = getRatelimitMap().getOrDefault(userId, 0L);
 
         if(ratelimit != 0) {
             return ratelimit > Instant.now().getEpochSecond();
         } else {
-            ratelimitMap.remove(userId);
+            getRatelimitMap().remove(userId);
             return false;
         }
     }
@@ -565,15 +613,12 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
     /**
      * Handles the reply of a command.
-     * @param event {@link SlashCommandInteractionEvent} that contains the interaction
+     * @param event {@link E} that contains the interaction
      * @param cmd {@link BotCommand} that contains the command used
      * @return {@link Message} that is the reply of the command
      */
     @NonNull
-    public Message handleReply(
-            @NonNull final E event,
-            @NonNull final BotCommand<?, E> cmd
-    ) {
+    public Message handleReply(@NonNull final E event, @NonNull final BotCommand<?, E> cmd) {
         if(cmd.isDeferReplies()) {
             return (Message) cmd.processDeferredCommand(event).complete();
         } else {
@@ -587,75 +632,50 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @return {@link WebhookMessageCreateAction}
      */
     @NonNull
-    @SuppressWarnings("unchecked")
-    protected WebhookMessageCreateAction<?> processDeferredCommand(
-            @NonNull E event
-    ) {
-        InteractionHook hook = event.getHook();
+    protected WebhookMessageCreateAction<?> processDeferredCommand(@NonNull final E event) {
+        final long userId = event.getUser().getIdLong();
+        final InteractionHook hook = event.getHook();
+        final boolean msgIsEphemeral = determineEphemeralStatus(event);
 
         try {
-            boolean msgIsEphemeral;
-            CommandResponse<?> responseFromCommand;
-            T[] response;
-
-            msgIsEphemeral = sendAsEphemeral(this, event.getGuild());
-            if (isOnlyEmbed()) {
-                if(ephemeralType == TypeOfEphemeral.DEFAULT) {
-                    if (!msgIsEphemeral && event.getGuild() != null) {
-                        event.deferReply(false).complete();
-                    } else {
-                        event.deferReply(msgIsEphemeral).complete();
-                    }
+            if(isOnlyEmbed()) {
+                if(getEphemeralType() == TypeOfEphemeral.DEFAULT) {
+                    event.deferReply(msgIsEphemeral).complete();
                 } else {
-                    CommandResponse<?> responseBeforeRunning = beforeRunCommand(event.getUser().getIdLong(), event);
+                    CommandResponse<?> responseBeforeRunning = beforeRunCommand(userId, event);
 
                     event.deferReply(responseBeforeRunning.messageIsEphemeral()).complete();
                     if(responseBeforeRunning.messageResponse() != null) {
-                        MessageEmbed[] messages = (MessageEmbed[]) responseBeforeRunning.messageResponse();
-
-                        event.replyEmbeds(Arrays.asList(messages)).complete();
+                        event.replyEmbeds(
+                                Arrays.asList((MessageEmbed[]) responseBeforeRunning.messageResponse())
+                        ).complete();
                     }
-                }
-
-                responseFromCommand = isActive() ? runCommand(event.getUser().getIdLong(), event) : inactiveCommandResponse();
-                response = (T[]) responseFromCommand.messageResponse();
-
-                if (isUsingRatelimits() && !isUserRatelimited(event.getUser().getIdLong())) {
-                    ratelimitMap.put(event.getUser().getIdLong(), Instant.now().getEpochSecond() + getRatelimitLength());
                 }
 
                 return hook.sendMessageEmbeds(
-                        Arrays.asList((MessageEmbed[]) response)).setEphemeral(responseFromCommand.messageIsEphemeral()
+                        Arrays.asList((MessageEmbed[]) retrieveAndProcessResponse(userId, event))
                 );
             } else {
                 if(getEphemeralType() == TypeOfEphemeral.DEFAULT) {
-                    if (!msgIsEphemeral && event.getGuild() != null) {
-                        hook.setEphemeral(false);
-                    } else {
-                        hook.setEphemeral(msgIsEphemeral);
-                    }
+                    event.deferReply(msgIsEphemeral).complete();
                 } else {
-                    CommandResponse<?> responseBeforeRunning = beforeRunCommand(event.getUser().getIdLong(), event);
+                    CommandResponse<?> responseBeforeRunning = beforeRunCommand(userId, event);
 
                     event.deferReply(responseBeforeRunning.messageIsEphemeral()).complete();
-                    if(responseBeforeRunning.messageResponse() != null) {
+                    if(responseBeforeRunning.messageResponse() != null)
                         event.reply((String) responseBeforeRunning.messageResponse()[0]).complete();
-                    }
                 }
 
-                responseFromCommand = isActive() ? runCommand(event.getUser().getIdLong(), event) : inactiveCommandResponse();
-                response = (T[]) responseFromCommand.messageResponse();
+                T[] response = retrieveAndProcessResponse(userId, event);
 
-                if (isUsingRatelimits() && !isUserRatelimited(event.getUser().getIdLong())) {
-                    ratelimitMap.put(event.getUser().getIdLong(), Instant.now().getEpochSecond() + getRatelimitLength());
-                }
-
-                return hook.sendMessage((String) response[0]);
+                if(response instanceof MessageEmbed[])
+                    return hook.sendMessageEmbeds(Arrays.asList((MessageEmbed[]) response));
+                else
+                    return hook.sendMessage((String) response[0]);
             }
         } catch(Exception e) {
-            if(isForgivingRatelimitOnError()) {
-                ratelimitMap.remove(event.getUser().getIdLong());
-            }
+            if(isForgivingRatelimitOnError())
+                getRatelimitMap().remove(userId);
 
             return hook.sendMessageEmbeds(handleError(e));
         }
@@ -666,51 +686,65 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @param event {@link E} that contains the interaction
      * @return {@link ReplyCallbackAction}
      */
-    @SuppressWarnings("unchecked")
     @NonNull
-    protected ReplyCallbackAction processNonDeferredCommand(
-            @NonNull E event
-    ) {
+    protected ReplyCallbackAction processNonDeferredCommand(@NonNull final E event) {
+        final long userId = event.getUser().getIdLong();
+        final boolean msgIsEphemeral = determineEphemeralStatus(event);
+        T[] response;
+        ReplyCallbackAction reply;
+
         try {
-            boolean msgIsEphemeral;
-            CommandResponse<?> responseFromCommand;
-            T[] response;
-            ReplyCallbackAction reply;
+            response = retrieveAndProcessResponse(userId, event);
 
-            responseFromCommand = isActive() ? runCommand(event.getUser().getIdLong(), event) : inactiveCommandResponse();
-            response = (T[]) responseFromCommand.messageResponse();
-            msgIsEphemeral = sendAsEphemeral(this, event.getGuild());
-
-            if (isOnlyEmbed()) {
-                if (!msgIsEphemeral && event.getGuild() != null) {
-                    reply = event.replyEmbeds(Arrays.asList((MessageEmbed[]) response)).setEphemeral(false);
-                } else {
-                    reply = event.replyEmbeds(Arrays.asList((MessageEmbed[]) response)).setEphemeral(msgIsEphemeral);
-                }
-            } else {
-                if (!msgIsEphemeral && event.getGuild() != null) {
-                    reply = event.reply((String) response[0]).setEphemeral(false);
-                } else {
-                    reply = event.reply((String) response[0]).setEphemeral(msgIsEphemeral);
-                }
-            }
+            if(isOnlyEmbed())
+                reply = event.replyEmbeds(Arrays.asList((MessageEmbed[]) response)).setEphemeral(msgIsEphemeral);
+            else
+                reply = event.reply((String) response[0]).setEphemeral(msgIsEphemeral);
 
             return reply;
         } catch(Exception e) {
-            if(isForgivingRatelimitOnError()) {
-                ratelimitMap.remove(event.getUser().getIdLong());
-            }
+            if(isForgivingRatelimitOnError())
+                getRatelimitMap().remove(userId);
 
             return event.replyEmbeds(handleError(e));
         }
     }
 
-    private static boolean sendAsEphemeral(@NonNull BotCommand<?, ?> cmd, @Nullable Guild guild) {
-        if(guild == null)
-            return cmd.isOnlyEphemeral();
-        else
-            return cmd.isOnlyEphemeral() ||
-                    cmd.core.getServerDataHandler().serverDataHashMap.get(guild.getIdLong()).getOnlyEphemeral();
+    /**
+     * Retrieves the response of the command and processes it
+     * @param userId The ID of the user who called the command
+     * @param event {@link E} that contains the interaction
+     * @return The response of the command
+     */
+    @SuppressWarnings("unchecked")
+    @NonNull
+    private T[] retrieveAndProcessResponse(long userId, @NonNull E event) {
+        CommandResponse<?> responseFromCommand = isActive() ? runCommand(userId, event) : inactiveCommandResponse();
+
+        determineRatelimit(userId, responseFromCommand);
+
+        return (T[]) responseFromCommand.messageResponse();
+    }
+
+    private boolean determineEphemeralStatus(@NonNull E event) {
+        if (event.getGuild() == null) {
+            return isOnlyEphemeral();
+        } else {
+            ServerData serverData = getCore().getServerDataHandler().getServerData(event.getGuild().getIdLong());
+            boolean guildEphemeralSetting = Objects.requireNonNull(serverData).getOnlyEphemeral();
+
+            return isOnlyEphemeral() || guildEphemeralSetting;
+        }
+    }
+
+    private void determineRatelimit(long userId, @NonNull CommandResponse<?> responseFromCommand) {
+        if(responseFromCommand.forgiveRatelimit() != null && responseFromCommand.forgiveRatelimit()) {
+            getRatelimitMap().remove(userId);
+        } else if(
+                isUsingRatelimits() && (getRatelimitMap().get(userId) == null || getRatelimitMap().get(userId) == 0)
+        ) {
+            getRatelimitMap().put(userId, Instant.now().getEpochSecond() + getRatelimitLength());
+        }
     }
 
     /**
@@ -719,9 +753,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @param message The message to delete
      */
     public static void letMessageExpire(@NonNull BotCommand<?, ?> command, @NonNull Message message) {
-        if(command.doMessagesExpire()) {
+        if(command.doMessagesExpire())
             message.delete().queueAfter(command.getMessageExpirationLength(), TimeUnit.SECONDS);
-        }
     }
 
     /**
@@ -747,7 +780,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             }
         } else {
             eb.addField(
-                    "Error Message", "Error message unable to be generated? Cause of error: " + e.getCause(),
+                    "Error Message",
+                    "Error message unable to be generated? Cause of error: " + e.getCause(),
                     false
             );
         }
@@ -768,7 +802,11 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @throws IllegalArgumentException If the command type is invalid or if the command is a slash command and does not have a description
      */
     @NonNull
-    protected static CommandData getJDACommandData(@NonNull Command.Type type, @NonNull String name, @Nullable String desc) {
+    protected static CommandData getJDACommandData(
+            @NonNull Command.Type type,
+            @NonNull String name,
+            @Nullable String desc
+    ) {
         switch(type) {
             case SLASH -> {
                 if(desc == null)
@@ -793,8 +831,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     @NonNull
     private static CommandResponse<MessageEmbed> inactiveCommandResponse() {
         return new CommandResponse<>(
-                new EmbedBuilder().setDescription("This command is currently not active").setColor(Color.RED).build(),
-                null
+                null,
+                new EmbedBuilder().setDescription("This command is currently not active").setColor(Color.RED).build()
         );
     }
 }

@@ -4,16 +4,18 @@ import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 
 /**
- * A record class that holds the response to a command. If both {@code messageResponse} and {@code messageIsEphemeral}
+ * A record that holds the response to a command. If both {@link #messageResponse} and {@link #messageIsEphemeral}
  * are null, an {@link IllegalArgumentException} will be thrown.
  * @param messageResponse The response to the command which is var args of several {@link MessageEmbed} or a <b>SINGLE</b> {@link String}
+ * @param forgiveRatelimit Whether the bot should forgive the ratelimit or not.
  * @param messageIsEphemeral Whether the response should be ephemeral or not.
  * @param <T> The type of the response which must be either a {@link MessageEmbed} or a {@link String}.
  */
-public record CommandResponse<T>(Boolean messageIsEphemeral, T... messageResponse) {
+public record CommandResponse<T>(Boolean messageIsEphemeral, Boolean forgiveRatelimit, T... messageResponse) {
     @SafeVarargs
     public CommandResponse(
             @Nullable Boolean messageIsEphemeral,
+            @Nullable Boolean forgiveRatelimit,
             @Nullable T... messageResponse
     ) {
         if (messageResponse != null) {
@@ -31,15 +33,16 @@ public record CommandResponse<T>(Boolean messageIsEphemeral, T... messageRespons
         }
 
         this.messageResponse = messageResponse;
+        this.forgiveRatelimit = forgiveRatelimit;
         this.messageIsEphemeral = messageIsEphemeral;
     }
 
     @SuppressWarnings("unchecked")
     public CommandResponse(
-            @Nullable MessageEmbed messageResponse,
-            @Nullable Boolean messageIsEphemeral
+            @Nullable Boolean messageIsEphemeral,
+            @Nullable MessageEmbed messageResponse
     ) {
-        this(messageIsEphemeral, (T[]) new MessageEmbed[]{messageResponse});
+        this(messageIsEphemeral, false, (T[]) new MessageEmbed[]{messageResponse});
     }
 
     @SuppressWarnings("unchecked")
@@ -47,7 +50,7 @@ public record CommandResponse<T>(Boolean messageIsEphemeral, T... messageRespons
             @Nullable Boolean messageIsEphemeral,
             @Nullable MessageEmbed... messageResponse
     ) {
-        this(messageIsEphemeral, (T[]) messageResponse);
+        this(messageIsEphemeral, false, (T[]) messageResponse);
     }
 
     @SuppressWarnings("unchecked")
@@ -55,6 +58,6 @@ public record CommandResponse<T>(Boolean messageIsEphemeral, T... messageRespons
             @Nullable Boolean messageIsEphemeral,
             @Nullable String messageResponse
     ) {
-        this(messageIsEphemeral, (T[]) new String[]{messageResponse});
+        this(messageIsEphemeral, false, (T[]) new String[]{messageResponse});
     }
 }

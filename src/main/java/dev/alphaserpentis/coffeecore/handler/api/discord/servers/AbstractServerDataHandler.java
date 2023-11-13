@@ -10,13 +10,20 @@ import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The abstract class that handles {@link ServerData}.
@@ -24,42 +31,65 @@ import java.util.Map;
  */
 public abstract class AbstractServerDataHandler<T extends ServerData> extends ListenerAdapter {
     /**
+     * Path to the server data file.
+     */
+    private final Path pathToFile;
+    /**
      * The {@link CoffeeCore} instance.
      */
     private CoffeeCore core;
     /**
-     * Path to the server data file.
+     * The {@link Future} of the scheduled executor.
      */
-    private final Path pathToFile;
+    protected ScheduledFuture<?> scheduledFuture;
+    /**
+     * Executor to asynchronously update the server data file.
+     */
+    protected ScheduledExecutorService executor;
+    /**
+     * The last time the server data file was updated.
+     */
+    protected long lastUpdate = 0;
     /**
      * The mapping of server IDs to {@link ServerData}.
      */
     public Map<Long, T> serverDataHashMap = new HashMap<>();
 
-    public AbstractServerDataHandler(
-            @NonNull Path path
-    ) {
+    public AbstractServerDataHandler(@NonNull Path path) {
         pathToFile = path;
     }
 
     /**
      * Initializes the server data handler.
+     * <p>
+     * This will assign a default executor of {@link Executors#newSingleThreadScheduledExecutor()}.
      * @param container The {@link ContainerHelper} instance to get the servers from.
      * @throws IOException If the bot fails to write to the server data file.
      */
     public void init(@NonNull ContainerHelper container, @NonNull CoffeeCore core) throws IOException {
+        init(container, core, Executors.newSingleThreadScheduledExecutor());
+    }
+
+    /**
+     * Initializes the server data handler.
+     * @param container The {@link ContainerHelper} instance to get the servers from.
+     * @param core The {@link CoffeeCore} instance.
+     * @param executor The executor to asynchronously update the server data file.
+     */
+    public void init(
+            @NonNull ContainerHelper container,
+            @NonNull CoffeeCore core,
+            @NonNull ScheduledExecutorService executor
+    ) {
+        this.executor = executor;
         this.core = core;
+        this.serverDataHashMap = Objects.requireNonNullElse(serverDataHashMap, new HashMap<>());
 
-        // Check the current servers
-        if(serverDataHashMap == null)
-            serverDataHashMap = new HashMap<>();
+        List<Guild> guilds = container.getGuilds();
+        ArrayList<Long> serversActuallyJoined = new ArrayList<>(guilds.size());
 
-        ArrayList<Long> serversActuallyJoined = new ArrayList<>();
-
-        for(Guild g: container.getGuilds()) {
-            if(!serverDataHashMap.containsKey(g.getIdLong())) {
-                serverDataHashMap.put(g.getIdLong(), createNewServerData());
-            }
+        for(Guild g: guilds) {
+            serverDataHashMap.computeIfAbsent(g.getIdLong(), id -> createNewServerData());
             serversActuallyJoined.add(g.getIdLong());
         }
 
@@ -97,23 +127,60 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
         return pathToFile;
     }
 
-    /**
-     * Updates the server data file.
-     * @throws IOException If the bot fails to write to the server data file.
-     */
-    public void updateServerData() throws IOException {
-        Gson gson = new GsonBuilder()
-                .setPrettyPrinting()
-                .create();
-
-        writeToJSON(gson, serverDataHashMap);
+    @Nullable
+    public ScheduledFuture<?> getScheduledFuture() {
+        return scheduledFuture;
     }
 
-    protected void writeToJSON(@NonNull Gson gson, @NonNull Object data) throws IOException {
-        Writer writer = Files.newBufferedWriter(pathToFile);
+    @NonNull
+    protected ScheduledExecutorService getExecutor() {
+        return executor;
+    }
 
-        gson.toJson(data, writer);
-        writer.close();
+    /**
+     * Gets the last time the server data file was updated.
+     * @return UNIX time in seconds of the last update.
+     */
+    protected long getLastUpdate() {
+        return lastUpdate;
+    }
+
+    /**
+     * Tells the executor to update the server data file after some time.
+     */
+    public void updateServerData() {
+        long timeBetweenUpdate = (System.currentTimeMillis() / 1000) - lastUpdate;
+        ScheduledFuture<?> future = getScheduledFuture();
+
+        if(timeBetweenUpdate < 60 && (future != null && !future.cancel(false)))
+            return;
+
+        scheduledFuture = executor.schedule(
+                () -> {
+                    Gson gson = new GsonBuilder()
+                            .setPrettyPrinting()
+                            .create();
+
+                    writeToJSON(gson, serverDataHashMap);
+                },
+                10,
+                TimeUnit.SECONDS
+        );
+    }
+
+    /**
+     * Writes the specified data to the server data file.
+     * @param gson The {@link Gson} instance to use to write the data.
+     * @param data The data to write.
+     */
+    protected void writeToJSON(@NonNull Gson gson, @NonNull Object data) {
+        try(BufferedWriter writer = Files.newBufferedWriter(pathToFile)) {
+            gson.toJson(data, writer);
+
+            lastUpdate = System.currentTimeMillis() / 1000;
+        } catch (IOException e) {
+            handleServerDataException(e);
+        }
     }
 
     /**
@@ -121,4 +188,10 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
      * @return A new instance of {@link ServerData}.
      */
     protected abstract T createNewServerData();
+
+    /**
+     * Handle an exception thrown when updating the server data.
+     * @param e The exception thrown.
+     */
+    protected abstract void handleServerDataException(@NonNull Exception e);
 }

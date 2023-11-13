@@ -20,7 +20,10 @@ public class ContainerHelper {
     private final IGuildChannelContainer container;
 
     public ContainerHelper(@NonNull IGuildChannelContainer container) {
-        this.container = container;
+        if(container instanceof JDA || container instanceof ShardManager)
+            this.container = container;
+        else
+            throw new IllegalArgumentException("The container must be either a JDA or a ShardManager.");
     }
 
     /**
