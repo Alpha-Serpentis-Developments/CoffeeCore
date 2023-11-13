@@ -26,13 +26,13 @@ functionality.
 <dependency>
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.5.0-alpha</version>
+    <version>0.6.0-alpha</version>
 </dependency>
 ```
 
 **Gradle**
 ```groovy
-implementation 'dev.alphaserpentis:CoffeeCore:0.5.0-alpha'
+implementation 'dev.alphaserpentis:CoffeeCore:0.6.0-alpha'
 ```
 
 #### Latest Snapshot:
@@ -214,7 +214,7 @@ To add buttons, you can use the `addButton(...)` method. When adding buttons, yo
 button, a `ButtonStyle`, a label, and whether the button is disabled. Optionally, there's a fifth parameter that allows
 you to provide an `Emoji`.
 
-Check out an example [here](src/test/java/hello/HelloCommandButton.java)
+Check out an example [here](src/test/dev/alphaserpentis/examples/coffeecore/java/hello/HelloCommandButton.java)
 
 ```java
 public class ExampleCommand extends ButtonCommand<MessageEmbed, SlashCommandInteractionEvent> {
