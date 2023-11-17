@@ -109,10 +109,16 @@ public class CoffeeCore {
         );
         this.commandsHandler.setCore(this);
 
-        if(additionalListeners != null && additionalListeners.length > 0)
-            addEventListenersToContainer(this.commandsHandler, this.serverDataHandler, additionalListeners);
-        else
+        if(additionalListeners != null && additionalListeners.length > 0) {
+            Object[] listeners = new Object[additionalListeners.length + 2];
+            listeners[0] = this.commandsHandler;
+            listeners[1] = this.serverDataHandler;
+            System.arraycopy(additionalListeners, 0, listeners, 2, additionalListeners.length);
+
+            addEventListenersToContainer(listeners);
+        } else {
             addEventListenersToContainer(this.commandsHandler, this.serverDataHandler);
+        }
     }
 
     /**
