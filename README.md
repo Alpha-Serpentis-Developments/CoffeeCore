@@ -64,17 +64,6 @@ By default, JDA includes a package to handle voice connections. If you don't nee
 </dependencies>
 ```
 
-You can also exclude the `dotenv-java` package if you do not intend to use it.
-
-```xml
-<exclusions>
-    <exclusion>
-        <groupId>io.github.cdimascio</groupId>
-        <artifactId>dotenv-java</artifactId>
-    </exclusion>
-</exclusions>
-```
-
 - - -
 ### Creating a bot
 
@@ -262,4 +251,3 @@ To be written...
 - [JDA - 5.0.0-beta.15](https://github.com/DV8FromTheWorld/JDA)
 - [Gson - 2.10.1](https://github.com/google/gson)
 - [RxJava - 3.1.7](https://github.com/ReactiveX/RxJava)
-- (Optional) [Dotenv - 3.0.0](https://github.com/cdimascio/dotenv-java)
