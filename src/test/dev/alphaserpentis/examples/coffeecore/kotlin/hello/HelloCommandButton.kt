@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.interactions.components.ItemComponent
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle
+import java.util.*
 
 class HelloCommandButton: ButtonCommand<MessageEmbed, SlashCommandInteractionEvent>(
     BotCommandOptions().apply {
@@ -30,13 +31,15 @@ class HelloCommandButton: ButtonCommand<MessageEmbed, SlashCommandInteractionEve
         return CommandResponse(isOnlyEphemeral, eb.build())
     }
 
-    override fun runButtonInteraction(event: ButtonInteractionEvent) {
+    override fun runButtonInteraction(event: ButtonInteractionEvent): Optional<Any> {
         when (val key = convertComponentIdToKey(event.componentId)) {
             "hello" -> event.reply("Hello, ${event.user.asMention}!").queue()
             "goodbye" -> event.reply("Goodbye, ${event.user.asMention}!").queue()
             "mystery" -> event.reply("How did you click on this?").queue()
             else -> throw IllegalStateException("Unexpected value: $key")
         }
+
+        return Optional.empty()
     }
 
     override fun addButtonsToMessage(event: SlashCommandInteractionEvent): Collection<ItemComponent> {

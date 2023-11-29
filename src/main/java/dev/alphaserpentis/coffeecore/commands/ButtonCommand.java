@@ -14,6 +14,7 @@ import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Optional;
 
 /**
  * A command that can utilize buttons
@@ -39,8 +40,9 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
     /**
      * This method is called when a button is pressed.
      * @param event The event that triggered the button press.
+     * @return An optional object after button execution. This may be empty.
      */
-    public abstract void runButtonInteraction(@NonNull final ButtonInteractionEvent event);
+    public abstract Optional<?> runButtonInteraction(@NonNull final ButtonInteractionEvent event);
 
     /**
      * This method is called when the command is executed which may add buttons to a message.

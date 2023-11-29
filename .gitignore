@@ -120,3 +120,4 @@ fabric.properties
 
 *.env
 src/main/resources/settings.json
+/target/

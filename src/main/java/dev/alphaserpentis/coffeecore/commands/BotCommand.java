@@ -2,7 +2,10 @@ package dev.alphaserpentis.coffeecore.commands;
 
 import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
+import dev.alphaserpentis.coffeecore.hook.CommandHook;
 import dev.alphaserpentis.coffeecore.data.server.ServerData;
+import dev.alphaserpentis.coffeecore.hook.defaults.MessageExpireHook;
+import dev.alphaserpentis.coffeecore.hook.defaults.RatelimitHook;
 import io.reactivex.rxjava3.annotations.Experimental;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
@@ -22,6 +25,7 @@ import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 
 import java.awt.Color;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -39,6 +43,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     protected final HashMap<Long, Long> guildCommandIds = new HashMap<>();
     protected final HashMap<Long, Long> ratelimitMap = new HashMap<>();
     protected final Collection<Long> guildsToRegisterIn;
+    protected final Collection<CommandHook> commandHooks;
     protected final String name;
     protected final String description;
     protected final String helpDescription;
@@ -74,6 +79,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * Types of ephemeral available for commands.
      */
     @Experimental
+    @Deprecated(forRemoval = true)
     public enum TypeOfEphemeral {
         /**
          * The default ephemeral type. This will be set to the server's default ephemeral type.
@@ -101,10 +107,12 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         protected boolean useRatelimits = false;
         protected boolean forgiveRatelimitOnError = false;
         protected boolean messagesExpire = false;
+        protected boolean useDefaultHooks = true;
         protected CommandVisibility commandVisibility = CommandVisibility.GLOBAL;
         protected Command.Type commandType = Command.Type.SLASH;
         protected TypeOfEphemeral typeOfEphemeral = TypeOfEphemeral.DEFAULT;
         protected Collection<Long> guildsToRegisterIn = List.of();
+        protected Collection<CommandHook> commandHooks = new ArrayList<>();
 
         public BotCommandOptions() {}
 
@@ -116,7 +124,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             this.description = description;
         }
 
-        @Deprecated
+        @Deprecated(forRemoval = true)
         public BotCommandOptions(
                 @NonNull String name,
                 @NonNull String description,
@@ -131,7 +139,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             this.typeOfEphemeral = typeOfEphemeral;
         }
 
-        @Deprecated
+        @Deprecated(forRemoval = true)
         public BotCommandOptions(
                 @NonNull String name,
                 @NonNull String description,
@@ -148,7 +156,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             this.deferReplies = deferReplies;
         }
 
-        @Deprecated
+        @Deprecated(forRemoval = true)
         public BotCommandOptions(
                 @NonNull String name,
                 @NonNull String description,
@@ -308,6 +316,17 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         }
 
         /**
+         * Sets the command to use default hooks
+         * @param useDefaultHooks Whether the command will use default hooks
+         * @return {@link BotCommandOptions}
+         */
+        @NonNull
+        public BotCommandOptions setUseDefaultHooks(boolean useDefaultHooks) {
+            this.useDefaultHooks = useDefaultHooks;
+            return this;
+        }
+
+        /**
          * Sets the command's visibility
          * @param commandVisibility The command's visibility
          * @return {@link BotCommandOptions}
@@ -335,6 +354,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
          * @return {@link BotCommandOptions}
          */
         @NonNull
+        @Deprecated(forRemoval = true)
         public BotCommandOptions setTypeOfEphemeral(@NonNull TypeOfEphemeral typeOfEphemeral) {
             this.typeOfEphemeral = typeOfEphemeral;
             return this;
@@ -350,6 +370,17 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         @NonNull
         public BotCommandOptions setGuildsToRegisterIn(@NonNull List<Long> guildsToRegisterIn) {
             this.guildsToRegisterIn = guildsToRegisterIn;
+            return this;
+        }
+
+        /**
+         * Sets the command's hooks
+         * @param commandHooks The command's hooks
+         * @return {@link BotCommandOptions}
+         */
+        @NonNull
+        public BotCommandOptions setHooks(@NonNull Collection<CommandHook> commandHooks) {
+            this.commandHooks.addAll(commandHooks);
             return this;
         }
 
@@ -396,6 +427,14 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         commandType = options.commandType;
         ephemeralType = options.typeOfEphemeral;
         guildsToRegisterIn = options.guildsToRegisterIn;
+        commandHooks = options.commandHooks;
+
+        if(isUsingRatelimits() && options.useDefaultHooks) {
+            commandHooks.add(new RatelimitHook());
+        }
+        if(doMessagesExpire() && options.useDefaultHooks) {
+            commandHooks.add(new MessageExpireHook());
+        }
     }
 
     /**
@@ -443,7 +482,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @return a nonnull {@link CommandResponse} containing either a {@link MessageEmbed} or String
      */
     @NonNull
-    @Experimental
+    @Deprecated(forRemoval = true)
     public CommandResponse<T> beforeRunCommand(long userId, @NonNull E event) {
         throw new UnsupportedOperationException("beforeRunCommand needs to be overridden!");
     }
@@ -587,6 +626,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     }
 
     @NonNull
+    @Deprecated(forRemoval = true)
     public TypeOfEphemeral getEphemeralType() {
         return ephemeralType;
     }
@@ -609,6 +649,11 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     @NonNull
     public Collection<Long> getGuildsToRegisterIn() {
         return guildsToRegisterIn;
+    }
+
+    @NonNull
+    public Collection<CommandHook> getCommandHooks() {
+        return commandHooks;
     }
 
     /**
@@ -634,50 +679,70 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     @NonNull
     protected WebhookMessageCreateAction<?> processDeferredCommand(@NonNull final E event) {
         final long userId = event.getUser().getIdLong();
-        final InteractionHook hook = event.getHook();
+        final InteractionHook interactHook = event.getHook();
         final boolean msgIsEphemeral = determineEphemeralStatus(event);
+        final List<CommandHook> preExecHooks = commandHooks.stream()
+                .filter(hook -> hook.getTypeOfHook() == CommandHook.TypeOfHook.PRE_EXECUTION)
+                .toList();
 
         try {
-            if(isOnlyEmbed()) {
-                if(getEphemeralType() == TypeOfEphemeral.DEFAULT) {
-                    event.deferReply(msgIsEphemeral).complete();
-                } else {
-                    CommandResponse<?> responseBeforeRunning = beforeRunCommand(userId, event);
+            event.deferReply(msgIsEphemeral).complete();
 
-                    event.deferReply(responseBeforeRunning.messageIsEphemeral()).complete();
-                    if(responseBeforeRunning.messageResponse() != null) {
-                        event.replyEmbeds(
-                                Arrays.asList((MessageEmbed[]) responseBeforeRunning.messageResponse())
-                        ).complete();
-                    }
+            if(isOnlyEmbed()) {
+                if(!preExecHooks.isEmpty()) {
+                    ArrayList<MessageEmbed> embeds = new ArrayList<>();
+
+                    preExecHooks.forEach(
+                            hook -> hook.execute(this, event, null).ifPresent(rawResponse -> {
+                                    if(rawResponse instanceof CommandResponse<?> cmdResponse) {
+                                        embeds.addAll(
+                                                List.of((MessageEmbed[]) cmdResponse.messageResponse())
+                                        );
+                                    }
+                            })
+                    );
+
+                    if(!embeds.isEmpty())
+                        return interactHook.sendMessageEmbeds(embeds);
                 }
 
-                return hook.sendMessageEmbeds(
+                return interactHook.sendMessageEmbeds(
                         Arrays.asList((MessageEmbed[]) retrieveAndProcessResponse(userId, event))
                 );
             } else {
-                if(getEphemeralType() == TypeOfEphemeral.DEFAULT) {
-                    event.deferReply(msgIsEphemeral).complete();
-                } else {
-                    CommandResponse<?> responseBeforeRunning = beforeRunCommand(userId, event);
+                if(!preExecHooks.isEmpty()) {
+                    ArrayList<MessageEmbed> embeds = new ArrayList<>();
+                    final String[] lastResponse = new String[1];
 
-                    event.deferReply(responseBeforeRunning.messageIsEphemeral()).complete();
-                    if(responseBeforeRunning.messageResponse() != null)
-                        event.reply((String) responseBeforeRunning.messageResponse()[0]).complete();
+                    preExecHooks.forEach(
+                            hook -> hook.execute(this, event, null).ifPresent(rawResponse -> {
+                                if(rawResponse instanceof CommandResponse<?> cmdResponse) {
+                                    if(cmdResponse.messageResponse() instanceof MessageEmbed[])
+                                        embeds.addAll(List.of((MessageEmbed[]) cmdResponse.messageResponse()));
+                                    else
+                                        lastResponse[0] = (String) cmdResponse.messageResponse()[0];
+                                }
+                            })
+                    );
+
+                    if(lastResponse[0] != null)
+                        return interactHook.sendMessage(lastResponse[0]);
+                    else if(!embeds.isEmpty())
+                        return interactHook.sendMessageEmbeds(embeds);
                 }
 
                 T[] response = retrieveAndProcessResponse(userId, event);
 
                 if(response instanceof MessageEmbed[])
-                    return hook.sendMessageEmbeds(Arrays.asList((MessageEmbed[]) response));
+                    return interactHook.sendMessageEmbeds(Arrays.asList((MessageEmbed[]) response));
                 else
-                    return hook.sendMessage((String) response[0]);
+                    return interactHook.sendMessage((String) response[0]);
             }
         } catch(Exception e) {
             if(isForgivingRatelimitOnError())
                 getRatelimitMap().remove(userId);
 
-            return hook.sendMessageEmbeds(handleError(e));
+            return interactHook.sendMessageEmbeds(handleError(e));
         }
     }
 
@@ -752,6 +817,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @param command The command that is being executed
      * @param message The message to delete
      */
+    @Deprecated
     public static void letMessageExpire(@NonNull BotCommand<?, ?> command, @NonNull Message message) {
         if(command.doMessagesExpire())
             message.delete().queueAfter(command.getMessageExpirationLength(), TimeUnit.SECONDS);
@@ -799,7 +865,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @param name The name of the command
      * @param desc The description of the command
      * @return The command data
-     * @throws IllegalArgumentException If the command type is invalid or if the command is a slash command and does not have a description
+     * @throws IllegalArgumentException If the command type is invalid or if the command is a slash command and does not
+     * have a description
      */
     @NonNull
     protected static CommandData getJDACommandData(
@@ -832,6 +899,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     private static CommandResponse<MessageEmbed> inactiveCommandResponse() {
         return new CommandResponse<>(
                 null,
+                true,
                 new EmbedBuilder().setDescription("This command is currently not active").setColor(Color.RED).build()
         );
     }
