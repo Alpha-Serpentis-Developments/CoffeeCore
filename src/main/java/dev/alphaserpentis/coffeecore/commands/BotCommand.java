@@ -2,11 +2,10 @@ package dev.alphaserpentis.coffeecore.commands;
 
 import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
-import dev.alphaserpentis.coffeecore.hook.CommandHook;
 import dev.alphaserpentis.coffeecore.data.server.ServerData;
+import dev.alphaserpentis.coffeecore.hook.CommandHook;
 import dev.alphaserpentis.coffeecore.hook.defaults.MessageExpireHook;
 import dev.alphaserpentis.coffeecore.hook.defaults.RatelimitHook;
-import io.reactivex.rxjava3.annotations.Experimental;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -22,9 +21,12 @@ import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
+import net.dv8tion.jda.api.utils.FileUpload;
 
 import java.awt.Color;
+import java.io.IOException;
 import java.time.Instant;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -78,7 +80,6 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     /**
      * Types of ephemeral available for commands.
      */
-    @Experimental
     @Deprecated(forRemoval = true)
     public enum TypeOfEphemeral {
         /**
@@ -493,8 +494,11 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * Commands not using embeds must override this method to return a {@link CommandResponse} containing String.
      * @param userId is a long ID provided by Discord for the user calling the command
      * @return a nullable {@link CommandResponse} that by default returns a {@link MessageEmbed}
+     * @deprecated Activating {@link #useRatelimits} will automatically use the {@link RatelimitHook} to handle
+     * ratelimits. Use that instead!
      */
     @Nullable
+    @Deprecated
     public CommandResponse<?> checkAndHandleRateLimitedUser(long userId) {
         if(isUserRatelimited(userId)) {
             return new CommandResponse<>(
@@ -691,6 +695,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             if(isOnlyEmbed()) {
                 if(!preExecHooks.isEmpty()) {
                     ArrayList<MessageEmbed> embeds = new ArrayList<>();
+                    ArrayList<FileUpload> files = new ArrayList<>();
 
                     preExecHooks.forEach(
                             hook -> hook.execute(this, event, null).ifPresent(rawResponse -> {
@@ -698,20 +703,42 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                                         embeds.addAll(
                                                 List.of((MessageEmbed[]) cmdResponse.messageResponse())
                                         );
+
+                                        try(var fileUpload = cmdResponse.fileUpload()) {
+                                            if(fileUpload != null) files.add(fileUpload);
+                                        } catch (IOException e) {
+                                            throw new RuntimeException(e);
+                                        }
                                     }
                             })
                     );
 
-                    if(!embeds.isEmpty())
-                        return interactHook.sendMessageEmbeds(embeds);
+                    if(!embeds.isEmpty()) {
+                        if(!files.isEmpty()) {
+                            return interactHook.sendMessageEmbeds(embeds).addFiles(files);
+                        } else {
+                            return interactHook.sendMessageEmbeds(embeds);
+                        }
+                    }
                 }
 
-                return interactHook.sendMessageEmbeds(
-                        Arrays.asList((MessageEmbed[]) retrieveAndProcessResponse(userId, event))
-                );
+                AbstractMap.SimpleEntry<T[], FileUpload> response = retrieveAndProcessResponse(userId, event);
+                T[] responseKey = response.getKey();
+                FileUpload responseValue = response.getValue();
+
+                if(responseValue == null) {
+                    return interactHook.sendMessageEmbeds(
+                            Arrays.asList((MessageEmbed[]) responseKey)
+                    );
+                } else {
+                    return interactHook.sendMessageEmbeds(
+                            Arrays.asList((MessageEmbed[]) responseKey)
+                    ).addFiles(responseValue);
+                }
             } else {
                 if(!preExecHooks.isEmpty()) {
                     ArrayList<MessageEmbed> embeds = new ArrayList<>();
+                    ArrayList<FileUpload> files = new ArrayList<>();
                     final String[] lastResponse = new String[1];
 
                     preExecHooks.forEach(
@@ -721,22 +748,44 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                                         embeds.addAll(List.of((MessageEmbed[]) cmdResponse.messageResponse()));
                                     else
                                         lastResponse[0] = (String) cmdResponse.messageResponse()[0];
+
+                                    try(var fileUpload = cmdResponse.fileUpload()) {
+                                        if(fileUpload != null) files.add(fileUpload);
+                                    } catch (IOException e) {
+                                        throw new RuntimeException(e);
+                                    }
                                 }
                             })
                     );
 
-                    if(lastResponse[0] != null)
-                        return interactHook.sendMessage(lastResponse[0]);
-                    else if(!embeds.isEmpty())
-                        return interactHook.sendMessageEmbeds(embeds);
+                    if(!files.isEmpty()) {
+                        if(lastResponse[0] != null)
+                            return interactHook.sendMessage(lastResponse[0]).addFiles(files);
+                        else if(!embeds.isEmpty())
+                            return interactHook.sendMessageEmbeds(embeds).addFiles(files);
+                    } else {
+                        if(lastResponse[0] != null)
+                            return interactHook.sendMessage(lastResponse[0]);
+                        else if(!embeds.isEmpty())
+                            return interactHook.sendMessageEmbeds(embeds);
+                    }
                 }
 
-                T[] response = retrieveAndProcessResponse(userId, event);
+                AbstractMap.SimpleEntry<T[], FileUpload> response = retrieveAndProcessResponse(userId, event);
+                T[] responseKey = response.getKey();
+                FileUpload responseValue = response.getValue();
 
-                if(response instanceof MessageEmbed[])
-                    return interactHook.sendMessageEmbeds(Arrays.asList((MessageEmbed[]) response));
-                else
-                    return interactHook.sendMessage((String) response[0]);
+                if(responseValue != null) {
+                    if(responseKey instanceof MessageEmbed[] embeds)
+                        return interactHook.sendMessageEmbeds(Arrays.asList(embeds)).addFiles(responseValue);
+                    else
+                        return interactHook.sendMessage((String) responseKey[0]).addFiles(responseValue);
+                } else {
+                    if(responseKey instanceof MessageEmbed[] embeds)
+                        return interactHook.sendMessageEmbeds(Arrays.asList(embeds));
+                    else
+                        return interactHook.sendMessage((String) responseKey[0]);
+                }
             }
         } catch(Exception e) {
             if(isForgivingRatelimitOnError())
@@ -755,16 +804,36 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     protected ReplyCallbackAction processNonDeferredCommand(@NonNull final E event) {
         final long userId = event.getUser().getIdLong();
         final boolean msgIsEphemeral = determineEphemeralStatus(event);
-        T[] response;
+        AbstractMap.SimpleEntry<T[], FileUpload> response;
         ReplyCallbackAction reply;
 
         try {
             response = retrieveAndProcessResponse(userId, event);
 
-            if(isOnlyEmbed())
-                reply = event.replyEmbeds(Arrays.asList((MessageEmbed[]) response)).setEphemeral(msgIsEphemeral);
-            else
-                reply = event.reply((String) response[0]).setEphemeral(msgIsEphemeral);
+            boolean isEmbedOnly = isOnlyEmbed();
+            T[] responseKey = response.getKey();
+            FileUpload responseValue = response.getValue();
+            if(responseValue == null) {
+                if(isEmbedOnly) {
+                    reply = event.replyEmbeds(
+                            Arrays.asList((MessageEmbed[]) responseKey)
+                    ).setEphemeral(msgIsEphemeral);
+                } else {
+                    reply = event.reply(
+                            (String) responseKey[0]
+                    ).setEphemeral(msgIsEphemeral);
+                }
+            } else {
+                if(isEmbedOnly) {
+                    reply = event.replyEmbeds(
+                            Arrays.asList((MessageEmbed[]) responseKey)
+                    ).setEphemeral(msgIsEphemeral).addFiles(responseValue);
+                } else {
+                    reply = event.reply(
+                            (String) responseKey[0]
+                    ).setEphemeral(msgIsEphemeral);
+                }
+            }
 
             return reply;
         } catch(Exception e) {
@@ -783,12 +852,15 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      */
     @SuppressWarnings("unchecked")
     @NonNull
-    private T[] retrieveAndProcessResponse(long userId, @NonNull E event) {
+    private AbstractMap.SimpleEntry<T[], FileUpload> retrieveAndProcessResponse(long userId, @NonNull E event) {
         CommandResponse<?> responseFromCommand = isActive() ? runCommand(userId, event) : inactiveCommandResponse();
 
         determineRatelimit(userId, responseFromCommand);
 
-        return (T[]) responseFromCommand.messageResponse();
+        return new AbstractMap.SimpleEntry<>(
+                (T[]) responseFromCommand.messageResponse(),
+                responseFromCommand.fileUpload()
+        );
     }
 
     private boolean determineEphemeralStatus(@NonNull E event) {
