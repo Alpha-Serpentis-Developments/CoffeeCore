@@ -15,15 +15,15 @@ import java.util.Optional;
  */
 @Experimental
 public abstract class CommandHook {
-    private final TypeOfHook typeOfHook;
+    private final Type type;
 
-    public enum TypeOfHook {
+    public enum Type {
         PRE_EXECUTION,
         POST_EXECUTION
     }
 
-    public CommandHook(@NonNull TypeOfHook typeOfHook) {
-        this.typeOfHook = typeOfHook;
+    public CommandHook(@NonNull Type type) {
+        this.type = type;
     }
 
     /**
@@ -50,7 +50,7 @@ public abstract class CommandHook {
      * @return Optional of CommandResponse to override the command response AND skip command execution
      */
     @NonNull
-    @SuppressWarnings({"UnusedReturnValue"})
+    @SuppressWarnings({"UnusedReturnValue", "UnusedParamValue"})
     public Optional<?> execute(
             @NonNull BotCommand<?, ?> cmd,
             @NonNull GenericInteractionCreateEvent event,
@@ -60,7 +60,7 @@ public abstract class CommandHook {
     }
 
     @NonNull
-    public TypeOfHook getTypeOfHook() {
-        return typeOfHook;
+    public Type getTypeOfHook() {
+        return type;
     }
 }

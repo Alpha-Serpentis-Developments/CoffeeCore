@@ -686,7 +686,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         final InteractionHook interactHook = event.getHook();
         final boolean msgIsEphemeral = determineEphemeralStatus(event);
         final List<CommandHook> preExecHooks = commandHooks.stream()
-                .filter(hook -> hook.getTypeOfHook() == CommandHook.TypeOfHook.PRE_EXECUTION)
+                .filter(hook -> hook.getTypeOfHook() == CommandHook.Type.PRE_EXECUTION)
                 .toList();
 
         try {
@@ -698,19 +698,21 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                     ArrayList<FileUpload> files = new ArrayList<>();
 
                     preExecHooks.forEach(
-                            hook -> hook.execute(this, event, null).ifPresent(rawResponse -> {
-                                    if(rawResponse instanceof CommandResponse<?> cmdResponse) {
-                                        embeds.addAll(
-                                                List.of((MessageEmbed[]) cmdResponse.messageResponse())
-                                        );
+                            hook -> hook
+                                    .execute(this, event, null)
+                                    .ifPresent(rawResponse -> {
+                                        if(rawResponse instanceof CommandResponse<?> cmdResponse) {
+                                            embeds.addAll(
+                                                    List.of((MessageEmbed[]) cmdResponse.messageResponse())
+                                            );
 
-                                        try(var fileUpload = cmdResponse.fileUpload()) {
-                                            if(fileUpload != null) files.add(fileUpload);
-                                        } catch (IOException e) {
-                                            throw new RuntimeException(e);
+                                            try(var fileUpload = cmdResponse.fileUpload()) {
+                                                if(fileUpload != null) files.add(fileUpload);
+                                            } catch (IOException e) {
+                                                throw new RuntimeException(e);
+                                            }
                                         }
-                                    }
-                            })
+                                    })
                     );
 
                     if(!embeds.isEmpty()) {
@@ -742,20 +744,22 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                     final String[] lastResponse = new String[1];
 
                     preExecHooks.forEach(
-                            hook -> hook.execute(this, event, null).ifPresent(rawResponse -> {
-                                if(rawResponse instanceof CommandResponse<?> cmdResponse) {
-                                    if(cmdResponse.messageResponse() instanceof MessageEmbed[])
-                                        embeds.addAll(List.of((MessageEmbed[]) cmdResponse.messageResponse()));
-                                    else
-                                        lastResponse[0] = (String) cmdResponse.messageResponse()[0];
+                            hook -> hook
+                                    .execute(this, event, null)
+                                    .ifPresent(rawResponse -> {
+                                        if(rawResponse instanceof CommandResponse<?> cmdResponse) {
+                                            if(cmdResponse.messageResponse() instanceof MessageEmbed[] msgResponse)
+                                                embeds.addAll(List.of(msgResponse));
+                                            else
+                                                lastResponse[0] = (String) cmdResponse.messageResponse()[0];
 
-                                    try(var fileUpload = cmdResponse.fileUpload()) {
-                                        if(fileUpload != null) files.add(fileUpload);
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                }
-                            })
+                                            try(var fileUpload = cmdResponse.fileUpload()) {
+                                                if(fileUpload != null) files.add(fileUpload);
+                                            } catch (IOException e) {
+                                                throw new RuntimeException(e);
+                                            }
+                                        }
+                                    })
                     );
 
                     if(!files.isEmpty()) {

@@ -26,13 +26,13 @@ functionality.
 <dependency>
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.6.0-alpha</version>
+    <version>0.6.2-alpha</version>
 </dependency>
 ```
 
 **Gradle**
 ```groovy
-implementation 'dev.alphaserpentis:CoffeeCore:0.6.0-alpha'
+implementation 'dev.alphaserpentis:CoffeeCore:0.6.2-alpha'
 ```
 
 #### Latest Snapshot:

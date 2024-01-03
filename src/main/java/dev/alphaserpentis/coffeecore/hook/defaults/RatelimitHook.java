@@ -17,7 +17,7 @@ import java.util.Optional;
  */
 public class RatelimitHook extends CommandHook {
     public RatelimitHook() {
-        super(TypeOfHook.PRE_EXECUTION);
+        super(Type.PRE_EXECUTION);
     }
 
     @Override

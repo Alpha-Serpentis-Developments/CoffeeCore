@@ -411,7 +411,7 @@ public class CommandsHandler extends ListenerAdapter {
     ) {
         var hooks = cmd.getCommandHooks()
                 .stream()
-                .filter(hook -> hook.getTypeOfHook() == CommandHook.TypeOfHook.POST_EXECUTION)
+                .filter(hook -> hook.getTypeOfHook() == CommandHook.Type.POST_EXECUTION)
                 .toList();
 
         hooks.forEach(hook -> hook.execute(cmd, event, msg));
@@ -424,7 +424,7 @@ public class CommandsHandler extends ListenerAdapter {
     ) {
         var hooks = cmd.getCommandHooks()
                 .stream()
-                .filter(hook -> hook.getTypeOfHook() == CommandHook.TypeOfHook.POST_EXECUTION)
+                .filter(hook -> hook.getTypeOfHook() == CommandHook.Type.POST_EXECUTION)
                 .toList();
 
         hooks.forEach(hook -> hook.execute(cmd, event, data));
