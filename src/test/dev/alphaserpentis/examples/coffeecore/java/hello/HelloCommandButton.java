@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 
 public class HelloCommandButton extends ButtonCommand<MessageEmbed, SlashCommandInteractionEvent> {
     public HelloCommandButton() {
@@ -41,7 +42,7 @@ public class HelloCommandButton extends ButtonCommand<MessageEmbed, SlashCommand
     }
 
     @Override
-    public void runButtonInteraction(@NonNull ButtonInteractionEvent event) {
+    public Optional<?> runButtonInteraction(@NonNull ButtonInteractionEvent event) {
         String key = convertComponentIdToKey(event.getComponentId());
 
         switch (key) {
@@ -50,6 +51,8 @@ public class HelloCommandButton extends ButtonCommand<MessageEmbed, SlashCommand
             case "mystery" -> event.reply("How did you click on this?").queue();
             default -> throw new IllegalStateException("Unexpected value: " + key);
         }
+
+        return Optional.empty();
     }
 
     @Override

@@ -1,12 +1,12 @@
-package hello
+package dev.alphaserpentis.examples.coffeecore.kotlin.hello
 
 import dev.alphaserpentis.coffeecore.core.CoffeeCore
 import dev.alphaserpentis.coffeecore.core.CoffeeCoreBuilder
 import dev.alphaserpentis.coffeecore.data.bot.AboutInformation
 import dev.alphaserpentis.coffeecore.data.bot.BotSettings
+import hello.HelloCommandText
 import io.github.cdimascio.dotenv.Dotenv
 import net.dv8tion.jda.api.JDABuilder
-import dev.alphaserpentis.examples.coffeecore.kotlin.hello.HelloCommandButton
 
 fun main() {
     val dotenv: Dotenv = Dotenv.load()

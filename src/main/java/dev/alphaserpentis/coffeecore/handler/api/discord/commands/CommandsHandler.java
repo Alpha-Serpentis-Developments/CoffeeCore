@@ -4,12 +4,15 @@ import dev.alphaserpentis.coffeecore.commands.BotCommand;
 import dev.alphaserpentis.coffeecore.commands.ButtonCommand;
 import dev.alphaserpentis.coffeecore.commands.ModalCommand;
 import dev.alphaserpentis.coffeecore.core.CoffeeCore;
+import dev.alphaserpentis.coffeecore.hook.CommandHook;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.UserContextInteractionEvent;
@@ -168,7 +171,7 @@ public class CommandsHandler extends ListenerAdapter {
                 );
                 Message msg = cmd.handleReply(event, cmd);
 
-                BotCommand.letMessageExpire(cmd, msg);
+                executePostExecutionHook(cmd, event, msg);
             } catch(Exception e) {
                 handleInteractionError(e);
             }
@@ -185,7 +188,7 @@ public class CommandsHandler extends ListenerAdapter {
                 );
                 Message msg = cmd.handleReply(event, cmd);
 
-                BotCommand.letMessageExpire(cmd, msg);
+                executePostExecutionHook(cmd, event, msg);
             } catch(Exception e) {
                 handleInteractionError(e);
             }
@@ -202,7 +205,7 @@ public class CommandsHandler extends ListenerAdapter {
                 );
                 Message msg = cmd.handleReply(event, cmd);
 
-                BotCommand.letMessageExpire(cmd, msg);
+                executePostExecutionHook(cmd, event, msg);
             } catch(Exception e) {
                 handleInteractionError(e);
             }
@@ -217,8 +220,9 @@ public class CommandsHandler extends ListenerAdapter {
                 var cmd = Objects.requireNonNull(
                         (ButtonCommand<?, ?>) getCommand(buttonId.substring(0, buttonId.indexOf("_")))
                 );
+                var optional = cmd.runButtonInteraction(event).orElse(null);
 
-                cmd.runButtonInteraction(event);
+                executePostExecutionHook(cmd, event, optional);
             } catch(Exception e) {
                 handleInteractionError(e);
             }
@@ -231,10 +235,11 @@ public class CommandsHandler extends ListenerAdapter {
             try {
                 String modalId = Objects.requireNonNull(event.getModalId());
                 var cmd = Objects.requireNonNull(
-                        (ModalCommand) getCommand(modalId.substring(0, modalId.indexOf("_")))
+                        (BotCommand<?, ?>) getCommand(modalId.substring(0, modalId.indexOf("_")))
                 );
+                var optional = ((ModalCommand) cmd).runModalInteraction(event);
 
-                cmd.runModalInteraction(event);
+                executePostExecutionHook(cmd, event, optional);
             } catch(Exception e) {
                 handleInteractionError(e);
             }
@@ -397,6 +402,32 @@ public class CommandsHandler extends ListenerAdapter {
 
         listOfActiveGuildCommands.clear();
         detectedGuildCommandNames.clear();
+    }
+
+    protected void executePostExecutionHook(
+            @NonNull BotCommand<?, ?> cmd,
+            @NonNull GenericCommandInteractionEvent event,
+            @NonNull Message msg
+    ) {
+        var hooks = cmd.getCommandHooks()
+                .stream()
+                .filter(hook -> hook.getTypeOfHook() == CommandHook.Type.POST_EXECUTION)
+                .toList();
+
+        hooks.forEach(hook -> hook.execute(cmd, event, msg));
+    }
+
+    protected void executePostExecutionHook(
+            @NonNull BotCommand<?, ?> cmd,
+            @NonNull GenericInteractionCreateEvent event,
+            @Nullable Object data
+    ) {
+        var hooks = cmd.getCommandHooks()
+                .stream()
+                .filter(hook -> hook.getTypeOfHook() == CommandHook.Type.POST_EXECUTION)
+                .toList();
+
+        hooks.forEach(hook -> hook.execute(cmd, event, data));
     }
 
     /**
