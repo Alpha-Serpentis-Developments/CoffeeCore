@@ -2,7 +2,7 @@ package dev.alphaserpentis.examples.coffeecore.kotlin.custom
 
 import dev.alphaserpentis.coffeecore.commands.BotCommand
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse
-import dev.alphaserpentis.examples.coffeecore.kotlin.custom.handler.CustomServerDataHandler
+import dev.alphaserpentis.examples.coffeecore.kotlin.custom.handler.CustomDataHandler
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.OptionType
@@ -17,8 +17,8 @@ class SetCustomData : BotCommand<String, SlashCommandInteractionEvent>(
     }
 ) {
     override fun runCommand(userId: Long, event: SlashCommandInteractionEvent): CommandResponse<String> {
-        val handler = core.serverDataHandler as CustomServerDataHandler
-        val customServerData = handler.getServerData(event.guild!!.idLong)!!
+        val handler = core.dataHandler as CustomDataHandler
+        val customServerData = handler.getEntityData("guild", event.guild!!.idLong)!!
         return when (val subcommand = event.subcommandName!!) {
             "view" -> CommandResponse(
                 isOnlyEphemeral,
@@ -27,7 +27,7 @@ class SetCustomData : BotCommand<String, SlashCommandInteractionEvent>(
             "set" -> {
                 val data = event.getOption("data")!!.asString
                 customServerData.customData = data
-                core.serverDataHandler.updateServerData()
+                core.dataHandler.updateEntityData()
                 CommandResponse(isOnlyEphemeral, "The custom data of this server has been set to: $data")
             }
             else -> throw RuntimeException("Unknown subcommand: $subcommand")

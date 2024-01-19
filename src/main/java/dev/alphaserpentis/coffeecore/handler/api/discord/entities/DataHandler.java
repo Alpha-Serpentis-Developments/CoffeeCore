@@ -1,11 +1,13 @@
-package dev.alphaserpentis.coffeecore.handler.api.discord.servers;
+package dev.alphaserpentis.coffeecore.handler.api.discord.entities;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import dev.alphaserpentis.coffeecore.commands.BotCommand;
-import dev.alphaserpentis.coffeecore.data.server.ServerData;
+import dev.alphaserpentis.coffeecore.data.entity.EntityData;
+import dev.alphaserpentis.coffeecore.data.entity.ServerData;
+import dev.alphaserpentis.coffeecore.serialization.EntityDataDeserializer;
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
@@ -20,67 +22,73 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * A default implementation of {@link AbstractServerDataHandler} that handles {@link ServerData}.
- * @param <T> The type of {@link ServerData} to handle.
+ * A default implementation of {@link AbstractDataHandler} that handles {@link EntityData}.
+ * Additionally, it handles data pertaining to guilds when the bot is invited to them or kicked out of them
+ * @param <T> The type of {@link EntityData} to handle.
  */
-public class ServerDataHandler<T extends ServerData> extends AbstractServerDataHandler<T> {
+public class DataHandler<T extends EntityData> extends AbstractDataHandler<T> {
     /**
      * Cached guild commands. <b>This expects that the commands do not change after caching</b>
      */
     private List<BotCommand<?, ?>> cachedGuildCommands = null;
 
     /**
-     * Initializes the server data handler.
-     * @param path The path to the server data file.
-     * @param typeToken The {@link TypeToken} of the mapping of user IDs to {@link ServerData}.
-     * @param jsonDeserializer The {@link JsonDeserializer} to deserialize the server data.
-     * @throws IOException If the bot fails to read the server data file.
+     * Initializes the data handler.
+     * @param path The path to the entity data file.
+     * @param typeToken The {@link TypeToken} of the mapping of entity IDs to {@link EntityData}.
+     * @param jsonDeserializer The {@link JsonDeserializer} to deserialize the entity data.
+     * @throws IOException If the bot fails to read the entity data file.
      */
-    public ServerDataHandler(
+    public DataHandler(
             @NonNull Path path,
-            @NonNull TypeToken<Map<Long, T>> typeToken,
-            @NonNull JsonDeserializer<Map<Long, T>> jsonDeserializer
+            @NonNull TypeToken<Map<String, Map<Long, T>>> typeToken,
+            @NonNull EntityDataDeserializer<T> jsonDeserializer
     ) throws IOException {
         super(path);
         Gson gson;
         Reader reader;
 
+        jsonDeserializer.setDataHandler(this);
         gson = new GsonBuilder()
-                .registerTypeAdapter(serverDataHashMap.getClass(), jsonDeserializer)
+                .registerTypeAdapter(typeToken.getType(), jsonDeserializer)
                 .create();
         reader = Files.newBufferedReader(path);
-        serverDataHashMap = Objects.requireNonNullElse(gson.fromJson(reader, typeToken.getType()), new HashMap<>());
+        entityDataHashMap = Objects.requireNonNullElse(
+                gson.fromJson(reader, typeToken.getType()),
+                new HashMap<>()
+        );
     }
 
     /**
-     * Creates a new instance of {@link ServerData}.
+     * Creates a new instance of {@link EntityData}.
      * <p>
      * <b>This method should be overridden if you're extending this class!</b>
-     * @return A new instance of {@link ServerData}.
+     * @return A new instance of {@link EntityData}.
+     * @implNote This returns a {@link ServerData} by default.
      */
     @Override
     @SuppressWarnings("unchecked")
-    protected T createNewServerData() {
+    protected T createNewEntityData() {
         return (T) new ServerData();
     }
 
     @Override
-    protected void handleServerDataException(@NonNull Exception e) {
+    protected void handleEntityDataException(@NonNull Exception e) {
         // Write your implementation, by default this won't do anything
     }
 
     @Override
     public void onGuildJoin(@NonNull GuildJoinEvent event) {
-        serverDataHashMap.put(event.getGuild().getIdLong(), createNewServerData());
+        entityDataHashMap.get("guilds").put(event.getGuild().getIdLong(), createNewEntityData());
         getCore().getCommandsHandler().upsertGuildCommandsToGuild(getCachedGuildCommands(), event.getGuild());
-        updateServerData();
+        updateEntityData();
     }
 
     @Override
     public void onGuildLeave(@NonNull GuildLeaveEvent event) {
-        serverDataHashMap.remove(event.getGuild().getIdLong());
+        entityDataHashMap.get("guilds").remove(event.getGuild().getIdLong());
         getCore().getCommandsHandler().deregisterCommands(event.getGuild().getIdLong());
-        updateServerData();
+        updateEntityData();
     }
 
     @NonNull

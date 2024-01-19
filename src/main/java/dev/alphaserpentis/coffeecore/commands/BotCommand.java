@@ -2,7 +2,7 @@ package dev.alphaserpentis.coffeecore.commands;
 
 import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
-import dev.alphaserpentis.coffeecore.data.server.ServerData;
+import dev.alphaserpentis.coffeecore.data.entity.ServerData;
 import dev.alphaserpentis.coffeecore.hook.CommandHook;
 import dev.alphaserpentis.coffeecore.hook.defaults.MessageExpireHook;
 import dev.alphaserpentis.coffeecore.hook.defaults.RatelimitHook;
@@ -871,7 +871,12 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         if (event.getGuild() == null) {
             return isOnlyEphemeral();
         } else {
-            ServerData serverData = getCore().getServerDataHandler().getServerData(event.getGuild().getIdLong());
+            ServerData serverData = (ServerData) getCore()
+                    .getDataHandler()
+                    .getEntityData(
+                            "guild",
+                            event.getGuild().getIdLong()
+                    );
             boolean guildEphemeralSetting = Objects.requireNonNull(serverData).getOnlyEphemeral();
 
             return isOnlyEphemeral() || guildEphemeralSetting;

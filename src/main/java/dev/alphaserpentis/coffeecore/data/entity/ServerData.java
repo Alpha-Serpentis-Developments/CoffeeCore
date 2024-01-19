@@ -1,4 +1,4 @@
-package dev.alphaserpentis.coffeecore.data.server;
+package dev.alphaserpentis.coffeecore.data.entity;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -8,7 +8,7 @@ import com.google.gson.annotations.SerializedName;
  *     This class can be extended to add more data to a server.
  * </p>
  */
-public class ServerData {
+public class ServerData extends EntityData {
     @SerializedName("onlyEphemeral")
     private boolean onlyEphemeral = true;
 

@@ -2,15 +2,16 @@ package dev.alphaserpentis.examples.coffeecore.java.custom.handler;
 
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
-import dev.alphaserpentis.coffeecore.data.server.ServerData;
-import dev.alphaserpentis.coffeecore.handler.api.discord.servers.ServerDataHandler;
+import dev.alphaserpentis.coffeecore.data.entity.ServerData;
+import dev.alphaserpentis.coffeecore.handler.api.discord.entities.DataHandler;
+import dev.alphaserpentis.coffeecore.serialization.EntityDataDeserializer;
 import io.reactivex.rxjava3.annotations.NonNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 
-public class CustomServerDataHandler extends ServerDataHandler<CustomServerData> {
+public class CustomDataHandler extends DataHandler<CustomServerData> {
     /**
      * Initializes the server data handler.
      *
@@ -19,16 +20,16 @@ public class CustomServerDataHandler extends ServerDataHandler<CustomServerData>
      * @param jsonDeserializer The {@link JsonDeserializer} to deserialize the server data.
      * @throws IOException If the bot fails to read the server data file.
      */
-    public CustomServerDataHandler(
+    public CustomDataHandler(
             @NonNull Path path,
-            @NonNull TypeToken<Map<Long, CustomServerData>> typeToken,
-            @NonNull JsonDeserializer<Map<Long, CustomServerData>> jsonDeserializer
+            @NonNull TypeToken<Map<String, Map<Long, CustomServerData>>> typeToken,
+            @NonNull EntityDataDeserializer<CustomServerData> jsonDeserializer
     ) throws IOException {
         super(path, typeToken, jsonDeserializer);
     }
 
     @Override
-    protected CustomServerData createNewServerData() {
+    protected CustomServerData createNewEntityData() {
         return new CustomServerData();
     }
 }
