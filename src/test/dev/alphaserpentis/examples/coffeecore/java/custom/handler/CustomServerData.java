@@ -1,6 +1,6 @@
 package dev.alphaserpentis.examples.coffeecore.java.custom.handler;
 
-import dev.alphaserpentis.coffeecore.data.server.ServerData;
+import dev.alphaserpentis.coffeecore.data.entity.ServerData;
 
 public class CustomServerData extends ServerData {
     private String customData = "This is custom data!";

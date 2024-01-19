@@ -10,10 +10,10 @@ import dev.alphaserpentis.coffeecore.commands.defaultcommands.Shutdown;
 import dev.alphaserpentis.coffeecore.data.bot.AboutInformation;
 import dev.alphaserpentis.coffeecore.data.bot.BotSettings;
 import dev.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;
-import dev.alphaserpentis.coffeecore.handler.api.discord.servers.AbstractServerDataHandler;
-import dev.alphaserpentis.coffeecore.handler.api.discord.servers.ServerDataHandler;
+import dev.alphaserpentis.coffeecore.handler.api.discord.entities.AbstractDataHandler;
+import dev.alphaserpentis.coffeecore.handler.api.discord.entities.DataHandler;
 import dev.alphaserpentis.coffeecore.helper.ContainerHelper;
-import dev.alphaserpentis.coffeecore.serialization.ServerDataDeserializer;
+import dev.alphaserpentis.coffeecore.serialization.EntityDataDeserializer;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.JDA;
@@ -43,9 +43,9 @@ public class CoffeeCore {
      */
     protected ShardManager shardManager = null;
     /**
-     * The {@link ServerDataHandler} instance.
+     * The {@link AbstractDataHandler} instance.
      */
-    protected AbstractServerDataHandler<?> serverDataHandler;
+    protected AbstractDataHandler<?> dataHandler;
     /**
      * The {@link CommandsHandler} instance.
      */
@@ -65,9 +65,9 @@ public class CoffeeCore {
     public CoffeeCore(
             @NonNull BotSettings settings,
             @NonNull IGuildChannelContainer container,
-            @Nullable AbstractServerDataHandler<?> serverDataHandler
+            @Nullable AbstractDataHandler<?> dataHandler
     ) {
-        this(settings, container, serverDataHandler, null);
+        this(settings, container, dataHandler, null);
     }
 
     public CoffeeCore(
@@ -81,7 +81,7 @@ public class CoffeeCore {
     public CoffeeCore(
             @NonNull BotSettings settings,
             @NonNull IGuildChannelContainer container,
-            @Nullable AbstractServerDataHandler<?> serverDataHandler,
+            @Nullable AbstractDataHandler<?> dataHandler,
             @Nullable CommandsHandler commandsHandler,
             @Nullable Object... additionalListeners
     ) {
@@ -90,16 +90,16 @@ public class CoffeeCore {
         try {
             determineAndSetContainer(container);
             ContainerHelper containerHelper = new ContainerHelper(container);
-            this.serverDataHandler = Objects.requireNonNullElse(
-                    serverDataHandler,
-                    new ServerDataHandler<>(
+            this.dataHandler = Objects.requireNonNullElse(
+                    dataHandler,
+                    new DataHandler<>(
                             Path.of(settings.getServerDataPath()),
                             new TypeToken<>() {},
-                            new ServerDataDeserializer<>()
+                            new EntityDataDeserializer<>()
                     )
             );
 
-            this.serverDataHandler.init(containerHelper, this);
+            this.dataHandler.init(containerHelper, this);
         } catch (IllegalStateException | InterruptedException | IOException | IllegalArgumentException e) {
             e.printStackTrace();
             System.exit(1);
@@ -112,12 +112,12 @@ public class CoffeeCore {
         if(additionalListeners != null && additionalListeners.length > 0) {
             Object[] listeners = new Object[additionalListeners.length + 2];
             listeners[0] = this.commandsHandler;
-            listeners[1] = this.serverDataHandler;
+            listeners[1] = this.dataHandler;
             System.arraycopy(additionalListeners, 0, listeners, 2, additionalListeners.length);
 
             addEventListenersToContainer(listeners);
         } else {
-            addEventListenersToContainer(this.commandsHandler, this.serverDataHandler);
+            addEventListenersToContainer(this.commandsHandler, this.dataHandler);
         }
     }
 
@@ -140,12 +140,12 @@ public class CoffeeCore {
     }
 
     /**
-     * Get the {@link AbstractServerDataHandler} instance
-     * @return {@link AbstractServerDataHandler}
+     * Get the {@link AbstractDataHandler} instance
+     * @return {@link AbstractDataHandler}
      */
     @NonNull
-    public AbstractServerDataHandler<?> getServerDataHandler() {
-        return serverDataHandler;
+    public AbstractDataHandler<?> getDataHandler() {
+        return dataHandler;
     }
 
     /**

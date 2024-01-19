@@ -1,9 +1,9 @@
 package dev.alphaserpentis.examples.coffeecore.java.custom;
 
-import dev.alphaserpentis.examples.coffeecore.java.custom.handler.CustomServerData;
-import dev.alphaserpentis.examples.coffeecore.java.custom.handler.CustomServerDataHandler;
 import dev.alphaserpentis.coffeecore.commands.BotCommand;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
+import dev.alphaserpentis.examples.coffeecore.java.custom.handler.CustomDataHandler;
+import dev.alphaserpentis.examples.coffeecore.java.custom.handler.CustomServerData;
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -28,8 +28,8 @@ public class SetCustomData extends BotCommand<String, SlashCommandInteractionEve
     @Override
     @NonNull
     public CommandResponse<String> runCommand(long userId, @NonNull SlashCommandInteractionEvent event) {
-        CustomServerDataHandler handler = (CustomServerDataHandler) core.getServerDataHandler();
-        CustomServerData customServerData = handler.getServerData(event.getGuild().getIdLong());
+        CustomDataHandler handler = (CustomDataHandler) core.getDataHandler();
+        CustomServerData customServerData = handler.getEntityData("guild", event.getGuild().getIdLong());
         String subcommand = Objects.requireNonNull(event.getSubcommandName());
 
         if(subcommand.equals("view")) {
@@ -40,7 +40,7 @@ public class SetCustomData extends BotCommand<String, SlashCommandInteractionEve
         } else if(subcommand.equals("set")) {
             String data = event.getOption("data").getAsString();
             customServerData.setCustomData(data);
-            core.getServerDataHandler().updateServerData();
+            core.getDataHandler().updateEntityData();
 
             return new CommandResponse<>(
                     isOnlyEphemeral(),

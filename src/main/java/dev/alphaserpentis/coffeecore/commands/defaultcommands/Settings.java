@@ -2,8 +2,8 @@ package dev.alphaserpentis.coffeecore.commands.defaultcommands;
 
 import dev.alphaserpentis.coffeecore.commands.BotCommand;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
-import dev.alphaserpentis.coffeecore.data.server.ServerData;
-import dev.alphaserpentis.coffeecore.handler.api.discord.servers.ServerDataHandler;
+import dev.alphaserpentis.coffeecore.data.entity.ServerData;
+import dev.alphaserpentis.coffeecore.handler.api.discord.entities.DataHandler;
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
@@ -81,8 +81,8 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
     }
 
     private void setServerEphemeral(long guildId, EmbedBuilder eb) throws IOException {
-        ServerDataHandler<?> sdh = (ServerDataHandler<?>) core.getServerDataHandler();
-        ServerData sd = sdh.getServerData(guildId);
+        DataHandler<?> sdh = (DataHandler<?>) core.getDataHandler();
+        ServerData sd = (ServerData) sdh.getEntityData("guild", guildId);
 
         if(sd.getOnlyEphemeral()) {
             sd.setOnlyEphemeral(false);
@@ -92,6 +92,6 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
             eb.setDescription("The bot's responses are now ephemeral.");
         }
 
-        sdh.updateServerData();
+        sdh.updateEntityData();
     }
 }

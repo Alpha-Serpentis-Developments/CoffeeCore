@@ -1,6 +1,6 @@
 package dev.alphaserpentis.examples.coffeecore.kotlin.custom.handler
 
-import dev.alphaserpentis.coffeecore.data.server.ServerData
+import dev.alphaserpentis.coffeecore.data.entity.ServerData
 
 class CustomServerData : ServerData {
     var customData = "This is custom data!"

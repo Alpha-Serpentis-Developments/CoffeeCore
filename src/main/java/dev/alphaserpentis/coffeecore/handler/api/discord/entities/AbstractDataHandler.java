@@ -1,9 +1,12 @@
-package dev.alphaserpentis.coffeecore.handler.api.discord.servers;
+package dev.alphaserpentis.coffeecore.handler.api.discord.entities;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import dev.alphaserpentis.coffeecore.core.CoffeeCore;
-import dev.alphaserpentis.coffeecore.data.server.ServerData;
+import dev.alphaserpentis.coffeecore.data.entity.EntityData;
+import dev.alphaserpentis.coffeecore.data.entity.EntityType;
+import dev.alphaserpentis.coffeecore.data.entity.ServerData;
+import dev.alphaserpentis.coffeecore.data.entity.UserData;
 import dev.alphaserpentis.coffeecore.helper.ContainerHelper;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
@@ -26,12 +29,12 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * The abstract class that handles {@link ServerData}.
- * @param <T> The type of {@link ServerData} to handle.
+ * The abstract class that handles {@link EntityData}.
+ * @param <T> The subclass of {@link EntityData} to handle.
  */
-public abstract class AbstractServerDataHandler<T extends ServerData> extends ListenerAdapter {
+public abstract class AbstractDataHandler<T extends EntityData> extends ListenerAdapter {
     /**
-     * Path to the server data file.
+     * Path to the entity data file.
      */
     private final Path pathToFile;
     /**
@@ -43,38 +46,50 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
      */
     protected ScheduledFuture<?> scheduledFuture;
     /**
-     * Executor to asynchronously update the server data file.
+     * Executor to asynchronously update the entity data file.
      */
     protected ScheduledExecutorService executor;
     /**
-     * The last time the server data file was updated.
+     * The last time the entity data file was updated.
      */
     protected long lastUpdate = 0;
     /**
-     * The mapping of server IDs to {@link ServerData}.
+     * List of valid entity types that the data handler can handle.
      */
-    public Map<Long, T> serverDataHashMap = new HashMap<>();
+    protected List<EntityType> entityTypes;
+    /**
+     * The mapping of entity IDs to {@link EntityData}.
+     * <p>
+     * Mapping is structured based on a string-based identifier from the entity type to allow for different types of
+     * entities to be stored.
+     */
+    public Map<String, Map<Long, T>> entityDataHashMap = new HashMap<>();
 
-    public AbstractServerDataHandler(@NonNull Path path) {
+    public AbstractDataHandler(@NonNull Path path) {
+        this(path, List.of(new EntityType("guild", ServerData.class), new EntityType("user", UserData.class)));
+    }
+
+    public AbstractDataHandler(@NonNull Path path, @NonNull List<EntityType> entityTypes) {
         pathToFile = path;
+        this.entityTypes = entityTypes;
     }
 
     /**
-     * Initializes the server data handler.
+     * Initializes the data handler.
      * <p>
      * This will assign a default executor of {@link Executors#newSingleThreadScheduledExecutor()}.
-     * @param container The {@link ContainerHelper} instance to get the servers from.
-     * @throws IOException If the bot fails to write to the server data file.
+     * @param container The {@link ContainerHelper} instance to get the entities from.
+     * @throws IOException If the bot fails to write to the entity data file.
      */
     public void init(@NonNull ContainerHelper container, @NonNull CoffeeCore core) throws IOException {
         init(container, core, Executors.newSingleThreadScheduledExecutor());
     }
 
     /**
-     * Initializes the server data handler.
-     * @param container The {@link ContainerHelper} instance to get the servers from.
+     * Initializes the data handler.
+     * @param container The {@link ContainerHelper} instance to get the entities from.
      * @param core The {@link CoffeeCore} instance.
-     * @param executor The executor to asynchronously update the server data file.
+     * @param executor The executor to asynchronously update the entity data file.
      */
     public void init(
             @NonNull ContainerHelper container,
@@ -83,30 +98,37 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
     ) {
         this.executor = executor;
         this.core = core;
-        this.serverDataHashMap = Objects.requireNonNullElse(serverDataHashMap, new HashMap<>());
+        this.entityDataHashMap = Objects.requireNonNullElse(entityDataHashMap, new HashMap<>());
+
+        // Check if the entity structures have been added
+        for(EntityType entityType: entityTypes) {
+            entityDataHashMap.computeIfAbsent(entityType.getId(), id -> new HashMap<>());
+        }
 
         List<Guild> guilds = container.getGuilds();
         ArrayList<Long> serversActuallyJoined = new ArrayList<>(guilds.size());
+        Map<Long, T> guildData = entityDataHashMap.get("guild");
 
         for(Guild g: guilds) {
-            serverDataHashMap.computeIfAbsent(g.getIdLong(), id -> createNewServerData());
+            guildData.computeIfAbsent(g.getIdLong(), id -> createNewEntityData());
             serversActuallyJoined.add(g.getIdLong());
         }
 
         // Check if the bot left a server but data wasn't cleared
-        serverDataHashMap.keySet().removeIf(id -> !serversActuallyJoined.contains(id));
+        guildData.keySet().removeIf(id -> !serversActuallyJoined.contains(id));
 
-        updateServerData();
+        updateEntityData();
     }
 
     /**
-     * Gets the {@link ServerData} for the specified server.
-     * @param guildId The ID of the server.
-     * @return The {@link ServerData} for the specified server or {@code null} if the server is not in the mapping.
+     * Gets the {@link EntityData} for the specified entity ID if mapped.
+     * @param mapId The identifier to check which mapping to use.
+     * @param id The ID of the entity (server/user).
+     * @return The {@link EntityData} for the specified entity or {@code null} if the entity is not in the mapping.
      */
     @Nullable
-    public T getServerData(long guildId) {
-        return serverDataHashMap.get(guildId);
+    public T getEntityData(@NonNull String mapId, long id) {
+        return entityDataHashMap.get(mapId).get(id);
     }
 
     /**
@@ -119,7 +141,7 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
     }
 
     /**
-     * Gets the {@link Path} to the server data file.
+     * Gets the {@link Path} to the entity data file.
      * @return {@link Path}
      */
     @NonNull
@@ -138,7 +160,7 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
     }
 
     /**
-     * Gets the last time the server data file was updated.
+     * Gets the last time the entity data file was updated.
      * @return UNIX time in seconds of the last update.
      */
     protected long getLastUpdate() {
@@ -146,9 +168,18 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
     }
 
     /**
-     * Tells the executor to update the server data file after some time.
+     * Gets the list of valid entity types that the data handler can handle.
+     * @return List of {@link EntityType}
      */
-    public void updateServerData() {
+    @NonNull
+    public List<EntityType> getEntityTypes() {
+        return entityTypes;
+    }
+
+    /**
+     * Tells the executor to update the entity data file after some time.
+     */
+    public void updateEntityData() {
         long timeBetweenUpdate = (System.currentTimeMillis() / 1000) - lastUpdate;
         ScheduledFuture<?> future = getScheduledFuture();
 
@@ -161,7 +192,7 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
                             .setPrettyPrinting()
                             .create();
 
-                    writeToJSON(gson, serverDataHashMap);
+                    writeToJSON(gson, entityDataHashMap);
                 },
                 10,
                 TimeUnit.SECONDS
@@ -169,7 +200,7 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
     }
 
     /**
-     * Writes the specified data to the server data file.
+     * Writes the specified data to the entity data file.
      * @param gson The {@link Gson} instance to use to write the data.
      * @param data The data to write.
      */
@@ -179,19 +210,19 @@ public abstract class AbstractServerDataHandler<T extends ServerData> extends Li
 
             lastUpdate = System.currentTimeMillis() / 1000;
         } catch (IOException e) {
-            handleServerDataException(e);
+            handleEntityDataException(e);
         }
     }
 
     /**
-     * Creates a new instance of {@link ServerData}.
-     * @return A new instance of {@link ServerData}.
+     * Creates a new instance of {@link EntityData}.
+     * @return A new instance of {@link EntityData}.
      */
-    protected abstract T createNewServerData();
+    protected abstract T createNewEntityData();
 
     /**
-     * Handle an exception thrown when updating the server data.
+     * Handle an exception thrown when updating the entity data.
      * @param e The exception thrown.
      */
-    protected abstract void handleServerDataException(@NonNull Exception e);
+    protected abstract void handleEntityDataException(@NonNull Exception e);
 }

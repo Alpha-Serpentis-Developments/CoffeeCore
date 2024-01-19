@@ -1,10 +1,10 @@
 package dev.alphaserpentis.examples.coffeecore.java.custom;
 
-import dev.alphaserpentis.examples.coffeecore.java.custom.deserializer.CustomServerDataDeserializer;
-import dev.alphaserpentis.examples.coffeecore.java.custom.handler.CustomServerDataHandler;
 import com.google.gson.reflect.TypeToken;
 import dev.alphaserpentis.coffeecore.core.CoffeeCoreBuilder;
 import dev.alphaserpentis.coffeecore.data.bot.BotSettings;
+import dev.alphaserpentis.examples.coffeecore.java.custom.deserializer.CustomEntityDataDeserializer;
+import dev.alphaserpentis.examples.coffeecore.java.custom.handler.CustomDataHandler;
 import io.github.cdimascio.dotenv.Dotenv;
 
 import java.io.IOException;
@@ -20,11 +20,11 @@ public class CustomServerDataExample {
                 Boolean.parseBoolean(dotenv.get("UPDATE_COMMANDS_AT_LAUNCH")),
                 Boolean.parseBoolean(dotenv.get("REGISTER_DEFAULT_COMMANDS"))
         );
-        CoffeeCoreBuilder<?> builder = new CoffeeCoreBuilder<>().setSettings(botSettings).setServerDataHandler(
-                new CustomServerDataHandler(
+        CoffeeCoreBuilder<?> builder = new CoffeeCoreBuilder<>().setSettings(botSettings).setDataHandler(
+                new CustomDataHandler(
                         Path.of(dotenv.get("SERVER_DATA_PATH")),
                         new TypeToken<>() {},
-                        new CustomServerDataDeserializer()
+                        new CustomEntityDataDeserializer()
                 )
         );
 

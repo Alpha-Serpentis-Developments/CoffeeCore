@@ -2,7 +2,7 @@ package dev.alphaserpentis.coffeecore.core;
 
 import dev.alphaserpentis.coffeecore.data.bot.BotSettings;
 import dev.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;
-import dev.alphaserpentis.coffeecore.handler.api.discord.servers.AbstractServerDataHandler;
+import dev.alphaserpentis.coffeecore.handler.api.discord.entities.AbstractDataHandler;
 import dev.alphaserpentis.coffeecore.helper.BuilderHelper;
 import io.reactivex.rxjava3.annotations.Experimental;
 import io.reactivex.rxjava3.annotations.NonNull;
@@ -54,7 +54,7 @@ public class CoffeeCoreBuilder<T> {
     }
 
     protected BotSettings settings = null;
-    protected AbstractServerDataHandler<?> serverDataHandler = null;
+    protected AbstractDataHandler<?> dataHandler = null;
     protected CommandsHandler commandsHandler = null;
     protected Object[] additionalListeners = null;
     protected ChunkingFilter chunkingFilter = ChunkingFilter.NONE;
@@ -81,7 +81,7 @@ public class CoffeeCoreBuilder<T> {
         return new CoffeeCore(
                 settings,
                 new BuilderHelper<>(createBuilderInstance(token)).build(),
-                serverDataHandler,
+                dataHandler,
                 commandsHandler,
                 additionalListeners
         );
@@ -100,14 +100,14 @@ public class CoffeeCoreBuilder<T> {
     }
 
     /**
-     * Sets the {@link AbstractServerDataHandler} for {@link CoffeeCore}.
-     * @param serverDataHandler The {@link AbstractServerDataHandler}.
+     * Sets the {@link AbstractDataHandler} for {@link CoffeeCore}.
+     * @param dataHandler The {@link AbstractDataHandler}.
      * @return {@link CoffeeCoreBuilder} for method chaining.
      */
     @Experimental
     @NonNull
-    public CoffeeCoreBuilder<?> setServerDataHandler(@NonNull AbstractServerDataHandler<?> serverDataHandler) {
-        this.serverDataHandler = serverDataHandler;
+    public CoffeeCoreBuilder<?> setDataHandler(@NonNull AbstractDataHandler<?> dataHandler) {
+        this.dataHandler = dataHandler;
         return this;
     }
 
