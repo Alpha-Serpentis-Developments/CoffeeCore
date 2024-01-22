@@ -2,11 +2,11 @@ package dev.alphaserpentis.coffeecore.handler.api.discord.entities;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import dev.alphaserpentis.coffeecore.commands.BotCommand;
 import dev.alphaserpentis.coffeecore.data.entity.EntityData;
 import dev.alphaserpentis.coffeecore.data.entity.ServerData;
+import dev.alphaserpentis.coffeecore.data.entity.UserData;
 import dev.alphaserpentis.coffeecore.serialization.EntityDataDeserializer;
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
@@ -36,7 +36,7 @@ public class DataHandler<T extends EntityData> extends AbstractDataHandler<T> {
      * Initializes the data handler.
      * @param path The path to the entity data file.
      * @param typeToken The {@link TypeToken} of the mapping of entity IDs to {@link EntityData}.
-     * @param jsonDeserializer The {@link JsonDeserializer} to deserialize the entity data.
+     * @param jsonDeserializer The {@link EntityDataDeserializer} to deserialize the entity data.
      * @throws IOException If the bot fails to read the entity data file.
      */
     public DataHandler(
@@ -60,16 +60,29 @@ public class DataHandler<T extends EntityData> extends AbstractDataHandler<T> {
     }
 
     /**
-     * Creates a new instance of {@link EntityData}.
+     * Creates a new instance of the specified {@link EntityData} type.
      * <p>
-     * <b>This method should be overridden if you're extending this class!</b>
+     * <b>This method should be overridden if you're extending this class or have additional entity types!</b>
+     * @param entityType The type of {@link EntityData} to create.
      * @return A new instance of {@link EntityData}.
-     * @implNote This returns a {@link ServerData} by default.
      */
     @Override
     @SuppressWarnings("unchecked")
-    protected T createNewEntityData() {
-        return (T) new ServerData();
+    protected T createNewEntityData(@NonNull String entityType) {
+        String type = getEntityTypes()
+                .stream()
+                .filter(type1 -> type1.getId().equals(entityType))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid entity type: " + entityType))
+                .getId();
+
+        if(type.equals("guild")) {
+            return (T) new ServerData();
+        } else if(type.equals("user")) {
+            return (T) new UserData();
+        } else {
+            throw new IllegalArgumentException("Invalid entity type: " + entityType);
+        }
     }
 
     @Override
@@ -79,7 +92,7 @@ public class DataHandler<T extends EntityData> extends AbstractDataHandler<T> {
 
     @Override
     public void onGuildJoin(@NonNull GuildJoinEvent event) {
-        entityDataHashMap.get("guilds").put(event.getGuild().getIdLong(), createNewEntityData());
+        entityDataHashMap.get("guilds").put(event.getGuild().getIdLong(), createNewEntityData("guild"));
         getCore().getCommandsHandler().upsertGuildCommandsToGuild(getCachedGuildCommands(), event.getGuild());
         updateEntityData();
     }

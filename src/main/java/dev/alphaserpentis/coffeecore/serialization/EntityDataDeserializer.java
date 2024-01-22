@@ -40,10 +40,12 @@ public class EntityDataDeserializer<T extends EntityData> implements JsonDeseria
 
         for(Map.Entry<String, JsonElement> entry: object.entrySet()) {
             // Determine the entity data class
-            EntityType entityType = dataHandler.getEntityTypes().stream()
-                            .filter(type1 -> type1.getId().equals(entry.getKey()))
-                            .findFirst()
-                            .orElseThrow(() -> new JsonParseException("Invalid entity type: " + entry.getKey()));
+            EntityType entityType = dataHandler
+                    .getEntityTypes()
+                    .stream()
+                    .filter(type1 -> type1.getId().equals(entry.getKey()))
+                    .findFirst()
+                    .orElseThrow(() -> new JsonParseException("Invalid entity type: " + entry.getKey()));
             Map<String, JsonElement> innerObject = entry.getValue().getAsJsonObject().asMap();
 
             // Initialize the entity data map

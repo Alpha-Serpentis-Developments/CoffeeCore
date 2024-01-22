@@ -34,6 +34,10 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractDataHandler<T extends EntityData> extends ListenerAdapter {
     /**
+     * The {@link Gson} instance to use to write the data.
+     */
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    /**
      * Path to the entity data file.
      */
     private final Path pathToFile;
@@ -55,6 +59,9 @@ public abstract class AbstractDataHandler<T extends EntityData> extends Listener
     protected long lastUpdate = 0;
     /**
      * List of valid entity types that the data handler can handle.
+     * <p>
+     * Unless a different list was passed during instantiation, the list will contain {@link ServerData} ("guild") and
+     * {@link UserData} ("user") by default
      */
     protected List<EntityType> entityTypes;
     /**
@@ -110,7 +117,7 @@ public abstract class AbstractDataHandler<T extends EntityData> extends Listener
         Map<Long, T> guildData = entityDataHashMap.get("guild");
 
         for(Guild g: guilds) {
-            guildData.computeIfAbsent(g.getIdLong(), id -> createNewEntityData());
+            guildData.computeIfAbsent(g.getIdLong(), id -> createNewEntityData("guild"));
             serversActuallyJoined.add(g.getIdLong());
         }
 
@@ -187,13 +194,7 @@ public abstract class AbstractDataHandler<T extends EntityData> extends Listener
             return;
 
         scheduledFuture = executor.schedule(
-                () -> {
-                    Gson gson = new GsonBuilder()
-                            .setPrettyPrinting()
-                            .create();
-
-                    writeToJSON(gson, entityDataHashMap);
-                },
+                () -> writeToJSON(entityDataHashMap),
                 10,
                 TimeUnit.SECONDS
         );
@@ -201,10 +202,9 @@ public abstract class AbstractDataHandler<T extends EntityData> extends Listener
 
     /**
      * Writes the specified data to the entity data file.
-     * @param gson The {@link Gson} instance to use to write the data.
      * @param data The data to write.
      */
-    protected void writeToJSON(@NonNull Gson gson, @NonNull Object data) {
+    protected void writeToJSON(@NonNull Object data) {
         try(BufferedWriter writer = Files.newBufferedWriter(pathToFile)) {
             gson.toJson(data, writer);
 
@@ -216,9 +216,10 @@ public abstract class AbstractDataHandler<T extends EntityData> extends Listener
 
     /**
      * Creates a new instance of {@link EntityData}.
+     * @param type The name of the entity type.
      * @return A new instance of {@link EntityData}.
      */
-    protected abstract T createNewEntityData();
+    protected abstract T createNewEntityData(@NonNull String type);
 
     /**
      * Handle an exception thrown when updating the entity data.

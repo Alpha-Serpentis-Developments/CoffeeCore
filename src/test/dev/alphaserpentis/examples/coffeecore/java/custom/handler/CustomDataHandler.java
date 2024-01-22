@@ -1,6 +1,5 @@
 package dev.alphaserpentis.examples.coffeecore.java.custom.handler;
 
-import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import dev.alphaserpentis.coffeecore.data.entity.ServerData;
 import dev.alphaserpentis.coffeecore.handler.api.discord.entities.DataHandler;
@@ -17,7 +16,7 @@ public class CustomDataHandler extends DataHandler<CustomServerData> {
      *
      * @param path             The path to the server data file.
      * @param typeToken        The {@link TypeToken} of the mapping of user IDs to {@link ServerData}.
-     * @param jsonDeserializer The {@link JsonDeserializer} to deserialize the server data.
+     * @param jsonDeserializer The {@link EntityDataDeserializer} to deserialize the server data.
      * @throws IOException If the bot fails to read the server data file.
      */
     public CustomDataHandler(
@@ -29,7 +28,7 @@ public class CustomDataHandler extends DataHandler<CustomServerData> {
     }
 
     @Override
-    protected CustomServerData createNewEntityData() {
+    protected CustomServerData createNewEntityData(@NonNull String entityId) {
         return new CustomServerData();
     }
 }

@@ -14,6 +14,8 @@ import java.util.Optional;
 
 /**
  * Default implementation to handle ratelimits automatically
+ * <p>
+ * This hook does <b>NOT</b> set the ratelimit for the user. It only checks if the user is ratelimited.
  */
 public class RatelimitHook extends CommandHook {
     public RatelimitHook() {
