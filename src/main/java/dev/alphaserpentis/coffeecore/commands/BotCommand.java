@@ -60,7 +60,6 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     protected final boolean messagesExpire;
     protected final CommandVisibility commandVisibility;
     protected final Command.Type commandType;
-    protected final TypeOfEphemeral ephemeralType;
     protected long globalCommandId;
     protected CoffeeCore core;
 
@@ -75,21 +74,6 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
          * @see Guild#upsertCommand(String, String)
          */
         GUILD
-    }
-
-    /**
-     * Types of ephemeral available for commands.
-     */
-    @Deprecated(forRemoval = true)
-    public enum TypeOfEphemeral {
-        /**
-         * The default ephemeral type. This will be set to the server's default ephemeral type.
-         */
-        DEFAULT,
-        /**
-         * Ephemeral type that enables the usage of {@link #beforeRunCommand(long, GenericCommandInteractionEvent)}
-         */
-        DYNAMIC
     }
 
     /**
@@ -111,7 +95,6 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         protected boolean useDefaultHooks = true;
         protected CommandVisibility commandVisibility = CommandVisibility.GLOBAL;
         protected Command.Type commandType = Command.Type.SLASH;
-        protected TypeOfEphemeral typeOfEphemeral = TypeOfEphemeral.DEFAULT;
         protected Collection<Long> guildsToRegisterIn = List.of();
         protected Collection<CommandHook> commandHooks = new ArrayList<>();
 
@@ -123,65 +106,6 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         ) {
             this.name = name;
             this.description = description;
-        }
-
-        @Deprecated(forRemoval = true)
-        public BotCommandOptions(
-                @NonNull String name,
-                @NonNull String description,
-                boolean onlyEmbed,
-                boolean onlyEphemeral,
-                @NonNull TypeOfEphemeral typeOfEphemeral
-        ) {
-            this.name = name;
-            this.description = description;
-            this.onlyEmbed = onlyEmbed;
-            this.onlyEphemeral = onlyEphemeral;
-            this.typeOfEphemeral = typeOfEphemeral;
-        }
-
-        @Deprecated(forRemoval = true)
-        public BotCommandOptions(
-                @NonNull String name,
-                @NonNull String description,
-                boolean onlyEmbed,
-                boolean onlyEphemeral,
-                @NonNull TypeOfEphemeral typeOfEphemeral,
-                boolean deferReplies
-        ) {
-            this.name = name;
-            this.description = description;
-            this.onlyEmbed = onlyEmbed;
-            this.onlyEphemeral = onlyEphemeral;
-            this.typeOfEphemeral = typeOfEphemeral;
-            this.deferReplies = deferReplies;
-        }
-
-        @Deprecated(forRemoval = true)
-        public BotCommandOptions(
-                @NonNull String name,
-                @NonNull String description,
-                long ratelimitLength,
-                long messageExpirationLength,
-                boolean onlyEmbed,
-                boolean onlyEphemeral,
-                @NonNull TypeOfEphemeral typeOfEphemeral,
-                boolean isActive,
-                boolean deferReplies,
-                boolean useRatelimits,
-                boolean messagesExpire
-        ) {
-            this.name = name;
-            this.description = description;
-            this.ratelimitLength = ratelimitLength;
-            this.messageExpirationLength = messageExpirationLength;
-            this.onlyEmbed = onlyEmbed;
-            this.onlyEphemeral = onlyEphemeral;
-            this.typeOfEphemeral = typeOfEphemeral;
-            this.isActive = isActive;
-            this.deferReplies = deferReplies;
-            this.useRatelimits = useRatelimits;
-            this.messagesExpire = messagesExpire;
         }
 
         /**
@@ -350,18 +274,6 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         }
 
         /**
-         * Sets the command's type of ephemeral
-         * @param typeOfEphemeral The command's type of ephemeral
-         * @return {@link BotCommandOptions}
-         */
-        @NonNull
-        @Deprecated(forRemoval = true)
-        public BotCommandOptions setTypeOfEphemeral(@NonNull TypeOfEphemeral typeOfEphemeral) {
-            this.typeOfEphemeral = typeOfEphemeral;
-            return this;
-        }
-
-        /**
          * Sets the command's guilds to register in
          * <p>
          * This is only used if the command's visibility is {@link CommandVisibility#GUILD}. To apply to all guilds, leave the array empty!
@@ -399,9 +311,9 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             if(description == null && commandType == Command.Type.SLASH)
                 throw new IllegalArgumentException("Description cannot be null for slash commands!");
             if(useRatelimits && ratelimitLength <= 0)
-                throw new IllegalArgumentException("Ratelimit length must be greater than 0!");
+                throw new IllegalArgumentException("Ratelimit length must be greater than 0 if using ratelimits!");
             if(messagesExpire && messageExpirationLength <= 0)
-                throw new IllegalArgumentException("Message expiration length must be greater than 0!");
+                throw new IllegalArgumentException("Message expiration length must be greater than 0 if messages expire!");
         }
     }
 
@@ -426,7 +338,6 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         messagesExpire = options.messagesExpire;
         commandVisibility = options.commandVisibility;
         commandType = options.commandType;
-        ephemeralType = options.typeOfEphemeral;
         guildsToRegisterIn = options.guildsToRegisterIn;
         commandHooks = options.commandHooks;
 
@@ -469,23 +380,6 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         guild
                 .upsertCommand(getJDACommandData(getCommandType(), getName(), getDescription()))
                 .queue();
-    }
-
-    /**
-     * A method that <b>REQUIRES</b> to be overridden if to be used for any {@link BotCommand} with an ephemeralType of
-     * {@link TypeOfEphemeral#DYNAMIC}
-     * <p>
-     * This method is currently only called if the command is <b>DEFERRED</b>.
-     * <p>
-     * Operations inside must NOT exceed the time it requires to <b>ACKNOWLEDGE</b> the API!
-     * @param userId is a long ID provided by Discord for the user calling the command
-     * @param event is a {@link E} that contains the interaction
-     * @return a nonnull {@link CommandResponse} containing either a {@link MessageEmbed} or String
-     */
-    @NonNull
-    @Deprecated(forRemoval = true)
-    public CommandResponse<T> beforeRunCommand(long userId, @NonNull E event) {
-        throw new UnsupportedOperationException("beforeRunCommand needs to be overridden!");
     }
 
     /**
@@ -627,12 +521,6 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
 
     public boolean doMessagesExpire() {
         return messagesExpire;
-    }
-
-    @NonNull
-    @Deprecated(forRemoval = true)
-    public TypeOfEphemeral getEphemeralType() {
-        return ephemeralType;
     }
 
     @NonNull
@@ -898,7 +786,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @param command The command that is being executed
      * @param message The message to delete
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static void letMessageExpire(@NonNull BotCommand<?, ?> command, @NonNull Message message) {
         if(command.doMessagesExpire())
             message.delete().queueAfter(command.getMessageExpirationLength(), TimeUnit.SECONDS);
