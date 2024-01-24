@@ -3,6 +3,7 @@ package dev.alphaserpentis.coffeecore.commands;
 import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 import dev.alphaserpentis.coffeecore.data.entity.ServerData;
+import dev.alphaserpentis.coffeecore.data.entity.UserData;
 import dev.alphaserpentis.coffeecore.hook.CommandHook;
 import dev.alphaserpentis.coffeecore.hook.defaults.MessageExpireHook;
 import dev.alphaserpentis.coffeecore.hook.defaults.RatelimitHook;
@@ -683,7 +684,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             if(isForgivingRatelimitOnError())
                 getRatelimitMap().remove(userId);
 
-            return interactHook.sendMessageEmbeds(handleError(e));
+            return interactHook.sendMessageEmbeds(handleError(e, userId));
         }
     }
 
@@ -732,7 +733,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             if(isForgivingRatelimitOnError())
                 getRatelimitMap().remove(userId);
 
-            return event.replyEmbeds(handleError(e));
+            return event.replyEmbeds(handleError(e, userId));
         }
     }
 
@@ -796,14 +797,22 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * If a command fails to execute, this method will be called to generate an error message
      * to send to the user
      * @param e The exception that was thrown
+     * @param userId The ID of the user who called the command
      * @return The error message to send to the user
      */
     @NonNull
-    protected static MessageEmbed handleError(@NonNull Exception e) {
+    protected MessageEmbed handleError(@NonNull Exception e, long userId) {
         EmbedBuilder eb = new EmbedBuilder();
 
         eb.setTitle("Command Failed To Execute");
         eb.setDescription("The command failed to execute due to: " + e.getClass().getSimpleName());
+
+        UserData ud = ((UserData) getCore().getDataHandler().getEntityData("user", userId));
+        boolean showFullStackTrace = false;
+
+        if(ud != null)
+            showFullStackTrace = ud.getShowFullStackTrace();
+
         if(e.getMessage() != null) {
             if(e.getMessage().length() > MessageEmbed.TEXT_MAX_LENGTH) {
                 eb.addField(
@@ -820,9 +829,20 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                     false
             );
         }
-        for(int i = 0; i < e.getStackTrace().length; i++) {
-            eb.addField("Error Stack " + i, e.getStackTrace()[i].toString(), false);
+
+        if(!showFullStackTrace) {
+            eb.addField(
+                    "Error Stack 0/" + e.getStackTrace().length,
+                    e.getStackTrace()[0].toString(),
+                    false
+            );
+            eb.setFooter("Full stack trace hidden. You can toggle this in your user settings.");
+        } else {
+            for(int i = 0; i < e.getStackTrace().length; i++) {
+                eb.addField("Error Stack " + i, e.getStackTrace()[i].toString(), false);
+            }
         }
+
         eb.setColor(Color.RED);
 
         return eb.build();

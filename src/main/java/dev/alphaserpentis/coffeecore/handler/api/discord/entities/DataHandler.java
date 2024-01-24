@@ -60,6 +60,28 @@ public class DataHandler<T extends EntityData> extends AbstractDataHandler<T> {
     }
 
     /**
+     * Gets the specified entity data.
+     * <p>
+     * <b>Implementation Note:</b> This method will create a new instance of the specified {@link EntityData} type if
+     * the entity data does not exist.
+     * @param entityType The identifier to check which mapping to use.
+     * @param id The ID of the entity (server/user).
+     * @return The entity data.
+     */
+    @Override
+    @NonNull
+    public T getEntityData(@NonNull String entityType, long id) {
+        T data = entityDataHashMap.get(entityType).get(id);
+
+        if(data == null) {
+            data = createNewEntityData(entityType);
+            entityDataHashMap.get(entityType).put(id, data);
+        }
+
+        return data;
+    }
+
+    /**
      * Creates a new instance of the specified {@link EntityData} type.
      * <p>
      * <b>This method should be overridden if you're extending this class or have additional entity types!</b>
@@ -68,7 +90,7 @@ public class DataHandler<T extends EntityData> extends AbstractDataHandler<T> {
      */
     @Override
     @SuppressWarnings("unchecked")
-    protected T createNewEntityData(@NonNull String entityType) {
+    public T createNewEntityData(@NonNull String entityType) {
         String type = getEntityTypes()
                 .stream()
                 .filter(type1 -> type1.getId().equals(entityType))

@@ -3,6 +3,7 @@ package dev.alphaserpentis.coffeecore.commands.defaultcommands;
 import dev.alphaserpentis.coffeecore.commands.BotCommand;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 import dev.alphaserpentis.coffeecore.data.entity.ServerData;
+import dev.alphaserpentis.coffeecore.data.entity.UserData;
 import dev.alphaserpentis.coffeecore.handler.api.discord.entities.DataHandler;
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -12,8 +13,8 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
 
-import java.io.IOException;
 import java.util.Objects;
 
 public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEvent> {
@@ -35,20 +36,28 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
     @NonNull
     public CommandResponse<MessageEmbed> runCommand(long userId, @NonNull SlashCommandInteractionEvent event) {
         EmbedBuilder eb = new EmbedBuilder();
+        String subcommandGroup = Objects.requireNonNull(event.getSubcommandGroup());
 
-        eb.setTitle("Server Settings");
+        if(subcommandGroup.equals("user")) {
+            eb.setTitle("User Settings");
 
-        if(event.getGuild() == null) {
-            eb.setDescription("This command can only be used in a server.");
-        } else {
+            if(Objects.equals(event.getSubcommandName(), "fullerror")) {
+                setUserFullError(userId, eb);
+            } else {
+                throw new IllegalStateException("Unexpected value: " + event.getSubcommandName());
+            }
+        } else if(subcommandGroup.equals("server")) {
+            eb.setTitle("Server Settings");
+
+            if(event.getGuild() == null) {
+                eb.setDescription("You must run this command in a server.");
+                eb.setColor(0xff0000);
+                return new CommandResponse<>(isOnlyEphemeral(), eb.build());
+            }
+
             if(isUserPermissioned(Objects.requireNonNull(event.getMember()))) {
-                // This will be swapped for a switch statement when more settings are added.
                 if(Objects.equals(event.getSubcommandName(), "ephemeral")) {
-                    try {
-                        setServerEphemeral(event.getGuild().getIdLong(), eb);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    setServerEphemeral(event.getGuild().getIdLong(), eb);
                 }
             } else {
                 eb.setDescription(
@@ -59,6 +68,8 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
                 );
                 eb.setColor(0xff0000);
             }
+        } else {
+            throw new IllegalStateException("Unexpected value: " + subcommandGroup);
         }
 
         return new CommandResponse<>(isOnlyEphemeral(), eb.build());
@@ -66,12 +77,28 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
 
     @Override
     public void updateCommand(@NonNull JDA jda) {
-        SubcommandData ephemeral = new SubcommandData(
-                "ephemeral",
-                "Toggle whether the bot's responses are ephemeral"
-        );
+        SubcommandGroupData userSettings = new SubcommandGroupData(
+                "user",
+                "Configure your personal settings with the bot"
+        )
+                .addSubcommands(
+                        new SubcommandData(
+                                "fullerror",
+                                "Toggle whether or not the bot will show the full stack trace"
+                        )
+                );
+        SubcommandGroupData serverSettings = new SubcommandGroupData(
+                "server",
+                "Configure the bot's settings for this server"
+        )
+                .addSubcommands(
+                        new SubcommandData(
+                                "ephemeral",
+                                "Toggle whether the bot's responses are ephemeral"
+                        )
+                );
 
-        jda.upsertCommand(name, description).addSubcommands(ephemeral).queue(
+        jda.upsertCommand(name, description).addSubcommandGroups(userSettings, serverSettings).queue(
                 (cmd) -> setGlobalCommandId(cmd.getIdLong())
         );
     }
@@ -80,9 +107,24 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
         return member.hasPermission(Permission.MANAGE_SERVER) || member.hasPermission(Permission.ADMINISTRATOR);
     }
 
-    private void setServerEphemeral(long guildId, EmbedBuilder eb) throws IOException {
-        DataHandler<?> sdh = (DataHandler<?>) core.getDataHandler();
-        ServerData sd = (ServerData) sdh.getEntityData("guild", guildId);
+    private void setUserFullError(long userId, EmbedBuilder eb) {
+        DataHandler<?> dh = (DataHandler<?>) core.getDataHandler();
+        UserData ud = (UserData) dh.getEntityData("user", userId);
+
+        if(ud.getShowFullStackTrace()) {
+            ud.setShowFullStackTrace(false);
+            eb.setDescription("The bot will no longer show the full stack trace.");
+        } else {
+            ud.setShowFullStackTrace(true);
+            eb.setDescription("The bot will now show the full stack trace.");
+        }
+
+        dh.updateEntityData();
+    }
+
+    private void setServerEphemeral(long guildId, EmbedBuilder eb) {
+        DataHandler<?> dh = (DataHandler<?>) core.getDataHandler();
+        ServerData sd = (ServerData) dh.getEntityData("guild", guildId);
 
         if(sd.getOnlyEphemeral()) {
             sd.setOnlyEphemeral(false);
@@ -92,6 +134,6 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
             eb.setDescription("The bot's responses are now ephemeral.");
         }
 
-        sdh.updateEntityData();
+        dh.updateEntityData();
     }
 }

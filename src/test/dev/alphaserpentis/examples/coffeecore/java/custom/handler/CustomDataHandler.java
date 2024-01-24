@@ -28,7 +28,7 @@ public class CustomDataHandler extends DataHandler<CustomServerData> {
     }
 
     @Override
-    protected CustomServerData createNewEntityData(@NonNull String entityId) {
+    public CustomServerData createNewEntityData(@NonNull String entityId) {
         return new CustomServerData();
     }
 }
