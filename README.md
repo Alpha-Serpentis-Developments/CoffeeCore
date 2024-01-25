@@ -42,7 +42,7 @@ implementation 'dev.alphaserpentis:CoffeeCore:0.6.2-alpha'
 <dependency>
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.6.2-alpha-120423-SNAPSHOT</version>
+    <version>0.7.0-alpha-011924-SNAPSHOT</version>
 </dependency>
 ```
 

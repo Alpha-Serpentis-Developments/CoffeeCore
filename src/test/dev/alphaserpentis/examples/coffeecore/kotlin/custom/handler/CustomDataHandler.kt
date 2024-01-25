@@ -20,7 +20,7 @@ class CustomDataHandler
     typeToken: TypeToken<Map<String, Map<Long?, CustomServerData?>?>>,
     jsonDeserializer: CustomEntityDataDeserializer
 ) : DataHandler<CustomServerData?>(path, typeToken, jsonDeserializer) {
-    override fun createNewEntityData(): CustomServerData {
+    override fun createNewEntityData(ignored: String): CustomServerData {
         return CustomServerData()
     }
 }

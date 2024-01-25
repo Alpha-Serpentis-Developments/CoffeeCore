@@ -32,12 +32,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
 /**
- * The handler for all the commands to be registered with the bot. This handles registration and execution of the commands.
+ * The handler for all the commands to be registered with the bot. This handles registration and execution of the
+ * commands.
  */
 public class CommandsHandler extends ListenerAdapter {
     /**
-     * The mapping of {@link BotCommand} that have been registered to the bot. This is used to check for commands that are already
-     * registered and update them if necessary.
+     * The mapping of {@link BotCommand} that have been registered to the bot. This is used to check for commands that
+     * are already registered and update them if necessary.
      */
     protected final HashMap<String, BotCommand<?, ?>> mapOfCommands = new HashMap<>();
     /**
@@ -93,9 +94,9 @@ public class CommandsHandler extends ListenerAdapter {
     }
 
     /**
-     * Provided a mapping of {@link BotCommand}, this will check for any commands that are already registered and update them if
-     * necessary. If the command is not registered, it will register it. If the command is registered, but not in the
-     * mapping, it will remove it.
+     * Provided a mapping of {@link BotCommand}, this will check for any commands that are already registered and update
+     * them if necessary. If the command is not registered, it will register it. If the command is registered, but not
+     * in the mapping, it will remove it.
      * @param mapOfCommands The mapping of commands to check and register
      * @param updateCommands Whether to update the commands if they are already registered
      */

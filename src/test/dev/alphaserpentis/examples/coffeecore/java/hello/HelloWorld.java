@@ -27,9 +27,10 @@ public class HelloWorld {
         HelloCommandText helloCommandText = new HelloCommandText();
         HelloCommandEmbed helloCommandEmbed = new HelloCommandEmbed();
         HelloCommandButton helloCommandButton = new HelloCommandButton();
+        HelloError helloError = new HelloError();
         CoffeeCoreBuilder<?> builder = new CoffeeCoreBuilder<>().setSettings(botSettings);
         CoffeeCore core = builder.build(dotenv.get("DISCORD_BOT_TOKEN"));
 
-        core.registerCommands(helloCommandText, helloCommandEmbed, helloCommandButton);
+        core.registerCommands(helloCommandText, helloCommandEmbed, helloCommandButton, helloError);
     }
 }
