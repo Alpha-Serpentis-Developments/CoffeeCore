@@ -838,8 +838,12 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             );
             eb.setFooter("Full stack trace hidden. You can toggle this in your user settings.");
         } else {
-            for(int i = 0; i < e.getStackTrace().length; i++) {
+            for(int i = 0; i < Math.min(24, e.getStackTrace().length); i++) {
                 eb.addField("Error Stack " + i, e.getStackTrace()[i].toString(), false);
+            }
+
+            if(e.getStackTrace().length > 24) {
+                eb.setFooter("Parts of the stack trace have been omitted due to Discord limitations.");
             }
         }
 

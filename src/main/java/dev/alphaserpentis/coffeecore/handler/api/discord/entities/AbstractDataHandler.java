@@ -85,21 +85,19 @@ public abstract class AbstractDataHandler<T extends EntityData> extends Listener
      * Initializes the data handler.
      * <p>
      * This will assign a default executor of {@link Executors#newSingleThreadScheduledExecutor()}.
-     * @param container The {@link ContainerHelper} instance to get the entities from.
+     * @param core The {@link CoffeeCore} instance.
      * @throws IOException If the bot fails to write to the entity data file.
      */
-    public void init(@NonNull ContainerHelper container, @NonNull CoffeeCore core) throws IOException {
-        init(container, core, Executors.newSingleThreadScheduledExecutor());
+    public void init(@NonNull CoffeeCore core) throws IOException {
+        init(core, Executors.newSingleThreadScheduledExecutor());
     }
 
     /**
      * Initializes the data handler.
-     * @param container The {@link ContainerHelper} instance to get the entities from.
      * @param core The {@link CoffeeCore} instance.
      * @param executor The executor to asynchronously update the entity data file.
      */
     public void init(
-            @NonNull ContainerHelper container,
             @NonNull CoffeeCore core,
             @NonNull ScheduledExecutorService executor
     ) {
@@ -112,7 +110,7 @@ public abstract class AbstractDataHandler<T extends EntityData> extends Listener
             entityDataHashMap.computeIfAbsent(entityType.getId(), id -> new HashMap<>());
         }
 
-        List<Guild> guilds = container.getGuilds();
+        List<Guild> guilds = ContainerHelper.getGuilds(core.getActiveContainer());
         ArrayList<Long> serversActuallyJoined = new ArrayList<>(guilds.size());
         Map<Long, T> guildData = entityDataHashMap.get("guild");
 

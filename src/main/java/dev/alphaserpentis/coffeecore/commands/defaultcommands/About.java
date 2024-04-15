@@ -75,7 +75,7 @@ public class About extends BotCommand<MessageEmbed, SlashCommandInteractionEvent
         if(info.displayServersInfo())
             eb.addField(
                     "Servers",
-                    "Total: " + new ContainerHelper(core.getActiveContainer()).getGuilds().size(),
+                    "Total: " + ContainerHelper.getGuilds(core.getActiveContainer()).size(),
                     false
             );
     }

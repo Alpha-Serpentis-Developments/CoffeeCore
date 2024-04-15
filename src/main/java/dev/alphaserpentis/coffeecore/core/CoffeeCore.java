@@ -12,7 +12,6 @@ import dev.alphaserpentis.coffeecore.data.bot.BotSettings;
 import dev.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;
 import dev.alphaserpentis.coffeecore.handler.api.discord.entities.AbstractDataHandler;
 import dev.alphaserpentis.coffeecore.handler.api.discord.entities.DataHandler;
-import dev.alphaserpentis.coffeecore.helper.ContainerHelper;
 import dev.alphaserpentis.coffeecore.serialization.EntityDataDeserializer;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
@@ -57,14 +56,14 @@ public class CoffeeCore {
 
     public CoffeeCore(
             @NonNull BotSettings settings,
-            @NonNull IGuildChannelContainer container
+            @NonNull IGuildChannelContainer<?> container
     ) {
         this(settings, container, null, null);
     }
 
     public CoffeeCore(
             @NonNull BotSettings settings,
-            @NonNull IGuildChannelContainer container,
+            @NonNull IGuildChannelContainer<?> container,
             @Nullable AbstractDataHandler<?> dataHandler
     ) {
         this(settings, container, dataHandler, null);
@@ -72,7 +71,7 @@ public class CoffeeCore {
 
     public CoffeeCore(
             @NonNull BotSettings settings,
-            @NonNull IGuildChannelContainer container,
+            @NonNull IGuildChannelContainer<?> container,
             @Nullable CommandsHandler commandsHandler
     ) {
         this(settings, container, null, commandsHandler);
@@ -80,7 +79,7 @@ public class CoffeeCore {
 
     public CoffeeCore(
             @NonNull BotSettings settings,
-            @NonNull IGuildChannelContainer container,
+            @NonNull IGuildChannelContainer<?> container,
             @Nullable AbstractDataHandler<?> dataHandler,
             @Nullable CommandsHandler commandsHandler,
             @Nullable Object... additionalListeners
@@ -89,17 +88,18 @@ public class CoffeeCore {
 
         try {
             determineAndSetContainer(container);
-            ContainerHelper containerHelper = new ContainerHelper(container);
-            this.dataHandler = Objects.requireNonNullElse(
-                    dataHandler,
-                    new DataHandler<>(
-                            Path.of(settings.getServerDataPath()),
-                            new TypeToken<>() {},
-                            new EntityDataDeserializer<>()
-                    )
-            );
 
-            this.dataHandler.init(containerHelper, this);
+            if(dataHandler == null) {
+                this.dataHandler = new DataHandler<>(
+                        Path.of(settings.getServerDataPath()),
+                        new TypeToken<>() {},
+                        new EntityDataDeserializer<>()
+                );
+            } else {
+                this.dataHandler = dataHandler;
+            }
+
+            this.dataHandler.init(this);
         } catch (IllegalStateException | InterruptedException | IOException | IllegalArgumentException e) {
             e.printStackTrace();
             System.exit(1);
@@ -189,7 +189,7 @@ public class CoffeeCore {
      * @throws IllegalStateException If the container has not been determined yet. This may be caused by calling it too early.
      */
     @NonNull
-    public IGuildChannelContainer getActiveContainer() {
+    public IGuildChannelContainer<?> getActiveContainer() {
         if(jda != null) {
             return jda;
         } else if(shardManager != null) {
@@ -214,7 +214,7 @@ public class CoffeeCore {
      */
     @NonNull
     public SelfUser getSelfUser() {
-        IGuildChannelContainer container = getActiveContainer();
+        IGuildChannelContainer<?> container = getActiveContainer();
 
         if(container instanceof JDA j)
             return j.getSelfUser();
@@ -228,7 +228,7 @@ public class CoffeeCore {
      * @throws InterruptedException If the bot fails to shut down within the specified duration
      */
     public void shutdown(@NonNull Duration duration) throws InterruptedException {
-        IGuildChannelContainer container = getActiveContainer();
+        IGuildChannelContainer<?> container = getActiveContainer();
 
         if(container instanceof JDA j) {
             j.shutdown();
@@ -314,7 +314,7 @@ public class CoffeeCore {
      * @throws IllegalStateException If the container has already been determined.
      * @throws IllegalArgumentException If the container is not a {@link JDA} instance or a {@link ShardManager}
      */
-    public void determineAndSetContainer(@NonNull IGuildChannelContainer container) throws InterruptedException {
+    public void determineAndSetContainer(@NonNull IGuildChannelContainer<?> container) throws InterruptedException {
         if(jda != null || shardManager != null)
             throw new IllegalStateException("The container has already been determined.");
 
@@ -337,7 +337,7 @@ public class CoffeeCore {
      * @param listeners The listeners to add to the container.
      */
     public void addEventListenersToContainer(@NonNull Object... listeners) {
-        IGuildChannelContainer container = getActiveContainer();
+        IGuildChannelContainer<?> container = getActiveContainer();
 
         if(container instanceof JDA j)
             j.addEventListener(listeners);

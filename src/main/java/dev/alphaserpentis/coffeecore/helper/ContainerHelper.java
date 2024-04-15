@@ -17,23 +17,17 @@ import java.util.List;
  */
 public class ContainerHelper {
 
-    private final IGuildChannelContainer container;
-
-    public ContainerHelper(@NonNull IGuildChannelContainer container) {
-        if(container instanceof JDA || container instanceof ShardManager)
-            this.container = container;
-        else
-            throw new IllegalArgumentException("The container must be either a JDA or a ShardManager.");
-    }
-
     /**
      * Gets a list of {@link Guild}s from the container.
+     * @param container The container to get the guilds from.
      * @return A list of {@link Guild}s from the container.
      * @see JDA#getGuilds()
      * @see ShardManager#getGuilds()
      */
     @NonNull
-    public List<Guild> getGuilds() {
+    public static List<Guild> getGuilds(@NonNull IGuildChannelContainer<?> container) {
+        validate(container);
+
         if(container instanceof JDA j) {
             return j.getGuilds();
         } else {
@@ -43,11 +37,14 @@ public class ContainerHelper {
 
     /**
      * Sets the activity for the bot to display.
+     * @param container The container to set the activity for.
      * @param activity {@link Activity} to set.
      * @see Presence#setActivity(Activity)
      * @see ShardManager#setActivity(Activity)
      */
-    public void setActivity(@NonNull Activity activity) {
+    public static void setActivity(@NonNull IGuildChannelContainer<?> container, @NonNull Activity activity) {
+        validate(container);
+
         if(container instanceof JDA j) {
             j.getPresence().setActivity(activity);
         } else {
@@ -57,11 +54,14 @@ public class ContainerHelper {
 
     /**
      * Adds event listeners to either the {@link JDA} or {@link ShardManager}.
+     * @param container The container to add the listeners to.
      * @param listeners The listeners to add.
      * @see JDA#addEventListener(Object...)
      * @see ShardManager#addEventListener(Object...)
      */
-    public void addEventListeners(@NonNull Object... listeners) {
+    public static void addEventListeners(@NonNull IGuildChannelContainer<?> container, @NonNull Object... listeners) {
+        validate(container);
+
         if(container instanceof JDA jda) {
             jda.addEventListener(listeners);
         } else {
@@ -69,4 +69,16 @@ public class ContainerHelper {
         }
     }
 
+    /**
+     * Validates that the container is an instance of {@link JDA} or {@link ShardManager}.
+     * @param container The container to validate.
+     * @throws IllegalArgumentException If the container is not an instance of {@link JDA} or {@link ShardManager}.
+     * @see JDA
+     * @see ShardManager
+     */
+    private static void validate(@NonNull IGuildChannelContainer<?> container) {
+        if(!(container instanceof JDA) && !(container instanceof ShardManager)) {
+            throw new IllegalArgumentException("Container must be an instance of JDA or ShardManager");
+        }
+    }
 }

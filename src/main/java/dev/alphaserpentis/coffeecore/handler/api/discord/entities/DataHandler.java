@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import dev.alphaserpentis.coffeecore.commands.BotCommand;
 import dev.alphaserpentis.coffeecore.data.entity.EntityData;
+import dev.alphaserpentis.coffeecore.data.entity.EntityType;
 import dev.alphaserpentis.coffeecore.data.entity.ServerData;
 import dev.alphaserpentis.coffeecore.data.entity.UserData;
 import dev.alphaserpentis.coffeecore.serialization.EntityDataDeserializer;
@@ -45,6 +46,35 @@ public class DataHandler<T extends EntityData> extends AbstractDataHandler<T> {
             @NonNull EntityDataDeserializer<T> jsonDeserializer
     ) throws IOException {
         super(path);
+        Gson gson;
+        Reader reader;
+
+        jsonDeserializer.setDataHandler(this);
+        gson = new GsonBuilder()
+                .registerTypeAdapter(typeToken.getType(), jsonDeserializer)
+                .create();
+        reader = Files.newBufferedReader(path);
+        entityDataHashMap = Objects.requireNonNullElse(
+                gson.fromJson(reader, typeToken.getType()),
+                new HashMap<>()
+        );
+    }
+
+    /**
+     * Initializes the data handler.
+     * @param path The path to the entity data file.
+     * @param typeToken The {@link TypeToken} of the mapping of entity IDs to {@link EntityData}.
+     * @param jsonDeserializer The {@link EntityDataDeserializer} to deserialize the entity data.
+     * @param entityTypes The list of entity types to handle.
+     * @throws IOException If the bot fails to read the entity data file.
+     */
+    public DataHandler(
+            @NonNull Path path,
+            @NonNull TypeToken<Map<String, Map<Long, T>>> typeToken,
+            @NonNull EntityDataDeserializer<T> jsonDeserializer,
+            @NonNull List<EntityType> entityTypes
+    ) throws IOException {
+        super(path, entityTypes);
         Gson gson;
         Reader reader;
 

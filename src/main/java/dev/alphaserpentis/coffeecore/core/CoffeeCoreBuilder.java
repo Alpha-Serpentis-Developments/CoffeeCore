@@ -80,7 +80,7 @@ public class CoffeeCoreBuilder<T> {
     public CoffeeCore build(@NonNull String token) {
         return new CoffeeCore(
                 settings,
-                new BuilderHelper<>(createBuilderInstance(token)).build(),
+                BuilderHelper.build(createBuilderInstance(token)),
                 dataHandler,
                 commandsHandler,
                 additionalListeners

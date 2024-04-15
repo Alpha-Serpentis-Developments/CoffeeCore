@@ -7,25 +7,16 @@ import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 
 /**
  * A helper class for building JDA instances.
- * @param <T> The type of builder to use. Must be either a {@link JDABuilder} or a {@link DefaultShardManagerBuilder}.
  */
-public class BuilderHelper<T> {
-    private final T builder;
-
-    public BuilderHelper(@NonNull T builder) {
-        if(!(builder instanceof JDABuilder) && !(builder instanceof DefaultShardManagerBuilder))
-            throw new IllegalArgumentException(
-                    "The builder must be either a JDABuilder or a DefaultShardManagerBuilder."
-            );
-
-        this.builder = builder;
-    }
+public class BuilderHelper {
 
     @NonNull
-    public IGuildChannelContainer build() {
+    public static <T> IGuildChannelContainer<?> build(@NonNull T builder) {
         if(builder instanceof JDABuilder jdaBuilder)
             return jdaBuilder.build();
+        else if(builder instanceof DefaultShardManagerBuilder shardManagerBuilder)
+            return (shardManagerBuilder).build();
         else
-            return ((DefaultShardManagerBuilder) builder).build();
+            throw new IllegalArgumentException("Builder must be either a JDABuilder or a DefaultShardManagerBuilder");
     }
 }

@@ -107,7 +107,7 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
         return member.hasPermission(Permission.MANAGE_SERVER) || member.hasPermission(Permission.ADMINISTRATOR);
     }
 
-    private void setUserFullError(long userId, EmbedBuilder eb) {
+    protected void setUserFullError(long userId, EmbedBuilder eb) {
         DataHandler<?> dh = (DataHandler<?>) core.getDataHandler();
         UserData ud = (UserData) dh.getEntityData("user", userId);
 
@@ -122,7 +122,7 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
         dh.updateEntityData();
     }
 
-    private void setServerEphemeral(long guildId, EmbedBuilder eb) {
+    protected void setServerEphemeral(long guildId, EmbedBuilder eb) {
         DataHandler<?> dh = (DataHandler<?>) core.getDataHandler();
         ServerData sd = (ServerData) dh.getEntityData("guild", guildId);
 
