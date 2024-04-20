@@ -8,6 +8,7 @@ import dev.alphaserpentis.coffeecore.data.entity.EntityData;
 import dev.alphaserpentis.coffeecore.data.entity.EntityType;
 import dev.alphaserpentis.coffeecore.data.entity.ServerData;
 import dev.alphaserpentis.coffeecore.data.entity.UserData;
+import dev.alphaserpentis.coffeecore.helper.Validate;
 import dev.alphaserpentis.coffeecore.serialization.EntityDataDeserializer;
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
@@ -49,6 +50,8 @@ public class DataHandler<T extends EntityData> extends AbstractDataHandler<T> {
         Gson gson;
         Reader reader;
 
+        Validate.throwOnNull(typeToken, jsonDeserializer);
+
         jsonDeserializer.setDataHandler(this);
         gson = new GsonBuilder()
                 .registerTypeAdapter(typeToken.getType(), jsonDeserializer)
@@ -78,6 +81,8 @@ public class DataHandler<T extends EntityData> extends AbstractDataHandler<T> {
         Gson gson;
         Reader reader;
 
+        Validate.throwOnNull(typeToken, jsonDeserializer);
+
         jsonDeserializer.setDataHandler(this);
         gson = new GsonBuilder()
                 .registerTypeAdapter(typeToken.getType(), jsonDeserializer)
@@ -101,6 +106,8 @@ public class DataHandler<T extends EntityData> extends AbstractDataHandler<T> {
     @Override
     @NonNull
     public T getEntityData(@NonNull String entityType, long id) {
+        Validate.throwOnBlank(entityType);
+
         T data = entityDataHashMap.get(entityType).get(id);
 
         if(data == null) {
@@ -121,6 +128,8 @@ public class DataHandler<T extends EntityData> extends AbstractDataHandler<T> {
     @Override
     @SuppressWarnings("unchecked")
     public T createNewEntityData(@NonNull String entityType) {
+        Validate.throwOnBlank(entityType);
+
         String type = getEntityTypes()
                 .stream()
                 .filter(type1 -> type1.getId().equals(entityType))

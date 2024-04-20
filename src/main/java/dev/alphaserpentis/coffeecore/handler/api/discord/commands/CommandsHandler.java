@@ -4,6 +4,7 @@ import dev.alphaserpentis.coffeecore.commands.BotCommand;
 import dev.alphaserpentis.coffeecore.commands.ButtonCommand;
 import dev.alphaserpentis.coffeecore.commands.ModalCommand;
 import dev.alphaserpentis.coffeecore.core.CoffeeCore;
+import dev.alphaserpentis.coffeecore.helper.Validate;
 import dev.alphaserpentis.coffeecore.hook.CommandHook;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
@@ -72,7 +73,7 @@ public class CommandsHandler extends ListenerAdapter {
     protected Function<Throwable, ?> handleRegistrationError;
 
     public CommandsHandler(@NonNull ExecutorService executor) {
-        this.executor = executor;
+        this.executor = Validate.throwOnNull(executor);
     }
 
     /**
@@ -86,11 +87,11 @@ public class CommandsHandler extends ListenerAdapter {
     }
 
     public void setHandleInteractionError(@NonNull Function<Throwable, ?> handleInteractionError) {
-        this.handleInteractionError = handleInteractionError;
+        this.handleInteractionError = Validate.throwOnNull(handleInteractionError);
     }
 
     public void setHandleRegistrationError(@NonNull Function<Throwable, ?> handleRegistrationError) {
-        this.handleRegistrationError = handleRegistrationError;
+        this.handleRegistrationError = Validate.throwOnNull(handleRegistrationError);
     }
 
     /**
@@ -151,6 +152,8 @@ public class CommandsHandler extends ListenerAdapter {
      * @param guild The guild to add the commands to
      */
     public void upsertGuildCommandsToGuild(@NonNull List<BotCommand<?, ?>> cmds, @NonNull Guild guild) {
+        Validate.throwOnNull(cmds, guild);
+
         cmds.stream().filter(cmd -> isGuildEligibleForCommand(guild, cmd)).forEach(
                 cmd -> {
                     try {
@@ -167,10 +170,10 @@ public class CommandsHandler extends ListenerAdapter {
     public void onSlashCommandInteraction(@NonNull SlashCommandInteractionEvent event) {
         executor.submit(() -> {
             try {
-                var cmd = Objects.requireNonNull(
+                var cmd = Validate.throwOnNull(
                         (BotCommand<?, SlashCommandInteractionEvent>) getCommand(event.getName())
                 );
-                Message msg = cmd.handleReply(event, cmd);
+                Message msg = Validate.throwOnNull(cmd.handleReply(event, cmd));
 
                 executePostExecutionHook(cmd, event, msg);
             } catch(Exception e) {
@@ -184,7 +187,7 @@ public class CommandsHandler extends ListenerAdapter {
     public void onUserContextInteraction(@NonNull UserContextInteractionEvent event) {
         executor.submit(() -> {
             try {
-                var cmd = Objects.requireNonNull(
+                var cmd = Validate.throwOnNull(
                         (BotCommand<?, UserContextInteractionEvent>) getCommand(event.getName())
                 );
                 Message msg = cmd.handleReply(event, cmd);
@@ -201,7 +204,7 @@ public class CommandsHandler extends ListenerAdapter {
     public void onMessageContextInteraction(@NonNull MessageContextInteractionEvent event) {
         executor.submit(() -> {
             try {
-                var cmd = Objects.requireNonNull(
+                var cmd = Validate.throwOnNull(
                         (BotCommand<?, MessageContextInteractionEvent>) getCommand(event.getName())
                 );
                 Message msg = cmd.handleReply(event, cmd);
@@ -217,8 +220,8 @@ public class CommandsHandler extends ListenerAdapter {
     public void onButtonInteraction(@NonNull ButtonInteractionEvent event) {
         executor.submit(() -> {
             try {
-                String buttonId = Objects.requireNonNull(event.getButton().getId());
-                var cmd = Objects.requireNonNull(
+                String buttonId = Validate.throwOnNull(event.getButton().getId());
+                var cmd = Validate.throwOnNull(
                         (ButtonCommand<?, ?>) getCommand(buttonId.substring(0, buttonId.indexOf("_")))
                 );
                 var optional = cmd.runButtonInteraction(event).orElse(null);
@@ -234,8 +237,8 @@ public class CommandsHandler extends ListenerAdapter {
     public void onModalInteraction(@NonNull ModalInteractionEvent event) {
         executor.submit(() -> {
             try {
-                String modalId = Objects.requireNonNull(event.getModalId());
-                var cmd = Objects.requireNonNull(
+                String modalId = Validate.throwOnNull(event.getModalId());
+                var cmd = Validate.throwOnNull(
                         (BotCommand<?, ?>) getCommand(modalId.substring(0, modalId.indexOf("_")))
                 );
                 var optional = ((ModalCommand) cmd).runModalInteraction(event);
@@ -291,6 +294,8 @@ public class CommandsHandler extends ListenerAdapter {
      * @return {@code true} if the guild is eligible for the command, {@code false} otherwise
      */
     public boolean isGuildEligibleForCommand(@NonNull Guild guild, @NonNull BotCommand<?, ?> cmd) {
+        Validate.throwOnNull(guild, cmd);
+
         return cmd.getCommandVisibility() == BotCommand.CommandVisibility.GUILD
                 && (cmd.getGuildsToRegisterIn().isEmpty() || cmd.getGuildsToRegisterIn().contains(guild.getIdLong()));
     }

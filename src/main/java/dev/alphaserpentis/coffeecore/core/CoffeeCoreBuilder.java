@@ -4,6 +4,7 @@ import dev.alphaserpentis.coffeecore.data.bot.BotSettings;
 import dev.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;
 import dev.alphaserpentis.coffeecore.handler.api.discord.entities.AbstractDataHandler;
 import dev.alphaserpentis.coffeecore.helper.BuilderHelper;
+import dev.alphaserpentis.coffeecore.helper.Validate;
 import io.reactivex.rxjava3.annotations.Experimental;
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.JDA;
@@ -78,6 +79,8 @@ public class CoffeeCoreBuilder<T> {
      */
     @NonNull
     public CoffeeCore build(@NonNull String token) {
+        Validate.throwOnNull(token);
+
         return new CoffeeCore(
                 settings,
                 BuilderHelper.build(createBuilderInstance(token)),
@@ -95,7 +98,7 @@ public class CoffeeCoreBuilder<T> {
      */
     @NonNull
     public CoffeeCoreBuilder<?> setSettings(@NonNull BotSettings settings) {
-        this.settings = settings;
+        this.settings = Validate.throwOnNull(settings);
         return this;
     }
 
@@ -107,7 +110,7 @@ public class CoffeeCoreBuilder<T> {
     @Experimental
     @NonNull
     public CoffeeCoreBuilder<?> setDataHandler(@NonNull AbstractDataHandler<?> dataHandler) {
-        this.dataHandler = dataHandler;
+        this.dataHandler = Validate.throwOnNull(dataHandler);
         return this;
     }
 
@@ -119,7 +122,7 @@ public class CoffeeCoreBuilder<T> {
     @Experimental
     @NonNull
     public CoffeeCoreBuilder<?> setCommandsHandler(@NonNull CommandsHandler commandsHandler) {
-        this.commandsHandler = commandsHandler;
+        this.commandsHandler = Validate.throwOnNull(commandsHandler);
         return this;
     }
 
@@ -130,7 +133,7 @@ public class CoffeeCoreBuilder<T> {
      */
     @NonNull
     public CoffeeCoreBuilder<?> setAdditionalListeners(@NonNull Object... additionalListeners) {
-        this.additionalListeners = additionalListeners;
+        this.additionalListeners = Validate.throwOnNull(additionalListeners);
         return this;
     }
 
@@ -142,7 +145,7 @@ public class CoffeeCoreBuilder<T> {
      */
     @NonNull
     public CoffeeCoreBuilder<?> setChunkingFilter(@NonNull ChunkingFilter chunkingFilter) {
-        this.chunkingFilter = chunkingFilter;
+        this.chunkingFilter = Validate.throwOnNull(chunkingFilter);
         return this;
     }
 
@@ -154,7 +157,7 @@ public class CoffeeCoreBuilder<T> {
      */
     @NonNull
     public CoffeeCoreBuilder<?> setEnabledCacheFlags(@NonNull Collection<CacheFlag> enabledCacheFlags) {
-        this.enabledCacheFlags = enabledCacheFlags;
+        this.enabledCacheFlags = Validate.throwOnNull(enabledCacheFlags);
         return this;
     }
 
@@ -166,7 +169,7 @@ public class CoffeeCoreBuilder<T> {
      */
     @NonNull
     public CoffeeCoreBuilder<?> setDisabledCacheFlags(@NonNull Collection<CacheFlag> disabledCacheFlags) {
-        this.disabledCacheFlags = disabledCacheFlags;
+        this.disabledCacheFlags = Validate.throwOnNull(disabledCacheFlags);
         return this;
     }
 
@@ -178,7 +181,7 @@ public class CoffeeCoreBuilder<T> {
      */
     @NonNull
     public CoffeeCoreBuilder<?> setEnabledGatewayIntents(@NonNull Collection<GatewayIntent> enabledGatewayIntents) {
-        this.enabledGatewayIntents = enabledGatewayIntents;
+        this.enabledGatewayIntents = Validate.throwOnNull(enabledGatewayIntents);
         return this;
     }
 
@@ -190,7 +193,7 @@ public class CoffeeCoreBuilder<T> {
      */
     @NonNull
     public CoffeeCoreBuilder<?> setDisabledGatewayIntents(@NonNull Collection<GatewayIntent> disabledGatewayIntents) {
-        this.disabledGatewayIntents = disabledGatewayIntents;
+        this.disabledGatewayIntents = Validate.throwOnNull(disabledGatewayIntents);
         return this;
     }
 
@@ -201,7 +204,7 @@ public class CoffeeCoreBuilder<T> {
      */
     @NonNull
     public CoffeeCoreBuilder<?> setBuilderConfiguration(@NonNull BuilderConfiguration builderConfiguration) {
-        this.builderConfiguration = builderConfiguration;
+        this.builderConfiguration = Validate.throwOnNull(builderConfiguration);
         return this;
     }
 
@@ -213,7 +216,7 @@ public class CoffeeCoreBuilder<T> {
      */
     @NonNull
     public CoffeeCoreBuilder<?> setMemberCachePolicy(@NonNull MemberCachePolicy memberCachePolicy) {
-        this.memberCachePolicy = memberCachePolicy;
+        this.memberCachePolicy = Validate.throwOnNull(memberCachePolicy);
         return this;
     }
 
@@ -254,6 +257,8 @@ public class CoffeeCoreBuilder<T> {
     @NonNull
     @SuppressWarnings("unchecked")
     private T createBuilderInstance(@NonNull String token) {
+        Validate.throwOnNull(token);
+
         if(enableSharding) {
             DefaultShardManagerBuilder shardManagerBuilder;
 

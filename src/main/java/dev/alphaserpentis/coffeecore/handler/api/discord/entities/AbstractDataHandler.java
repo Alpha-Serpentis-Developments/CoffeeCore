@@ -8,6 +8,7 @@ import dev.alphaserpentis.coffeecore.data.entity.EntityType;
 import dev.alphaserpentis.coffeecore.data.entity.ServerData;
 import dev.alphaserpentis.coffeecore.data.entity.UserData;
 import dev.alphaserpentis.coffeecore.helper.ContainerHelper;
+import dev.alphaserpentis.coffeecore.helper.Validate;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.entities.Guild;
@@ -77,8 +78,8 @@ public abstract class AbstractDataHandler<T extends EntityData> extends Listener
     }
 
     public AbstractDataHandler(@NonNull Path path, @NonNull List<EntityType> entityTypes) {
-        pathToFile = path;
-        this.entityTypes = entityTypes;
+        pathToFile = Validate.throwOnNull(path);
+        this.entityTypes = Validate.throwOnEmpty(entityTypes);
     }
 
     /**
@@ -101,6 +102,8 @@ public abstract class AbstractDataHandler<T extends EntityData> extends Listener
             @NonNull CoffeeCore core,
             @NonNull ScheduledExecutorService executor
     ) {
+        Validate.throwOnNull(core, executor);
+
         this.executor = executor;
         this.core = core;
         this.entityDataHashMap = Objects.requireNonNullElse(entityDataHashMap, new HashMap<>());
@@ -133,6 +136,8 @@ public abstract class AbstractDataHandler<T extends EntityData> extends Listener
      */
     @Nullable
     public T getEntityData(@NonNull String mapId, long id) {
+        Validate.throwOnNull(mapId);
+
         return entityDataHashMap.get(mapId).get(id);
     }
 
@@ -192,7 +197,13 @@ public abstract class AbstractDataHandler<T extends EntityData> extends Listener
             return;
 
         scheduledFuture = executor.schedule(
-                () -> writeToJSON(entityDataHashMap),
+                () -> {
+                    try {
+                        writeToJSON(entityDataHashMap);
+                    } catch (Exception e) {
+                        handleEntityDataException(e);
+                    }
+                },
                 10,
                 TimeUnit.SECONDS
         );
@@ -203,6 +214,8 @@ public abstract class AbstractDataHandler<T extends EntityData> extends Listener
      * @param data The data to write.
      */
     protected void writeToJSON(@NonNull Object data) {
+        Validate.throwOnNull(data);
+
         try(BufferedWriter writer = Files.newBufferedWriter(pathToFile)) {
             gson.toJson(data, writer);
 

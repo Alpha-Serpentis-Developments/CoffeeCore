@@ -1,5 +1,6 @@
 package dev.alphaserpentis.coffeecore.commands;
 
+import dev.alphaserpentis.coffeecore.helper.Validate;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.entities.Message;
@@ -79,7 +80,10 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
      * @param disabled Determines if the button is disabled.
      * @throws IllegalArgumentException If the key is already in use.
      */
+    @SuppressWarnings("unchecked") // According to javac the throwOnNull method is unchecked
     public void addButton(@NonNull String key, @NonNull ButtonStyle style, @NonNull String label, boolean disabled) {
+        Validate.throwOnNull(key, style, label);
+
         if(buttonHashMap.containsKey(key))
             throw new IllegalArgumentException("The key " + key + " is already in use!");
 
@@ -95,6 +99,7 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
      * @param disabled Determines if the button is disabled.
      * @throws IllegalArgumentException If the key is already in use.
      */
+    @SuppressWarnings("unchecked") // According to javac the throwOnNull method is unchecked
     public void addButton(
             @NonNull String key,
             @NonNull ButtonStyle style,
@@ -102,6 +107,8 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
             @Nullable Emoji emoji,
             boolean disabled
     ) {
+        Validate.throwOnNull(key, style);
+
         if(buttonHashMap.containsKey(key))
             throw new IllegalArgumentException("The key " + key + " is already in use!");
 
@@ -125,7 +132,9 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
      */
     @NonNull
     public String convertComponentIdToKey(@NonNull String componentId) {
-        return componentId.substring(getName().length() + 1);
+        return Validate
+                .throwOnNull(componentId)
+                .substring(getName().length() + 1);
     }
 
     @Override

@@ -6,7 +6,7 @@
 
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.7.0-alpha-041124-SNAPSHOT</version>
+    <version>0.7.0-alpha-041924-SNAPSHOT</version>
     <name>Coffee Core</name>
     <description>Coffee Core is a JDA-based framework for Discord bots</description>
     <url>https://asrp.dev/#libraries</url>
@@ -38,7 +38,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.9.20</kotlin.version>
+        <kotlin.version>1.9.23</kotlin.version>
     </properties>
 
     <dependencies>
@@ -67,12 +67,17 @@
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-jdk8</artifactId>
             <version>${kotlin.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-test</artifactId>
             <version>${kotlin.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>RELEASE</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

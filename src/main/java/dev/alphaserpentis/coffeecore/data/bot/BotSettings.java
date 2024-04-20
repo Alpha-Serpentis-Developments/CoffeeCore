@@ -1,5 +1,6 @@
 package dev.alphaserpentis.coffeecore.data.bot;
 
+import dev.alphaserpentis.coffeecore.helper.Validate;
 import io.reactivex.rxjava3.annotations.NonNull;
 
 /**
@@ -42,11 +43,13 @@ public class BotSettings {
 
     public BotSettings(
             long botOwnerId,
-            String serverDataPath,
+            @NonNull String serverDataPath,
             boolean updateCommandsAtLaunch,
             boolean registerDefaultCommands,
-            AboutInformation aboutInformation
+            @NonNull AboutInformation aboutInformation
     ) {
+        Validate.throwOnNull(serverDataPath, aboutInformation);
+
         this.botOwnerId = botOwnerId;
         this.serverDataPath = serverDataPath;
         this.updateCommandsAtLaunch = updateCommandsAtLaunch;
@@ -77,6 +80,6 @@ public class BotSettings {
     }
 
     public void setAboutInformation(@NonNull AboutInformation aboutInformation) {
-        this.aboutInformation = aboutInformation;
+        this.aboutInformation = Validate.throwOnNull(aboutInformation);
     }
 }

@@ -12,6 +12,7 @@ import dev.alphaserpentis.coffeecore.data.bot.BotSettings;
 import dev.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;
 import dev.alphaserpentis.coffeecore.handler.api.discord.entities.AbstractDataHandler;
 import dev.alphaserpentis.coffeecore.handler.api.discord.entities.DataHandler;
+import dev.alphaserpentis.coffeecore.helper.Validate;
 import dev.alphaserpentis.coffeecore.serialization.EntityDataDeserializer;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
@@ -84,6 +85,8 @@ public class CoffeeCore {
             @Nullable CommandsHandler commandsHandler,
             @Nullable Object... additionalListeners
     ) {
+        Validate.throwOnNull(settings, container);
+
         this.settings = settings;
 
         try {
@@ -228,6 +231,8 @@ public class CoffeeCore {
      * @throws InterruptedException If the bot fails to shut down within the specified duration
      */
     public void shutdown(@NonNull Duration duration) throws InterruptedException {
+        Validate.throwOnNull(duration);
+
         IGuildChannelContainer<?> container = getActiveContainer();
 
         if(container instanceof JDA j) {
@@ -279,6 +284,8 @@ public class CoffeeCore {
      * @param command The command or commands to register.
      */
     public void registerCommands(@NonNull BotCommand<?, ?>... command) {
+        Validate.throwOnNull(command);
+
         HashMap<String, BotCommand<?, ?>> commands = new HashMap<>();
 
         if(settings.isRegisterDefaultCommands()) {
@@ -315,6 +322,8 @@ public class CoffeeCore {
      * @throws IllegalArgumentException If the container is not a {@link JDA} instance or a {@link ShardManager}
      */
     public void determineAndSetContainer(@NonNull IGuildChannelContainer<?> container) throws InterruptedException {
+        Validate.throwOnNull(container);
+
         if(jda != null || shardManager != null)
             throw new IllegalStateException("The container has already been determined.");
 
@@ -337,6 +346,8 @@ public class CoffeeCore {
      * @param listeners The listeners to add to the container.
      */
     public void addEventListenersToContainer(@NonNull Object... listeners) {
+        Validate.throwOnNull(listeners);
+
         IGuildChannelContainer<?> container = getActiveContainer();
 
         if(container instanceof JDA j)

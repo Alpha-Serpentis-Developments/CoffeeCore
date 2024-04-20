@@ -4,6 +4,7 @@ import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 import dev.alphaserpentis.coffeecore.data.entity.ServerData;
 import dev.alphaserpentis.coffeecore.data.entity.UserData;
+import dev.alphaserpentis.coffeecore.helper.Validate;
 import dev.alphaserpentis.coffeecore.hook.CommandHook;
 import dev.alphaserpentis.coffeecore.hook.defaults.MessageExpireHook;
 import dev.alphaserpentis.coffeecore.hook.defaults.RatelimitHook;
@@ -105,6 +106,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                 @NonNull String name,
                 @NonNull String description
         ) {
+            Validate.throwOnNull(name, description);
+
             this.name = name;
             this.description = description;
         }
@@ -116,7 +119,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
          */
         @NonNull
         public BotCommandOptions setName(@NonNull String name) {
-            this.name = name;
+            this.name = Validate.throwOnNull(name);
             return this;
         }
 
@@ -127,7 +130,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
          */
         @NonNull
         public BotCommandOptions setDescription(@NonNull String description) {
-            this.description = description;
+            this.description = Validate.throwOnNull(description);
             return this;
         }
 
@@ -138,7 +141,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
          */
         @NonNull
         public BotCommandOptions setHelpDescription(@NonNull String helpDescription) {
-            this.helpDescription = helpDescription;
+            this.helpDescription = Validate.throwOnNull(helpDescription);
             return this;
         }
 
@@ -259,7 +262,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
          */
         @NonNull
         public BotCommandOptions setCommandVisibility(@NonNull CommandVisibility commandVisibility) {
-            this.commandVisibility = commandVisibility;
+            this.commandVisibility = Validate.throwOnNull(commandVisibility);
             return this;
         }
 
@@ -270,7 +273,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
          */
         @NonNull
         public BotCommandOptions setCommandType(@NonNull Command.Type commandType) {
-            this.commandType = commandType;
+            this.commandType = Validate.throwOnNull(commandType);
             return this;
         }
 
@@ -283,7 +286,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
          */
         @NonNull
         public BotCommandOptions setGuildsToRegisterIn(@NonNull List<Long> guildsToRegisterIn) {
-            this.guildsToRegisterIn = guildsToRegisterIn;
+            this.guildsToRegisterIn = Validate.throwOnNull(guildsToRegisterIn);
             return this;
         }
 
@@ -294,7 +297,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
          */
         @NonNull
         public BotCommandOptions setHooks(@NonNull Collection<CommandHook> commandHooks) {
-            this.commandHooks.addAll(commandHooks);
+            this.commandHooks.addAll(Validate.throwOnEmpty(commandHooks));
             return this;
         }
 
@@ -323,6 +326,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     }
 
     public BotCommand(@NonNull BotCommandOptions options) {
+        Validate.throwOnNull(options);
+
         options.validate();
 
         name = options.name;
@@ -430,7 +435,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     }
 
     public void setCore(@NonNull CoffeeCore core) {
-        this.core = core;
+        this.core = Validate.throwOnNull(core);
     }
 
     @NonNull
@@ -468,6 +473,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @return a long ID of the command. If the command is not registered in the guild, it will return -1.
      */
     public long getGuildCommandId(@NonNull Guild guild) {
+        Validate.throwOnNull(guild);
+
         return getGuildCommandIds().computeIfAbsent(guild.getIdLong(), id ->
                 guild.retrieveCommands().complete().stream()
                         .filter(command -> command.getName().equals(getName()))
