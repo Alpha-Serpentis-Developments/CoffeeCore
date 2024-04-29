@@ -18,12 +18,11 @@ open class Sync(options: BotCommandOptions) : BotCommand<MessageEmbed, SlashComm
             .setDeferReplies(true)
             .setUseRatelimits(true)
             .setRatelimitLength(600)
+            .setCommandVisibility(CommandVisibility.GUILD)
     )
 
     override fun runCommand(userId: Long, event: SlashCommandInteractionEvent): CommandResponse<MessageEmbed> {
-        if (event.guild == null) {
-            return CommandResponse(true, "This command can only be used in a server!")
-        } else if (event.member?.hasPermission(Permission.ADMINISTRATOR) == true) {
+        if (event.member?.hasPermission(Permission.ADMINISTRATOR) == true) {
             return CommandResponse(true, "You must be an administrator to use this command!")
         }
 
