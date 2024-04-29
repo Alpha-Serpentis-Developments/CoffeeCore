@@ -97,7 +97,7 @@ public class CoffeeCoreBuilder<T> {
      * @see BotSettings
      */
     @NonNull
-    public CoffeeCoreBuilder<?> setSettings(@NonNull BotSettings settings) {
+    public CoffeeCoreBuilder<T> setSettings(@NonNull BotSettings settings) {
         this.settings = Validate.throwOnNull(settings);
         return this;
     }
@@ -109,7 +109,7 @@ public class CoffeeCoreBuilder<T> {
      */
     @Experimental
     @NonNull
-    public CoffeeCoreBuilder<?> setDataHandler(@NonNull AbstractDataHandler<?> dataHandler) {
+    public CoffeeCoreBuilder<T> setDataHandler(@NonNull AbstractDataHandler<?> dataHandler) {
         this.dataHandler = Validate.throwOnNull(dataHandler);
         return this;
     }
@@ -121,7 +121,7 @@ public class CoffeeCoreBuilder<T> {
      */
     @Experimental
     @NonNull
-    public CoffeeCoreBuilder<?> setCommandsHandler(@NonNull CommandsHandler commandsHandler) {
+    public CoffeeCoreBuilder<T> setCommandsHandler(@NonNull CommandsHandler commandsHandler) {
         this.commandsHandler = Validate.throwOnNull(commandsHandler);
         return this;
     }
@@ -132,7 +132,7 @@ public class CoffeeCoreBuilder<T> {
      * @return {@link CoffeeCoreBuilder} for method chaining.
      */
     @NonNull
-    public CoffeeCoreBuilder<?> setAdditionalListeners(@NonNull Object... additionalListeners) {
+    public CoffeeCoreBuilder<T> setAdditionalListeners(@NonNull Object... additionalListeners) {
         this.additionalListeners = Validate.throwOnNull(additionalListeners);
         return this;
     }
@@ -144,7 +144,7 @@ public class CoffeeCoreBuilder<T> {
      * @see JDABuilder#setChunkingFilter(ChunkingFilter)
      */
     @NonNull
-    public CoffeeCoreBuilder<?> setChunkingFilter(@NonNull ChunkingFilter chunkingFilter) {
+    public CoffeeCoreBuilder<T> setChunkingFilter(@NonNull ChunkingFilter chunkingFilter) {
         this.chunkingFilter = Validate.throwOnNull(chunkingFilter);
         return this;
     }
@@ -156,7 +156,7 @@ public class CoffeeCoreBuilder<T> {
      * @see JDABuilder#enableCache(Collection)
      */
     @NonNull
-    public CoffeeCoreBuilder<?> setEnabledCacheFlags(@NonNull Collection<CacheFlag> enabledCacheFlags) {
+    public CoffeeCoreBuilder<T> setEnabledCacheFlags(@NonNull Collection<CacheFlag> enabledCacheFlags) {
         this.enabledCacheFlags = Validate.throwOnNull(enabledCacheFlags);
         return this;
     }
@@ -168,7 +168,7 @@ public class CoffeeCoreBuilder<T> {
      * @see JDABuilder#disableCache(Collection)
      */
     @NonNull
-    public CoffeeCoreBuilder<?> setDisabledCacheFlags(@NonNull Collection<CacheFlag> disabledCacheFlags) {
+    public CoffeeCoreBuilder<T> setDisabledCacheFlags(@NonNull Collection<CacheFlag> disabledCacheFlags) {
         this.disabledCacheFlags = Validate.throwOnNull(disabledCacheFlags);
         return this;
     }
@@ -180,7 +180,7 @@ public class CoffeeCoreBuilder<T> {
      * @see JDABuilder#enableIntents(Collection)
      */
     @NonNull
-    public CoffeeCoreBuilder<?> setEnabledGatewayIntents(@NonNull Collection<GatewayIntent> enabledGatewayIntents) {
+    public CoffeeCoreBuilder<T> setEnabledGatewayIntents(@NonNull Collection<GatewayIntent> enabledGatewayIntents) {
         this.enabledGatewayIntents = Validate.throwOnNull(enabledGatewayIntents);
         return this;
     }
@@ -192,7 +192,7 @@ public class CoffeeCoreBuilder<T> {
      * @see JDABuilder#disableIntents(Collection)
      */
     @NonNull
-    public CoffeeCoreBuilder<?> setDisabledGatewayIntents(@NonNull Collection<GatewayIntent> disabledGatewayIntents) {
+    public CoffeeCoreBuilder<T> setDisabledGatewayIntents(@NonNull Collection<GatewayIntent> disabledGatewayIntents) {
         this.disabledGatewayIntents = Validate.throwOnNull(disabledGatewayIntents);
         return this;
     }
@@ -203,7 +203,7 @@ public class CoffeeCoreBuilder<T> {
      * @return {@link CoffeeCoreBuilder} for method chaining.
      */
     @NonNull
-    public CoffeeCoreBuilder<?> setBuilderConfiguration(@NonNull BuilderConfiguration builderConfiguration) {
+    public CoffeeCoreBuilder<T> setBuilderConfiguration(@NonNull BuilderConfiguration builderConfiguration) {
         this.builderConfiguration = Validate.throwOnNull(builderConfiguration);
         return this;
     }
@@ -215,7 +215,7 @@ public class CoffeeCoreBuilder<T> {
      * @see JDABuilder#setMemberCachePolicy(MemberCachePolicy)
      */
     @NonNull
-    public CoffeeCoreBuilder<?> setMemberCachePolicy(@NonNull MemberCachePolicy memberCachePolicy) {
+    public CoffeeCoreBuilder<T> setMemberCachePolicy(@NonNull MemberCachePolicy memberCachePolicy) {
         this.memberCachePolicy = Validate.throwOnNull(memberCachePolicy);
         return this;
     }
@@ -226,7 +226,7 @@ public class CoffeeCoreBuilder<T> {
      * @return {@link CoffeeCoreBuilder} for method chaining.
      */
     @NonNull
-    public CoffeeCoreBuilder<?> enableSharding(boolean enableSharding) {
+    public CoffeeCoreBuilder<T> enableSharding(boolean enableSharding) {
         this.enableSharding = enableSharding;
         return this;
     }
@@ -238,7 +238,7 @@ public class CoffeeCoreBuilder<T> {
      * @see DefaultShardManagerBuilder#setShardsTotal(int)
      */
     @NonNull
-    public CoffeeCoreBuilder<?> setShardsTotal(int shardsTotal) {
+    public CoffeeCoreBuilder<T> setShardsTotal(int shardsTotal) {
         this.shardsTotal = shardsTotal;
         return this;
     }

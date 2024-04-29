@@ -19,6 +19,24 @@ functionality.
 
 ### Adding Coffee Core to Your Project
 
+By default, JDA includes a package to handle voice connections. If you don't need voice support, you can exclude it:
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>dev.alphaserpentis</groupId>
+        <artifactId>CoffeeCore</artifactId>
+        <version>VERSION-HERE</version>
+        <exclusions>
+            <exclusion>
+                <groupId>club.minnced</groupId>
+                <artifactId>opus-java</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+```
+
 #### Latest Release:
 
 **Maven**
@@ -37,31 +55,16 @@ implementation 'dev.alphaserpentis:CoffeeCore:0.6.2-alpha'
 
 #### Latest Snapshot:
 
+**Notice**: Due to recent changes, snapshot builds cannot be obtained through Maven anymore. You must compile and
+`mvn install` the project locally to use the snapshot build.
+
 **Maven**
 ```xml
 <dependency>
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.7.0-alpha-011924-SNAPSHOT</version>
+    <version>0.7.0-alpha-042824-SNAPSHOT</version>
 </dependency>
-```
-
-By default, JDA includes a package to handle voice connections. If you don't need voice support, you can exclude it:
-
-```xml
-<dependencies>
-    <dependency>
-        <groupId>dev.alphaserpentis</groupId>
-        <artifactId>CoffeeCore</artifactId>
-        <version>VERSION-HERE</version>
-        <exclusions>
-            <exclusion>
-                <groupId>club.minnced</groupId>
-                <artifactId>opus-java</artifactId>
-            </exclusion>
-        </exclusions>
-    </dependency>
-</dependencies>
 ```
 
 - - -
@@ -248,6 +251,7 @@ To be written...
 
 ## Dependencies
 
-- [JDA - 5.0.0-beta.15](https://github.com/DV8FromTheWorld/JDA)
+- [JDA - 5.0.0-beta.23](https://github.com/discord-jda/JDA)
 - [Gson - 2.10.1](https://github.com/google/gson)
-- [RxJava - 3.1.7](https://github.com/ReactiveX/RxJava)
+- [RxJava - 3.1.8](https://github.com/ReactiveX/RxJava)
+- [Kotlin-Stdlib-Jdk8 - 1.9.23](https://github.com/Jetbrains/Kotlin)

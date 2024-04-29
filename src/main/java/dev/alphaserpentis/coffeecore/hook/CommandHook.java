@@ -1,6 +1,8 @@
 package dev.alphaserpentis.coffeecore.hook;
 
 import dev.alphaserpentis.coffeecore.commands.BotCommand;
+import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
+import dev.alphaserpentis.coffeecore.helper.Validate;
 import io.reactivex.rxjava3.annotations.Experimental;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
@@ -23,7 +25,7 @@ public abstract class CommandHook {
     }
 
     public CommandHook(@NonNull Type type) {
-        this.type = type;
+        this.type = Validate.throwOnNull(type);
     }
 
     /**
@@ -31,7 +33,7 @@ public abstract class CommandHook {
      * @param cmd The command that was triggered
      * @param event The event that triggered the command
      * @param msg The message that was sent
-     * @return Optional of CommandResponse to override the command response AND skip command execution
+     * @return Optional of {@link CommandResponse} to override the command response AND skip command execution
      */
     @NonNull
     public Optional<?> execute(
@@ -47,7 +49,7 @@ public abstract class CommandHook {
      * @param cmd The command that was triggered
      * @param event The (button/modal) event that triggered the command
      * @param data The optional data that was returned from the command
-     * @return Optional of CommandResponse to override the command response AND skip command execution
+     * @return Optional of {@link CommandResponse} to override the command response AND skip command execution
      */
     @NonNull
     @SuppressWarnings({"UnusedReturnValue", "UnusedParamValue"})

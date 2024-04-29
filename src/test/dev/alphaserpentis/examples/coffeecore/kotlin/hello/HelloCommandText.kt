@@ -1,4 +1,4 @@
-package hello
+package dev.alphaserpentis.examples.coffeecore.kotlin.hello
 
 import dev.alphaserpentis.coffeecore.commands.BotCommand
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse

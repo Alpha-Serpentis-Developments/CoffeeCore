@@ -6,7 +6,7 @@
 
     <groupId>dev.alphaserpentis</groupId>
     <artifactId>CoffeeCore</artifactId>
-    <version>0.7.0-alpha-041924-SNAPSHOT</version>
+    <version>0.7.0-alpha-042824-SNAPSHOT</version>
     <name>Coffee Core</name>
     <description>Coffee Core is a JDA-based framework for Discord bots</description>
     <url>https://asrp.dev/#libraries</url>
@@ -45,7 +45,7 @@
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
-            <version>5.0.0-beta.22</version>
+            <version>5.0.0-beta.23</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -94,11 +94,6 @@
     </distributionManagement>
 
     <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-            </resource>
-        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -109,19 +104,6 @@
                         <id>attach-sources</id>
                         <goals>
                             <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.6.3</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -147,29 +129,27 @@
                 <executions>
                     <execution>
                         <id>compile</id>
-                        <phase>compile</phase>
                         <goals>
                             <goal>compile</goal>
                         </goals>
                         <configuration>
                             <sourceDirs>
                                 <source>src/main/java</source>
+                                <source>src/main/kotlin</source>
                                 <source>target/generated-sources/annotations</source>
                             </sourceDirs>
                         </configuration>
                     </execution>
                     <execution>
                         <id>test-compile</id>
-                        <phase>test-compile</phase>
                         <goals>
                             <goal>test-compile</goal>
                         </goals>
                         <configuration>
                             <sourceDirs>
                                 <source>src/test/java</source>
-                                <source>target/generated-test-sources/test-annotations</source>
-                                <source>src/test/java</source>
                                 <source>src/test/kotlin</source>
+                                <source>target/generated-test-sources/test-annotations</source>
                             </sourceDirs>
                         </configuration>
                     </execution>
@@ -192,17 +172,30 @@
                         <phase>none</phase>
                     </execution>
                     <execution>
-                        <id>compile</id>
+                        <id>java-compile</id>
                         <phase>compile</phase>
                         <goals>
                             <goal>compile</goal>
                         </goals>
                     </execution>
                     <execution>
-                        <id>testCompile</id>
+                        <id>java-test-compile</id>
                         <phase>test-compile</phase>
                         <goals>
                             <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.jetbrains.dokka</groupId>
+                <artifactId>dokka-maven-plugin</artifactId>
+                <version>1.9.20</version>
+                <executions>
+                    <execution>
+                        <phase>pre-site</phase>
+                        <goals>
+                            <goal>dokka</goal>
                         </goals>
                     </execution>
                 </executions>

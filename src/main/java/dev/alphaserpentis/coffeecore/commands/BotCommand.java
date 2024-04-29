@@ -874,6 +874,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
             @NonNull String name,
             @Nullable String desc
     ) {
+        Validate.throwOnNull(type, name);
+
         switch(type) {
             case SLASH -> {
                 if(desc == null)

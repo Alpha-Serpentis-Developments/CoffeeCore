@@ -4,7 +4,6 @@ import dev.alphaserpentis.coffeecore.core.CoffeeCore
 import dev.alphaserpentis.coffeecore.core.CoffeeCoreBuilder
 import dev.alphaserpentis.coffeecore.data.bot.AboutInformation
 import dev.alphaserpentis.coffeecore.data.bot.BotSettings
-import hello.HelloCommandText
 import io.github.cdimascio.dotenv.Dotenv
 import net.dv8tion.jda.api.JDABuilder
 
@@ -28,7 +27,7 @@ fun main() {
     val helloCmdText = HelloCommandText()
     val helloCmdEmbed = HelloCommandEmbed()
     val helloCmdButton = HelloCommandButton()
-    val builder: CoffeeCoreBuilder<*> = CoffeeCoreBuilder<JDABuilder>().setSettings(botSettings)
+    val builder: CoffeeCoreBuilder<JDABuilder> = CoffeeCoreBuilder<JDABuilder>().setSettings(botSettings)
     val core: CoffeeCore = builder.build(dotenv.get("DISCORD_BOT_TOKEN"))
 
     core.registerCommands(helloCmdText, helloCmdEmbed, helloCmdButton)
