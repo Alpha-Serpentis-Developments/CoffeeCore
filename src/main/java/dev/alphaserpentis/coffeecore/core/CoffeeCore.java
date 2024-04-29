@@ -7,6 +7,7 @@ import dev.alphaserpentis.coffeecore.commands.defaultcommands.Help;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Restart;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Settings;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Shutdown;
+import dev.alphaserpentis.coffeecore.commands.defaultcommands.Sync;
 import dev.alphaserpentis.coffeecore.data.bot.AboutInformation;
 import dev.alphaserpentis.coffeecore.data.bot.BotSettings;
 import dev.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;
@@ -294,6 +295,7 @@ public class CoffeeCore {
             commands.put("about", new About());
             commands.put("shutdown", new Shutdown());
             commands.put("restart", new Restart());
+            commands.put("sync", new Sync());
         }
 
         for(BotCommand<?, ?> cmd: command) {
