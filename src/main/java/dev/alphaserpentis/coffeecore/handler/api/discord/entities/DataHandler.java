@@ -3,7 +3,7 @@ package dev.alphaserpentis.coffeecore.handler.api.discord.entities;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import dev.alphaserpentis.coffeecore.commands.BotCommand;
+import dev.alphaserpentis.coffeecore.commands.types.BotCommand;
 import dev.alphaserpentis.coffeecore.data.entity.EntityData;
 import dev.alphaserpentis.coffeecore.data.entity.EntityType;
 import dev.alphaserpentis.coffeecore.data.entity.ServerData;

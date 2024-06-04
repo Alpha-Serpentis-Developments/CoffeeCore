@@ -1,4 +1,4 @@
-package dev.alphaserpentis.coffeecore.commands;
+package dev.alphaserpentis.coffeecore.commands.types;
 
 import dev.alphaserpentis.coffeecore.helper.Validate;
 import io.reactivex.rxjava3.annotations.NonNull;
@@ -21,7 +21,7 @@ import java.util.Optional;
  * A command that can utilize buttons
  * @param <T> The type of object to return when the command is executed.
  * @param <E> The type of event that triggers the command.
- * @see dev.alphaserpentis.coffeecore.commands.BotCommand
+ * @see BotCommand
  */
 public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent> extends BotCommand<T, E> {
 

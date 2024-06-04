@@ -1,6 +1,6 @@
 package dev.alphaserpentis.coffeecore.commands.defaultcommands;
 
-import dev.alphaserpentis.coffeecore.commands.BotCommand;
+import dev.alphaserpentis.coffeecore.commands.types.EmbeddedCommand;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -9,7 +9,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 
 import java.time.Duration;
 
-public class Shutdown extends BotCommand<MessageEmbed, SlashCommandInteractionEvent> {
+public class Shutdown extends EmbeddedCommand<SlashCommandInteractionEvent> {
 
     public Shutdown() {
         super(

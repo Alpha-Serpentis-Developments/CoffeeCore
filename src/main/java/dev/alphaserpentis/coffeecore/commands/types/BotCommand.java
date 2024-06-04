@@ -1,4 +1,4 @@
-package dev.alphaserpentis.coffeecore.commands;
+package dev.alphaserpentis.coffeecore.commands.types;
 
 import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
@@ -19,8 +19,12 @@ import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionE
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.commands.Command;
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import net.dv8tion.jda.api.utils.FileUpload;
@@ -38,8 +42,10 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Abstract class for bot commands
- * @param <T> The return type for responses. This should only be {@link MessageEmbed} or {@link String}.
+ * Abstract class for bot commands. This class assumes that if {@link #onlyEmbed} is true, the command will only ever
+ * return a {@link MessageEmbed}. If you're creating a command that could return both, you MUST override the
+ * {@link #processDeferredCommand} and {@link #processNonDeferredCommand} methods.
+ * @param <T> The return type for responses. This can only be {@link MessageEmbed} or {@link String}.
  * @param <E> Type of {@link GenericCommandInteractionEvent} that will be used to pass events to the command.
  */
 public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
@@ -48,6 +54,9 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     protected final HashMap<Long, Long> ratelimitMap = new HashMap<>();
     protected final Collection<Long> guildsToRegisterIn;
     protected final Collection<CommandHook> commandHooks;
+    protected final Collection<SubcommandGroupData> subcommandGroups;
+    protected final Collection<SubcommandData> subcommands;
+    protected final DefaultMemberPermissions defaultMemberPermissions;
     protected final String name;
     protected final String description;
     protected final String helpDescription;
@@ -99,6 +108,9 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         protected Command.Type commandType = Command.Type.SLASH;
         protected Collection<Long> guildsToRegisterIn = List.of();
         protected Collection<CommandHook> commandHooks = new ArrayList<>();
+        protected DefaultMemberPermissions defaultMemberPermissions = null;
+        protected Collection<SubcommandGroupData> subcommandGroups = new ArrayList<>();
+        protected Collection<SubcommandData> subcommands = new ArrayList<>();
 
         public BotCommandOptions() {}
 
@@ -168,7 +180,8 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         }
 
         /**
-         * Sets the command to determine if it'll only ever embed messages
+         * Sets the command to determine if it'll only ever embed messages. Do not use if you're using
+         * {@link EmbeddedCommand}
          * @param onlyEmbed Whether the command will only ever embed messages
          * @return {@link BotCommandOptions}
          */
@@ -302,6 +315,39 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         }
 
         /**
+         * Sets the command's default member permissions
+         * @param defaultMemberPermissions The command's default member permissions
+         * @return {@link BotCommandOptions}
+         */
+        @NonNull
+        public BotCommandOptions setDefaultMemberPermissions(@NonNull DefaultMemberPermissions defaultMemberPermissions) {
+            this.defaultMemberPermissions = Validate.throwOnNull(defaultMemberPermissions);
+            return this;
+        }
+
+        /**
+         * Sets the command's subcommand groups
+         * @param subcommandGroups The command's subcommand groups
+         * @return {@link BotCommandOptions}
+         */
+        @NonNull
+        public BotCommandOptions setSubcommandGroups(@NonNull Collection<SubcommandGroupData> subcommandGroups) {
+            this.subcommandGroups.addAll(Validate.throwOnEmpty(subcommandGroups));
+            return this;
+        }
+
+        /**
+         * Sets the command's subcommands
+         * @param subcommands The command's subcommands
+         * @return {@link BotCommandOptions}
+         */
+        @NonNull
+        public BotCommandOptions setSubcommands(@NonNull Collection<SubcommandData> subcommands) {
+            this.subcommands.addAll(Validate.throwOnEmpty(subcommands));
+            return this;
+        }
+
+        /**
          * Validates the command options.
          * A command is considered valid if: <br>
          *    - The name is not null <br>
@@ -346,6 +392,9 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         commandType = options.commandType;
         guildsToRegisterIn = options.guildsToRegisterIn;
         commandHooks = options.commandHooks;
+        defaultMemberPermissions = options.defaultMemberPermissions;
+        subcommandGroups = options.subcommandGroups;
+        subcommands = options.subcommands;
 
         if(isUsingRatelimits() && options.useDefaultHooks) {
             commandHooks.add(new RatelimitHook());
@@ -373,7 +422,12 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      */
     public void updateCommand(@NonNull JDA jda) {
         jda
-                .upsertCommand(getJDACommandData(getCommandType(), getName(), getDescription()))
+                .upsertCommand(
+                        ((SlashCommandData) getJDACommandData(getCommandType(), getName(), getDescription()))
+                                .setDefaultPermissions(defaultMemberPermissions)
+                                .addSubcommands(subcommands)
+                                .addSubcommandGroups(subcommandGroups)
+                )
                 .queue(command -> globalCommandId = command.getIdLong());
     }
 
@@ -384,7 +438,12 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      */
     public void updateCommand(@NonNull Guild guild) {
         guild
-                .upsertCommand(getJDACommandData(getCommandType(), getName(), getDescription()))
+                .upsertCommand(
+                        ((SlashCommandData) getJDACommandData(getCommandType(), getName(), getDescription()))
+                                .setDefaultPermissions(defaultMemberPermissions)
+                                .addSubcommands(subcommands)
+                                .addSubcommandGroups(subcommandGroups)
+                )
                 .queue();
     }
 
@@ -564,128 +623,87 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      */
     @NonNull
     public Message handleReply(@NonNull final E event, @NonNull final BotCommand<?, E> cmd) {
-        if(cmd.isDeferReplies()) {
+        if(cmd.isDeferReplies())
             return (Message) cmd.processDeferredCommand(event).complete();
-        } else {
+        else
             return cmd.processNonDeferredCommand(event).complete().retrieveOriginal().complete();
-        }
     }
 
     /**
-     * Runs and processes a deferred command
+     * Runs and processes a deferred command. The default behavior written will assume that if {@link #onlyEmbed} is
+     * true, the command will only ever return a {@link MessageEmbed}. If you're creating a command that could return
+     * {@link MessageEmbed} or {@link String}, you MUST override this method to handle that behavior!
      * @param event {@link E} that contains the interaction
      * @return {@link WebhookMessageCreateAction}
      */
     @NonNull
+    @SuppressWarnings("unchecked")
     protected WebhookMessageCreateAction<?> processDeferredCommand(@NonNull final E event) {
+        if(isOnlyEmbed())
+            return EmbeddedCommand.deferredCommandLogic(event, (BotCommand<MessageEmbed, E>) this);
+
         final long userId = event.getUser().getIdLong();
         final InteractionHook interactHook = event.getHook();
-        final boolean msgIsEphemeral = determineEphemeralStatus(event);
-        final List<CommandHook> preExecHooks = commandHooks.stream()
-                .filter(hook -> hook.getTypeOfHook() == CommandHook.Type.PRE_EXECUTION)
-                .toList();
 
         try {
+            final boolean msgIsEphemeral = determineEphemeralStatus(event);
+            final List<CommandHook> preExecHooks = commandHooks.stream()
+                    .filter(hook -> hook.getTypeOfHook() == CommandHook.Type.PRE_EXECUTION)
+                    .toList();
+
             event.deferReply(msgIsEphemeral).complete();
 
-            if(isOnlyEmbed()) {
-                if(!preExecHooks.isEmpty()) {
-                    ArrayList<MessageEmbed> embeds = new ArrayList<>();
-                    ArrayList<FileUpload> files = new ArrayList<>();
+            if(!preExecHooks.isEmpty()) {
+                ArrayList<MessageEmbed> embeds = new ArrayList<>();
+                ArrayList<FileUpload> files = new ArrayList<>();
+                final String[] lastResponse = new String[1];
 
-                    preExecHooks.forEach(
-                            hook -> hook
-                                    .execute(this, event, null)
-                                    .ifPresent(rawResponse -> {
-                                        if(rawResponse instanceof CommandResponse<?> cmdResponse) {
-                                            embeds.addAll(
-                                                    List.of((MessageEmbed[]) cmdResponse.messageResponse())
-                                            );
+                preExecHooks.forEach(
+                        hook -> hook
+                                .execute(this, event, null)
+                                .ifPresent(rawResponse -> {
+                                    if(rawResponse instanceof CommandResponse<?> cmdResponse) {
+                                        if(cmdResponse.messageResponse() instanceof MessageEmbed[] msgResponse)
+                                            embeds.addAll(List.of(msgResponse));
+                                        else
+                                            lastResponse[0] = (String) cmdResponse.messageResponse()[0];
 
-                                            try(var fileUpload = cmdResponse.fileUpload()) {
-                                                if(fileUpload != null) files.add(fileUpload);
-                                            } catch (IOException e) {
-                                                throw new RuntimeException(e);
-                                            }
+                                        try(var fileUpload = cmdResponse.fileUpload()) {
+                                            if(fileUpload != null) files.add(fileUpload);
+                                        } catch (IOException e) {
+                                            throw new RuntimeException(e);
                                         }
-                                    })
-                    );
+                                    }
+                                })
+                );
 
-                    if(!embeds.isEmpty()) {
-                        if(!files.isEmpty()) {
-                            return interactHook.sendMessageEmbeds(embeds).addFiles(files);
-                        } else {
-                            return interactHook.sendMessageEmbeds(embeds);
-                        }
-                    }
-                }
-
-                AbstractMap.SimpleEntry<T[], FileUpload> response = retrieveAndProcessResponse(userId, event);
-                T[] responseKey = response.getKey();
-                FileUpload responseValue = response.getValue();
-
-                if(responseValue == null) {
-                    return interactHook.sendMessageEmbeds(
-                            Arrays.asList((MessageEmbed[]) responseKey)
-                    );
+                if(!files.isEmpty()) {
+                    if(lastResponse[0] != null)
+                        return interactHook.sendMessage(lastResponse[0]).addFiles(files);
+                    else if(!embeds.isEmpty())
+                        return interactHook.sendMessageEmbeds(embeds).addFiles(files);
                 } else {
-                    return interactHook.sendMessageEmbeds(
-                            Arrays.asList((MessageEmbed[]) responseKey)
-                    ).addFiles(responseValue);
+                    if(lastResponse[0] != null)
+                        return interactHook.sendMessage(lastResponse[0]);
+                    else if(!embeds.isEmpty())
+                        return interactHook.sendMessageEmbeds(embeds);
                 }
+            }
+
+            AbstractMap.SimpleEntry<T[], FileUpload> response = retrieveAndProcessResponse(userId, event);
+            T[] responseKey = response.getKey();
+            FileUpload responseValue = response.getValue();
+
+            if(responseValue != null) {
+                if(responseKey instanceof MessageEmbed[] embeds)
+                    return interactHook.sendMessageEmbeds(Arrays.asList(embeds)).addFiles(responseValue);
+                else
+                    return interactHook.sendMessage((String) responseKey[0]).addFiles(responseValue);
             } else {
-                if(!preExecHooks.isEmpty()) {
-                    ArrayList<MessageEmbed> embeds = new ArrayList<>();
-                    ArrayList<FileUpload> files = new ArrayList<>();
-                    final String[] lastResponse = new String[1];
-
-                    preExecHooks.forEach(
-                            hook -> hook
-                                    .execute(this, event, null)
-                                    .ifPresent(rawResponse -> {
-                                        if(rawResponse instanceof CommandResponse<?> cmdResponse) {
-                                            if(cmdResponse.messageResponse() instanceof MessageEmbed[] msgResponse)
-                                                embeds.addAll(List.of(msgResponse));
-                                            else
-                                                lastResponse[0] = (String) cmdResponse.messageResponse()[0];
-
-                                            try(var fileUpload = cmdResponse.fileUpload()) {
-                                                if(fileUpload != null) files.add(fileUpload);
-                                            } catch (IOException e) {
-                                                throw new RuntimeException(e);
-                                            }
-                                        }
-                                    })
-                    );
-
-                    if(!files.isEmpty()) {
-                        if(lastResponse[0] != null)
-                            return interactHook.sendMessage(lastResponse[0]).addFiles(files);
-                        else if(!embeds.isEmpty())
-                            return interactHook.sendMessageEmbeds(embeds).addFiles(files);
-                    } else {
-                        if(lastResponse[0] != null)
-                            return interactHook.sendMessage(lastResponse[0]);
-                        else if(!embeds.isEmpty())
-                            return interactHook.sendMessageEmbeds(embeds);
-                    }
-                }
-
-                AbstractMap.SimpleEntry<T[], FileUpload> response = retrieveAndProcessResponse(userId, event);
-                T[] responseKey = response.getKey();
-                FileUpload responseValue = response.getValue();
-
-                if(responseValue != null) {
-                    if(responseKey instanceof MessageEmbed[] embeds)
-                        return interactHook.sendMessageEmbeds(Arrays.asList(embeds)).addFiles(responseValue);
-                    else
-                        return interactHook.sendMessage((String) responseKey[0]).addFiles(responseValue);
-                } else {
-                    if(responseKey instanceof MessageEmbed[] embeds)
-                        return interactHook.sendMessageEmbeds(Arrays.asList(embeds));
-                    else
-                        return interactHook.sendMessage((String) responseKey[0]);
-                }
+                if(responseKey instanceof MessageEmbed[] embeds)
+                    return interactHook.sendMessageEmbeds(Arrays.asList(embeds));
+                else
+                    return interactHook.sendMessage((String) responseKey[0]);
             }
         } catch(Exception e) {
             if(isForgivingRatelimitOnError())
@@ -696,46 +714,25 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     }
 
     /**
-     * Runs and processes a non-deferred command
+     * Runs and processes a non-deferred command. The default behavior written will assume that if {@link #onlyEmbed} is
+     * true, the command will only ever return a {@link MessageEmbed}. If you're creating a command that could return
+     * {@link MessageEmbed} or {@link String}, you MUST override this method to handle that behavior!
      * @param event {@link E} that contains the interaction
      * @return {@link ReplyCallbackAction}
      */
     @NonNull
+    @SuppressWarnings("unchecked")
     protected ReplyCallbackAction processNonDeferredCommand(@NonNull final E event) {
+        if(isOnlyEmbed())
+            return EmbeddedCommand.nonDeferredCommandLogic(event, (BotCommand<MessageEmbed, E>) this);
+
         final long userId = event.getUser().getIdLong();
-        final boolean msgIsEphemeral = determineEphemeralStatus(event);
-        AbstractMap.SimpleEntry<T[], FileUpload> response;
-        ReplyCallbackAction reply;
 
         try {
-            response = retrieveAndProcessResponse(userId, event);
+            return event
+                    .reply((String) retrieveAndProcessResponse(userId, event).getKey()[0])
+                    .setEphemeral(determineEphemeralStatus(event));
 
-            boolean isEmbedOnly = isOnlyEmbed();
-            T[] responseKey = response.getKey();
-            FileUpload responseValue = response.getValue();
-            if(responseValue == null) {
-                if(isEmbedOnly) {
-                    reply = event.replyEmbeds(
-                            Arrays.asList((MessageEmbed[]) responseKey)
-                    ).setEphemeral(msgIsEphemeral);
-                } else {
-                    reply = event.reply(
-                            (String) responseKey[0]
-                    ).setEphemeral(msgIsEphemeral);
-                }
-            } else {
-                if(isEmbedOnly) {
-                    reply = event.replyEmbeds(
-                            Arrays.asList((MessageEmbed[]) responseKey)
-                    ).setEphemeral(msgIsEphemeral).addFiles(responseValue);
-                } else {
-                    reply = event.reply(
-                            (String) responseKey[0]
-                    ).setEphemeral(msgIsEphemeral);
-                }
-            }
-
-            return reply;
         } catch(Exception e) {
             if(isForgivingRatelimitOnError())
                 getRatelimitMap().remove(userId);
@@ -752,7 +749,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      */
     @SuppressWarnings("unchecked")
     @NonNull
-    private AbstractMap.SimpleEntry<T[], FileUpload> retrieveAndProcessResponse(long userId, @NonNull E event) {
+    protected AbstractMap.SimpleEntry<T[], FileUpload> retrieveAndProcessResponse(long userId, @NonNull E event) {
         CommandResponse<?> responseFromCommand = isActive() ? runCommand(userId, event) : inactiveCommandResponse();
 
         determineRatelimit(userId, responseFromCommand);
@@ -763,7 +760,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         );
     }
 
-    private boolean determineEphemeralStatus(@NonNull E event) {
+    protected boolean determineEphemeralStatus(@NonNull E event) {
         if (event.getGuild() == null) {
             return isOnlyEphemeral();
         } else {
@@ -779,7 +776,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         }
     }
 
-    private void determineRatelimit(long userId, @NonNull CommandResponse<?> responseFromCommand) {
+    protected void determineRatelimit(long userId, @NonNull CommandResponse<?> responseFromCommand) {
         if(responseFromCommand.forgiveRatelimit() != null && responseFromCommand.forgiveRatelimit()) {
             getRatelimitMap().remove(userId);
         } else if(
@@ -898,7 +895,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * @return The command response
      */
     @NonNull
-    private static CommandResponse<MessageEmbed> inactiveCommandResponse() {
+    protected static CommandResponse<MessageEmbed> inactiveCommandResponse() {
         return new CommandResponse<>(
                 null,
                 true,

@@ -1,4 +1,4 @@
-package dev.alphaserpentis.coffeecore.commands;
+package dev.alphaserpentis.coffeecore.commands.types;
 
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;

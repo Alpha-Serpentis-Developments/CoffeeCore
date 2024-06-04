@@ -1,13 +1,13 @@
 package dev.alphaserpentis.coffeecore.core;
 
 import com.google.gson.reflect.TypeToken;
-import dev.alphaserpentis.coffeecore.commands.BotCommand;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.About;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Help;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Restart;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Settings;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Shutdown;
 import dev.alphaserpentis.coffeecore.commands.defaultcommands.Sync;
+import dev.alphaserpentis.coffeecore.commands.types.BotCommand;
 import dev.alphaserpentis.coffeecore.data.bot.AboutInformation;
 import dev.alphaserpentis.coffeecore.data.bot.BotSettings;
 import dev.alphaserpentis.coffeecore.handler.api.discord.commands.CommandsHandler;

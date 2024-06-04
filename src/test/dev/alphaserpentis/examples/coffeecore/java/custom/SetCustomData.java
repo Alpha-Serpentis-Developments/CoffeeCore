@@ -1,6 +1,6 @@
 package dev.alphaserpentis.examples.coffeecore.java.custom;
 
-import dev.alphaserpentis.coffeecore.commands.BotCommand;
+import dev.alphaserpentis.coffeecore.commands.types.BotCommand;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 import dev.alphaserpentis.examples.coffeecore.java.custom.handler.CustomDataHandler;
 import dev.alphaserpentis.examples.coffeecore.java.custom.handler.CustomServerData;

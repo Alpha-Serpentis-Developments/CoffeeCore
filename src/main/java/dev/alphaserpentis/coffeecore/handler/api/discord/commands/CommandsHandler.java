@@ -1,8 +1,8 @@
 package dev.alphaserpentis.coffeecore.handler.api.discord.commands;
 
-import dev.alphaserpentis.coffeecore.commands.BotCommand;
-import dev.alphaserpentis.coffeecore.commands.ButtonCommand;
-import dev.alphaserpentis.coffeecore.commands.ModalCommand;
+import dev.alphaserpentis.coffeecore.commands.types.BotCommand;
+import dev.alphaserpentis.coffeecore.commands.types.ButtonCommand;
+import dev.alphaserpentis.coffeecore.commands.types.ModalCommand;
 import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import dev.alphaserpentis.coffeecore.helper.Validate;
 import dev.alphaserpentis.coffeecore.hook.CommandHook;

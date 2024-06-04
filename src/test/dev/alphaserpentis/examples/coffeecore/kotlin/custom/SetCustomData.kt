@@ -1,6 +1,6 @@
 package dev.alphaserpentis.examples.coffeecore.kotlin.custom
 
-import dev.alphaserpentis.coffeecore.commands.BotCommand
+import dev.alphaserpentis.coffeecore.commands.types.BotCommand
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse
 import dev.alphaserpentis.examples.coffeecore.kotlin.custom.handler.CustomDataHandler
 import net.dv8tion.jda.api.JDA

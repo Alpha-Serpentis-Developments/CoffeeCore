@@ -1,13 +1,12 @@
 package dev.alphaserpentis.coffeecore.commands.defaultcommands;
 
-import dev.alphaserpentis.coffeecore.commands.BotCommand;
+import dev.alphaserpentis.coffeecore.commands.types.EmbeddedCommand;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 import dev.alphaserpentis.coffeecore.data.entity.ServerData;
 import dev.alphaserpentis.coffeecore.data.entity.UserData;
 import dev.alphaserpentis.coffeecore.handler.api.discord.entities.DataHandler;
 import io.reactivex.rxjava3.annotations.NonNull;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -15,9 +14,23 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
 
+import java.util.List;
 import java.util.Objects;
 
-public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEvent> {
+public class Settings extends EmbeddedCommand<SlashCommandInteractionEvent> {
+    protected static final SubcommandGroupData USER_SETTINGS = new SubcommandGroupData(
+            "user",
+            "Configure your personal settings with the bot"
+    ).addSubcommands(
+            new SubcommandData("fullerror", "Toggle whether or not the bot will show the full stack trace")
+    );
+
+    protected static final SubcommandGroupData SERVER_SETTINGS = new SubcommandGroupData(
+            "server",
+            "Configure the bot's settings for this server"
+    ).addSubcommands(
+            new SubcommandData("ephemeral", "Toggle whether the bot's responses are ephemeral")
+    );
 
     public Settings() {
         super(
@@ -25,6 +38,7 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
                         .setName("settings")
                         .setDescription("Configure the bot's settings")
                         .setOnlyEmbed(true)
+                        .setSubcommandGroups(List.of(USER_SETTINGS, SERVER_SETTINGS))
         );
     }
 
@@ -73,34 +87,6 @@ public class Settings extends BotCommand<MessageEmbed, SlashCommandInteractionEv
         }
 
         return new CommandResponse<>(isOnlyEphemeral(), eb.build());
-    }
-
-    @Override
-    public void updateCommand(@NonNull JDA jda) {
-        SubcommandGroupData userSettings = new SubcommandGroupData(
-                "user",
-                "Configure your personal settings with the bot"
-        )
-                .addSubcommands(
-                        new SubcommandData(
-                                "fullerror",
-                                "Toggle whether or not the bot will show the full stack trace"
-                        )
-                );
-        SubcommandGroupData serverSettings = new SubcommandGroupData(
-                "server",
-                "Configure the bot's settings for this server"
-        )
-                .addSubcommands(
-                        new SubcommandData(
-                                "ephemeral",
-                                "Toggle whether the bot's responses are ephemeral"
-                        )
-                );
-
-        jda.upsertCommand(name, description).addSubcommandGroups(userSettings, serverSettings).queue(
-                (cmd) -> setGlobalCommandId(cmd.getIdLong())
-        );
     }
 
     public boolean isUserPermissioned(@NonNull Member member) {

@@ -1,6 +1,6 @@
 package dev.alphaserpentis.coffeecore.commands.defaultcommands
 
-import dev.alphaserpentis.coffeecore.commands.BotCommand
+import dev.alphaserpentis.coffeecore.commands.types.EmbeddedCommand
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.MessageEmbed
@@ -10,7 +10,7 @@ import net.dv8tion.jda.api.requests.RestAction
 /**
  * A command to force sync commands with the server
  */
-open class Sync(options: BotCommandOptions) : BotCommand<MessageEmbed, SlashCommandInteractionEvent>(options) {
+open class Sync(options: BotCommandOptions) : EmbeddedCommand<SlashCommandInteractionEvent>(options) {
 
     constructor() : this(
         BotCommandOptions("sync", "Force sync commands with the server")

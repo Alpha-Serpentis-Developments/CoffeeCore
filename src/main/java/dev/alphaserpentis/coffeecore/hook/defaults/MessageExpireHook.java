@@ -1,6 +1,6 @@
 package dev.alphaserpentis.coffeecore.hook.defaults;
 
-import dev.alphaserpentis.coffeecore.commands.BotCommand;
+import dev.alphaserpentis.coffeecore.commands.types.BotCommand;
 import dev.alphaserpentis.coffeecore.hook.CommandHook;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;

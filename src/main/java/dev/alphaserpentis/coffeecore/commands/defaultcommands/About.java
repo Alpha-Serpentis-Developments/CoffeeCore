@@ -1,6 +1,6 @@
 package dev.alphaserpentis.coffeecore.commands.defaultcommands;
 
-import dev.alphaserpentis.coffeecore.commands.BotCommand;
+import dev.alphaserpentis.coffeecore.commands.types.EmbeddedCommand;
 import dev.alphaserpentis.coffeecore.data.bot.AboutInformation;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 import dev.alphaserpentis.coffeecore.helper.ContainerHelper;
@@ -9,7 +9,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
-public class About extends BotCommand<MessageEmbed, SlashCommandInteractionEvent> {
+public class About extends EmbeddedCommand<SlashCommandInteractionEvent> {
 
     private static final String DEFAULT_DESCRIPTION = """
     A bot powered by Coffee Core! The bot creator should change this description!
@@ -23,7 +23,6 @@ public class About extends BotCommand<MessageEmbed, SlashCommandInteractionEvent
                 new BotCommandOptions()
                         .setName("about")
                         .setDescription("Shows information about the bot")
-                        .setOnlyEmbed(true)
         );
     }
 

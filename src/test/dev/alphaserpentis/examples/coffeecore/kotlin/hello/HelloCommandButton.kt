@@ -1,6 +1,6 @@
 package dev.alphaserpentis.examples.coffeecore.kotlin.hello
 
-import dev.alphaserpentis.coffeecore.commands.ButtonCommand
+import dev.alphaserpentis.coffeecore.commands.types.ButtonCommand
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.MessageEmbed
