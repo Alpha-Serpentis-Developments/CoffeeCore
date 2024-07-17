@@ -108,7 +108,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         protected Command.Type commandType = Command.Type.SLASH;
         protected Collection<Long> guildsToRegisterIn = List.of();
         protected Collection<CommandHook> commandHooks = new ArrayList<>();
-        protected DefaultMemberPermissions defaultMemberPermissions = null;
+        protected DefaultMemberPermissions defaultMemberPermissions = DefaultMemberPermissions.ENABLED;
         protected Collection<SubcommandGroupData> subcommandGroups = new ArrayList<>();
         protected Collection<SubcommandData> subcommands = new ArrayList<>();
 

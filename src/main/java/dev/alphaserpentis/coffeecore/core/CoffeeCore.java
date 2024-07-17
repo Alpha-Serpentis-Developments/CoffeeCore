@@ -21,6 +21,8 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.SelfUser;
 import net.dv8tion.jda.api.entities.channel.attribute.IGuildChannelContainer;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -34,7 +36,7 @@ import java.util.concurrent.Executors;
  * various components.
  */
 public class CoffeeCore {
-
+    protected static final Logger LOGGER = LoggerFactory.getLogger(CoffeeCore.class);
     /**
      * The {@link JDA} instance. Mutually exclusive with {@link #shardManager}.
      */
@@ -94,18 +96,23 @@ public class CoffeeCore {
             determineAndSetContainer(container);
 
             if(dataHandler == null) {
-                this.dataHandler = new DataHandler<>(
-                        Path.of(settings.getServerDataPath()),
-                        new TypeToken<>() {},
-                        new EntityDataDeserializer<>()
-                );
+                if(settings.getServerDataPath() == null) {
+                    LOGGER.warn("No data path provided, running without data handler!");
+                    this.dataHandler = null;
+                } else {
+                    this.dataHandler = new DataHandler<>(
+                            Path.of(settings.getServerDataPath()),
+                            new TypeToken<>() {},
+                            new EntityDataDeserializer<>()
+                    );
+                    this.dataHandler.init(this);
+                }
             } else {
                 this.dataHandler = dataHandler;
+                this.dataHandler.init(this);
             }
-
-            this.dataHandler.init(this);
         } catch (IllegalStateException | InterruptedException | IOException | IllegalArgumentException e) {
-            e.printStackTrace();
+            LOGGER.error("An error has occurred within Coffee Core initialization. Shutting down...", e);
             System.exit(1);
         }
         this.commandsHandler = Objects.requireNonNullElseGet(
@@ -144,12 +151,13 @@ public class CoffeeCore {
     }
 
     /**
-     * Get the {@link AbstractDataHandler} instance
+     * Get the {@link AbstractDataHandler} instance. This will throw an {@link IllegalStateException} if the data
+     * handler is not set.
      * @return {@link AbstractDataHandler}
      */
     @NonNull
     public AbstractDataHandler<?> getDataHandler() {
-        return dataHandler;
+        return Validate.throwOnNull(dataHandler);
     }
 
     /**
@@ -300,7 +308,7 @@ public class CoffeeCore {
 
         for(BotCommand<?, ?> cmd: command) {
             if(commands.get(cmd.getName()) != null) {
-                System.err.println("Duplicate command name: " + cmd.getName());
+                LOGGER.warn("Duplicate command name: {}", cmd.getName());
             }
 
             commands.put(cmd.getName(), cmd);

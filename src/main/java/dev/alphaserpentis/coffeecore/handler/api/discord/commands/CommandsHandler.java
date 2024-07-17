@@ -237,7 +237,7 @@ public class CommandsHandler extends ListenerAdapter {
     public void onModalInteraction(@NonNull ModalInteractionEvent event) {
         executor.submit(() -> {
             try {
-                String modalId = Validate.throwOnNull(event.getModalId());
+                String modalId = event.getModalId();
                 var cmd = Validate.throwOnNull(
                         (BotCommand<?, ?>) getCommand(modalId.substring(0, modalId.indexOf("_")))
                 );

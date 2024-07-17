@@ -2,6 +2,7 @@ package dev.alphaserpentis.coffeecore.data.bot;
 
 import dev.alphaserpentis.coffeecore.helper.Validate;
 import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.annotations.Nullable;
 
 /**
  * Class used to contain settings for the bot.
@@ -30,6 +31,27 @@ public class BotSettings {
     private AboutInformation aboutInformation = null;
 
     public BotSettings(
+            boolean updateCommandsAtLaunch,
+            boolean registerDefaultCommands
+    ) {
+        this.botOwnerId = 0;
+        this.serverDataPath = null;
+        this.updateCommandsAtLaunch = updateCommandsAtLaunch;
+        this.registerDefaultCommands = registerDefaultCommands;
+    }
+
+    public BotSettings(
+            long botOwnerId,
+            boolean updateCommandsAtLaunch,
+            boolean registerDefaultCommands
+    ) {
+        this.botOwnerId = botOwnerId;
+        this.serverDataPath = null;
+        this.updateCommandsAtLaunch = updateCommandsAtLaunch;
+        this.registerDefaultCommands = registerDefaultCommands;
+    }
+
+    public BotSettings(
             long botOwnerId,
             String serverDataPath,
             boolean updateCommandsAtLaunch,
@@ -43,12 +65,12 @@ public class BotSettings {
 
     public BotSettings(
             long botOwnerId,
-            @NonNull String serverDataPath,
+            String serverDataPath,
             boolean updateCommandsAtLaunch,
             boolean registerDefaultCommands,
             @NonNull AboutInformation aboutInformation
     ) {
-        Validate.throwOnNull(serverDataPath, aboutInformation);
+        Validate.throwOnNull(aboutInformation);
 
         this.botOwnerId = botOwnerId;
         this.serverDataPath = serverDataPath;
@@ -61,7 +83,7 @@ public class BotSettings {
         return botOwnerId;
     }
 
-    @NonNull
+    @Nullable
     public String getServerDataPath() {
         return serverDataPath;
     }

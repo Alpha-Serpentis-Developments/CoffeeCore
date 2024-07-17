@@ -18,6 +18,11 @@ public class ServerData extends EntityData {
         this.onlyEphemeral = onlyEphemeral;
     }
 
+    @Override
+    public ServerData createNewEntityData() {
+        return new ServerData();
+    }
+
     public void setOnlyEphemeral(boolean onlyEphemeral) {
         this.onlyEphemeral = onlyEphemeral;
     }

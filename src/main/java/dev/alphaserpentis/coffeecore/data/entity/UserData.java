@@ -6,6 +6,11 @@ public class UserData extends EntityData {
     @SerializedName("showFullStackTrace")
     private boolean showFullStackTrace = false;
 
+    @Override
+    public UserData createNewEntityData() {
+        return new UserData();
+    }
+
     public void setShowFullStackTrace(boolean showFullStackTrace) {
         this.showFullStackTrace = showFullStackTrace;
     }

@@ -37,15 +37,15 @@ public abstract class AbstractDataHandler<T extends EntityData> extends Listener
     /**
      * The {@link Gson} instance to use to write the data.
      */
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    protected final Gson gson;
     /**
      * Path to the entity data file.
      */
-    private final Path pathToFile;
+    protected final Path pathToFile;
     /**
      * The {@link CoffeeCore} instance.
      */
-    private CoffeeCore core;
+    protected CoffeeCore core;
     /**
      * The {@link Future} of the scheduled executor.
      */
@@ -71,15 +71,24 @@ public abstract class AbstractDataHandler<T extends EntityData> extends Listener
      * Mapping is structured based on a string-based identifier from the entity type to allow for different types of
      * entities to be stored.
      */
-    public Map<String, Map<Long, T>> entityDataHashMap = new HashMap<>();
+    protected Map<String, Map<Long, T>> entityDataHashMap = new HashMap<>();
 
     public AbstractDataHandler(@NonNull Path path) {
-        this(path, List.of(new EntityType("guild", ServerData.class), new EntityType("user", UserData.class)));
+        this(
+                path,
+                List.of(new EntityType("guild", ServerData.class), new EntityType("user", UserData.class)),
+                new GsonBuilder().setPrettyPrinting().create()
+        );
     }
 
     public AbstractDataHandler(@NonNull Path path, @NonNull List<EntityType> entityTypes) {
+        this(path, entityTypes, new GsonBuilder().setPrettyPrinting().create());
+    }
+
+    public AbstractDataHandler(@NonNull Path path, @NonNull List<EntityType> entityTypes, @NonNull Gson gson) {
         pathToFile = Validate.throwOnNull(path);
         this.entityTypes = Validate.throwOnEmpty(entityTypes);
+        this.gson = Validate.throwOnNull(gson);
     }
 
     /**
@@ -187,26 +196,61 @@ public abstract class AbstractDataHandler<T extends EntityData> extends Listener
     }
 
     /**
-     * Tells the executor to update the entity data file after some time.
+     * Gets the mapping for entities
+     * @return Mapping of the bot's entities
+     */
+    @NonNull
+    public Map<String, Map<Long, T>> getEntityDataHashMap() {
+        return entityDataHashMap;
+    }
+
+    /**
+     * Tells the executor to update the entity data file after some time. Does not update immediately.
+     * @see #updateEntityData(boolean)
      */
     public void updateEntityData() {
-        long timeBetweenUpdate = (System.currentTimeMillis() / 1000) - lastUpdate;
-        ScheduledFuture<?> future = getScheduledFuture();
+        updateEntityData(false);
+    }
 
-        if(timeBetweenUpdate < 60 && (future != null && !future.cancel(false)))
-            return;
+    /**
+     * Tells the executor to update the entity data file after some time.
+     * @param immediate Whether to update the entity data file immediately.
+     */
+    public void updateEntityData(boolean immediate) {
+        if(immediate) {
+            if(scheduledFuture != null && !scheduledFuture.cancel(false))
+                return;
 
-        scheduledFuture = executor.schedule(
-                () -> {
-                    try {
-                        writeToJSON(entityDataHashMap);
-                    } catch (Exception e) {
-                        handleEntityDataException(e);
-                    }
-                },
-                10,
-                TimeUnit.SECONDS
-        );
+            scheduledFuture = executor.schedule(
+                    () -> {
+                        try {
+                            writeToJSON(entityDataHashMap);
+                        } catch (Exception e) {
+                            handleEntityDataException(e);
+                        }
+                    },
+                    0,
+                    TimeUnit.SECONDS
+            );
+        } else {
+            long timeBetweenUpdate = (System.currentTimeMillis() / 1000) - lastUpdate;
+            ScheduledFuture<?> future = getScheduledFuture();
+
+            if(timeBetweenUpdate < 60 && (future != null && !future.cancel(false)))
+                return;
+
+            scheduledFuture = executor.schedule(
+                    () -> {
+                        try {
+                            writeToJSON(entityDataHashMap);
+                        } catch (Exception e) {
+                            handleEntityDataException(e);
+                        }
+                    },
+                    10,
+                    TimeUnit.SECONDS
+            );
+        }
     }
 
     /**
