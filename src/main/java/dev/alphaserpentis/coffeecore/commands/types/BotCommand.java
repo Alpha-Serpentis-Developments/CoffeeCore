@@ -28,6 +28,8 @@ import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import net.dv8tion.jda.api.utils.FileUpload;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -49,7 +51,7 @@ import java.util.concurrent.TimeUnit;
  * @param <E> Type of {@link GenericCommandInteractionEvent} that will be used to pass events to the command.
  */
 public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
-
+    private static Logger logger = LoggerFactory.getLogger(BotCommand.class);
     protected final HashMap<Long, Long> guildCommandIds = new HashMap<>();
     protected final HashMap<Long, Long> ratelimitMap = new HashMap<>();
     protected final Collection<Long> guildsToRegisterIn;
@@ -807,11 +809,21 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     @NonNull
     protected MessageEmbed handleError(@NonNull Exception e, long userId) {
         EmbedBuilder eb = new EmbedBuilder();
+        UserData ud;
 
         eb.setTitle("Command Failed To Execute");
         eb.setDescription("The command failed to execute due to: " + e.getClass().getSimpleName());
 
-        UserData ud = ((UserData) getCore().getDataHandler().getEntityData("user", userId));
+        try {
+            ud = ((UserData) getCore().getDataHandler().getEntityData("user", userId));
+        } catch(NullPointerException npe) {
+            ud = null;
+        } catch(Exception ex) {
+            logger.warn("Unexpected exception occurred while retrieving user data: {}", ex.getMessage());
+            ud = null;
+        }
+
+
         boolean showFullStackTrace = false;
 
         if(ud != null)
