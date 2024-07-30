@@ -40,7 +40,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -772,7 +771,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
                             "guild",
                             event.getGuild().getIdLong()
                     );
-            boolean guildEphemeralSetting = Objects.requireNonNull(serverData).getOnlyEphemeral();
+            boolean guildEphemeralSetting = serverData == null || serverData.getOnlyEphemeral();
 
             return isOnlyEphemeral() || guildEphemeralSetting;
         }

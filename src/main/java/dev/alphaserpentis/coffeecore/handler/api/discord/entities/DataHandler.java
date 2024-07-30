@@ -11,6 +11,7 @@ import dev.alphaserpentis.coffeecore.data.entity.UserData;
 import dev.alphaserpentis.coffeecore.helper.Validate;
 import dev.alphaserpentis.coffeecore.serialization.EntityDataDeserializer;
 import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.annotations.Nullable;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
 
@@ -98,19 +99,20 @@ public class DataHandler<T extends EntityData> extends AbstractDataHandler<T> {
      * Gets the specified entity data.
      * <p>
      * <b>Implementation Note:</b> This method will create a new instance of the specified {@link EntityData} type if
-     * the entity data does not exist.
+     * the entity data does not exist and the entity type exists.
      * @param entityType The identifier to check which mapping to use.
      * @param id The ID of the entity (server/user).
      * @return The entity data.
      */
     @Override
-    @NonNull
+    @Nullable
     public T getEntityData(@NonNull String entityType, long id) {
         Validate.throwOnBlank(entityType);
 
-        T data = entityDataHashMap.get(entityType).get(id);
+        Map<Long, T> entityMapping = entityDataHashMap.get(entityType);
+        T data = entityMapping == null ? null : entityMapping.get(id);
 
-        if(data == null) {
+        if(data == null && getEntityTypes().stream().anyMatch(type -> type.getId().equals(entityType))) {
             data = createNewEntityData(entityType);
             entityDataHashMap.get(entityType).put(id, data);
         }
