@@ -823,7 +823,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
         }
 
 
-        boolean showFullStackTrace = false;
+        boolean showFullStackTrace = core.getSettings().getDefaultShowFullStackTrace();
 
         if(ud != null)
             showFullStackTrace = ud.getShowFullStackTrace();
