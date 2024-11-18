@@ -165,4 +165,8 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
                 return action.addActionRow(buttons).complete().retrieveOriginal().complete();
         }
     }
+
+    public String getKey(ButtonInteractionEvent event) {
+        return event.getComponentId().split("_")[1];
+    }
 }
