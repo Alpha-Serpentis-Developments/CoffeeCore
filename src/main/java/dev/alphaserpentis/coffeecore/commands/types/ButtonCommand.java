@@ -3,13 +3,13 @@ package dev.alphaserpentis.coffeecore.commands.types;
 import dev.alphaserpentis.coffeecore.helper.Validate;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.annotations.Nullable;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
-import net.dv8tion.jda.api.interactions.components.ItemComponent;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
+import net.dv8tion.jda.api.components.buttons.Button;
+import net.dv8tion.jda.api.components.buttons.ButtonStyle;
 import net.dv8tion.jda.api.requests.restaction.WebhookMessageCreateAction;
 import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 
@@ -51,7 +51,7 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
      * @return A collection of buttons to add to the message. The collection may be empty.
      */
     @NonNull
-    public abstract Collection<ItemComponent> addButtonsToMessage(@NonNull final E event);
+    public abstract Collection<Button> addButtonsToMessage(@NonNull final E event);
 
     /**
      * Get a {@link Button} by its key.
@@ -80,7 +80,6 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
      * @param disabled Determines if the button is disabled.
      * @throws IllegalArgumentException If the key is already in use.
      */
-    @SuppressWarnings("unchecked") // According to javac the throwOnNull method is unchecked
     public void addButton(@NonNull String key, @NonNull ButtonStyle style, @NonNull String label, boolean disabled) {
         Validate.throwOnNull(key, style, label);
 
@@ -99,7 +98,6 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
      * @param disabled Determines if the button is disabled.
      * @throws IllegalArgumentException If the key is already in use.
      */
-    @SuppressWarnings("unchecked") // According to javac the throwOnNull method is unchecked
     public void addButton(
             @NonNull String key,
             @NonNull ButtonStyle style,
@@ -143,7 +141,7 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
             @NonNull final E event,
             @NonNull final BotCommand<?, E> cmd
     ) {
-        Collection<ItemComponent> buttons;
+        Collection<Button> buttons;
 
         if(cmd.isDeferReplies()) {
             final WebhookMessageCreateAction<?> action = cmd.processDeferredCommand(event);
@@ -153,7 +151,7 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
             if(buttons.isEmpty())
                 return (Message) action.complete();
             else
-                return (Message) action.addActionRow(buttons).complete();
+                return (Message) action.addComponents(ActionRow.of(buttons)).complete();
         } else {
             final ReplyCallbackAction action = cmd.processNonDeferredCommand(event);
 
@@ -162,7 +160,7 @@ public abstract class ButtonCommand<T, E extends GenericCommandInteractionEvent>
             if(buttons.isEmpty())
                 return action.complete().retrieveOriginal().complete();
             else
-                return action.addActionRow(buttons).complete().retrieveOriginal().complete();
+                return action.addComponents(ActionRow.of(buttons)).complete().retrieveOriginal().complete();
         }
     }
 

@@ -123,12 +123,16 @@ public class CoffeeCore {
         if(additionalListeners != null && additionalListeners.length > 0) {
             Object[] listeners = new Object[additionalListeners.length + 2];
             listeners[0] = this.commandsHandler;
-            listeners[1] = this.dataHandler;
-            System.arraycopy(additionalListeners, 0, listeners, 2, additionalListeners.length);
+            if(dataHandler != null)
+                listeners[1] = this.dataHandler;
+            System.arraycopy(additionalListeners, 0, listeners, listeners.length, additionalListeners.length);
 
             addEventListenersToContainer(listeners);
         } else {
-            addEventListenersToContainer(this.commandsHandler, this.dataHandler);
+            if(dataHandler != null)
+                addEventListenersToContainer(this.commandsHandler, this.dataHandler);
+            else
+                addEventListenersToContainer(this.commandsHandler);
         }
     }
 
@@ -151,13 +155,12 @@ public class CoffeeCore {
     }
 
     /**
-     * Get the {@link AbstractDataHandler} instance. This will throw an {@link IllegalStateException} if the data
-     * handler is not set.
+     * Get the {@link AbstractDataHandler} instance.
      * @return {@link AbstractDataHandler}
      */
-    @NonNull
+    @Nullable
     public AbstractDataHandler<?> getDataHandler() {
-        return Validate.throwOnNull(dataHandler);
+        return dataHandler;
     }
 
     /**

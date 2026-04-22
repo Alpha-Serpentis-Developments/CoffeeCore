@@ -45,8 +45,14 @@ abstract class EmbeddedCommand<E : GenericCommandInteractionEvent>(
                         cmdHook
                             .execute(cmd, event, null)
                             .ifPresent { rawResponse ->
-                                if (rawResponse is CommandResponse<*>)
+                                if (rawResponse is CommandResponse<*>) {
+                                    val msgResponse = rawResponse.messageResponse
+
+                                    if (msgResponse[0] is String)
+                                        throw IllegalStateException("Message response cannot be a String for EmbeddedCommand")
+
                                     embeds.addAll((rawResponse as CommandResponse<MessageEmbed>).messageResponse)
+                                }
 
                                 (rawResponse as CommandResponse<MessageEmbed>).fileUpload.use {
                                     if (it != null) files.add(it)
@@ -63,6 +69,14 @@ abstract class EmbeddedCommand<E : GenericCommandInteractionEvent>(
                 }
 
                 val response = cmd.retrieveAndProcessResponse(userId, event)
+
+                // Ensures that the response is a valid MessageEmbed
+                // TODO: Try to find a way to prevent this at compile time instead of runtime
+                try {
+                    response.key.first()
+                } catch (_: ClassCastException) {
+                    throw IllegalStateException("Message response cannot be a String for EmbeddedCommand")
+                }
 
                 return if (response.value == null)
                     interactionHook.sendMessageEmbeds(response.key.toList())

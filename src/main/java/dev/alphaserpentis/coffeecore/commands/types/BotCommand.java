@@ -4,6 +4,7 @@ import dev.alphaserpentis.coffeecore.core.CoffeeCore;
 import dev.alphaserpentis.coffeecore.data.bot.CommandResponse;
 import dev.alphaserpentis.coffeecore.data.entity.ServerData;
 import dev.alphaserpentis.coffeecore.data.entity.UserData;
+import dev.alphaserpentis.coffeecore.handler.api.discord.entities.DataHandler;
 import dev.alphaserpentis.coffeecore.helper.Validate;
 import dev.alphaserpentis.coffeecore.hook.CommandHook;
 import dev.alphaserpentis.coffeecore.hook.defaults.MessageExpireHook;
@@ -50,7 +51,7 @@ import java.util.concurrent.TimeUnit;
  * @param <E> Type of {@link GenericCommandInteractionEvent} that will be used to pass events to the command.
  */
 public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
-    private static Logger logger = LoggerFactory.getLogger(BotCommand.class);
+    private static final Logger logger = LoggerFactory.getLogger(BotCommand.class);
     protected final HashMap<Long, Long> guildCommandIds = new HashMap<>();
     protected final HashMap<Long, Long> ratelimitMap = new HashMap<>();
     protected final Collection<Long> guildsToRegisterIn;
@@ -409,7 +410,7 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
      * Method used to execute the command. Should contain the main logic of the command.
      * @param userId is the ID of the user who called the command
      * @param event is the {@link SlashCommandInteractionEvent} that contains the interaction
-     * @return a nonnull {@link CommandResponse} containing either a {@link MessageEmbed} or {@link String}
+     * @return a nonnull {@link CommandResponse} containing either an array of {@link MessageEmbed} or a single {@link String}
      */
     @NonNull
     public abstract CommandResponse<T> runCommand(final long userId, @NonNull final E event);
@@ -762,19 +763,18 @@ public abstract class BotCommand<T, E extends GenericCommandInteractionEvent> {
     }
 
     protected boolean determineEphemeralStatus(@NonNull E event) {
-        if (event.getGuild() == null) {
-            return isOnlyEphemeral();
-        } else {
-            ServerData serverData = (ServerData) getCore()
-                    .getDataHandler()
-                    .getEntityData(
-                            "guild",
-                            event.getGuild().getIdLong()
-                    );
-            boolean guildEphemeralSetting = serverData == null || serverData.getOnlyEphemeral();
-
-            return isOnlyEphemeral() || guildEphemeralSetting;
+        if (event.getGuild() != null) {
+            DataHandler<?> dataHandler = (DataHandler<?>) getCore().getDataHandler();
+            if (dataHandler != null) {
+                ServerData serverData = (ServerData) dataHandler
+                        .getEntityData(
+                                "guild",
+                                event.getGuild().getIdLong()
+                        );
+                return serverData == null || serverData.getOnlyEphemeral();
+            }
         }
+        return isOnlyEphemeral();
     }
 
     protected void determineRatelimit(long userId, @NonNull CommandResponse<?> responseFromCommand) {

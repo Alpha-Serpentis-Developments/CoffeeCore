@@ -13,7 +13,7 @@ import net.dv8tion.jda.api.requests.RestAction
 open class Sync(options: BotCommandOptions) : EmbeddedCommand<SlashCommandInteractionEvent>(options) {
 
     constructor() : this(
-        BotCommandOptions("sync", "Force sync commands with the server")
+        BotCommandOptions("sync", "(DEBUG) Force sync commands with the server")
             .setOnlyEmbed(true)
             .setDeferReplies(true)
             .setUseRatelimits(true)
@@ -22,7 +22,7 @@ open class Sync(options: BotCommandOptions) : EmbeddedCommand<SlashCommandIntera
     )
 
     override fun runCommand(userId: Long, event: SlashCommandInteractionEvent): CommandResponse<MessageEmbed> {
-        if (event.member?.hasPermission(Permission.ADMINISTRATOR) == true) {
+        if (event.member?.hasPermission(Permission.ADMINISTRATOR) == false) {
             return CommandResponse(true, "You must be an administrator to use this command!")
         }
 

@@ -220,7 +220,7 @@ public class CommandsHandler extends ListenerAdapter {
     public void onButtonInteraction(@NonNull ButtonInteractionEvent event) {
         executor.submit(() -> {
             try {
-                String buttonId = Validate.throwOnNull(event.getButton().getId());
+                String buttonId = Validate.throwOnNull(event.getButton().getCustomId());
                 var cmd = Validate.throwOnNull(
                         (ButtonCommand<?, ?>) getCommand(buttonId.substring(0, buttonId.indexOf("_")))
                 );
