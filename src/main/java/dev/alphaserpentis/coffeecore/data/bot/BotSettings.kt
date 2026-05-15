@@ -7,7 +7,7 @@ class BotSettings(
     /**
      * The Discord user ID of the bot owner
      */
-    val botOwnerId: Long,
+    val botOwnerId: Long?,
     /**
      * The path to the server data file.
      */
@@ -15,11 +15,11 @@ class BotSettings(
     /**
      * Whether to update the commands at launch.
      */
-    val isUpdateCommandsAtLaunch: Boolean,
+    val isUpdateCommandsAtLaunch: Boolean = true,
     /**
      * Whether to register the default commands.
      */
-    val isRegisterDefaultCommands: Boolean,
+    val isRegisterDefaultCommands: Boolean = true,
     /**
      * Whether to default to show the full stack trace of errors to users
      */
